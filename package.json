@@ -1,0 +1,23 @@
+{
+  "name": "bio-mapping",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "turbo test",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "private": "true",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "^2.10.0"
+  }
+}
