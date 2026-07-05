@@ -86,7 +86,7 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^@bio/database$": "<rootDir>/../../../database/node_modules/.prisma/client/index.js"
+      "^@bio/database$": "<rootDir>/../../../database/generated/client/index.js"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

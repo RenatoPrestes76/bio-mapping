@@ -12,8 +12,8 @@
   },
   "exports": {
     ".": {
-      "types": "./node_modules/.prisma/client/index.d.ts",
-      "default": "./node_modules/.prisma/client/index.js"
+      "types": "./generated/client/index.d.ts",
+      "default": "./generated/client/index.js"
     }
   },
   "dependencies": {

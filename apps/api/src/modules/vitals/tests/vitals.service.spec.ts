@@ -201,7 +201,7 @@ describe('VitalsService', () => {
 
       expect(result.id).toBe('vital-1');
       expect(result.bmiClassification).toBe('Sobrepeso');
-      expect(result.bloodPressureClassification).toBe('Elevada');
+      expect(result.bloodPressureClassification).toBe('Hipertensão Estágio 1');
     });
 
     it('lança NotFoundException para registro inexistente', async () => {

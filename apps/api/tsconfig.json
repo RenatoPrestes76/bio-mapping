@@ -22,7 +22,7 @@
     "noFallthroughCasesInSwitch": false,
     "types": ["jest", "node", "multer"],
     "paths": {
-      "@bio/database": ["../../database/node_modules/.prisma/client/index"]
+      "@bio/database": ["../../database/generated/client/index"]
     }
   }
 }

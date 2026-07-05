@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BiomarkersService } from '../services/biomarkers.service';
 import { CreateBiomarkerDto } from '../dto/create-biomarker.dto';

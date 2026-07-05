@@ -1,4 +1,5 @@
 node_modules
+database/generated/
 .env
 .env.local
 dist
