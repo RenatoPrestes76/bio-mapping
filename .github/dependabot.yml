@@ -1,0 +1,70 @@
+version: 2
+
+updates:
+  # ── Node.js / pnpm ──────────────────────────────────────────────────────────
+  # Monitoriza TODAS as dependências npm do workspace (raiz, apps/api e database).
+  # O Dependabot cria PRs separados para cada pacote atualizado.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "node"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+      prisma:
+        patterns:
+          - "prisma"
+          - "@prisma/*"
+      testing:
+        patterns:
+          - "jest"
+          - "@types/jest"
+          - "ts-jest"
+          - "supertest"
+          - "@types/supertest"
+      typescript:
+        patterns:
+          - "typescript"
+          - "ts-node"
+          - "@types/node"
+
+  # ── Docker (base image) ──────────────────────────────────────────────────────
+  # Atualiza automaticamente a tag do node:22-alpine no Dockerfile.
+  - package-ecosystem: docker
+    directory: "/apps/api"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # ── GitHub Actions ───────────────────────────────────────────────────────────
+  # Mantém as versões das actions usadas no CI sempre atualizadas.
+  # Crítico para segurança: actions comprometidas podem vazar secrets.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"

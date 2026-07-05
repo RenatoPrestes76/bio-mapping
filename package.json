@@ -1,5 +1,5 @@
 {
-  "name": "bio-mapping",
+  "name": "@bio/api",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -13,10 +13,10 @@
   "license": "ISC",
   "description": "",
   "private": "true",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.33.4",
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/engines", "prisma", "bcrypt", "sharp", "unrs-resolver"]
+  },
   "devDependencies": {
     "turbo": "^2.10.0"
   }

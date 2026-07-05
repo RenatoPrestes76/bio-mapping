@@ -1,0 +1,82 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: biomapping_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-biomapping_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-biomapping_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      args:
+        BUILD_DATE: ${BUILD_DATE:-}
+        GIT_SHA: ${GIT_SHA:-}
+        VERSION: ${VERSION:-0.1.0}
+    container_name: biomapping_api
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-biomapping_dev}
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    volumes:
+      - uploads_data:/app/uploads
+
+    # ── Sistema de arquivos somente-leitura ──────────────────────────────────
+    # A API não precisa escrever no filesystem da imagem.
+    # /app/uploads é um volume gravável; /tmp é tmpfs in-memory.
+    read_only: true
+    tmpfs:
+      - /tmp:size=50m,noexec,nosuid
+
+    # ── Capabilities Linux ───────────────────────────────────────────────────
+    # Remove TODAS as capabilities (a API escuta em :3000, acima de 1024,
+    # portanto não precisa de NET_BIND_SERVICE nem de nenhuma outra cap).
+    cap_drop:
+      - ALL
+
+    # ── Opções de segurança ──────────────────────────────────────────────────
+    # no-new-privileges impede que o processo filho eleve seus próprios privilégios
+    # via setuid/setgid binaries (ex: sudo).
+    security_opt:
+      - no-new-privileges:true
+
+    # ── Limites de recursos ──────────────────────────────────────────────────
+    # Impede que um bug ou ataque consuma todos os recursos do host.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    pids_limit: 200
+
+    depends_on:
+      db:
+        condition: service_healthy
+    # Aguarda 30s para o NestJS drenar conexões abertas antes do SIGKILL
+    stop_grace_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads_data:
