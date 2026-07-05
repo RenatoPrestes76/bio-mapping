@@ -6,7 +6,7 @@ import { RiskClassificationEngine } from '../engines/risk-classification.engine'
 
 @Injectable()
 export class ScoringService {
-  private readonly engines: Map<string, ScoringEngine> = new Map([
+  private readonly engines: Map<string, ScoringEngine> = new Map<string, ScoringEngine>([
     ['weighted-sum',        new WeightedSumEngine()],
     ['percentage',          new PercentageEngine()],
     ['risk-classification', new RiskClassificationEngine()],

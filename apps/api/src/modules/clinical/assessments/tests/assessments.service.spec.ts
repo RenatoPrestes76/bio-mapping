@@ -343,7 +343,7 @@ describe('AssessmentsService', () => {
     it('soft-deleta avaliação em DRAFT', async () => {
       repo.findById.mockResolvedValue(makeAssessment());
       prisma.patient.findFirst.mockResolvedValue(makePatient());
-      repo.softDelete.mockResolvedValue(undefined);
+      repo.softDelete.mockResolvedValue(null as any);
 
       await service.remove('asm-1', ADMIN, CTX);
       expect(repo.softDelete).toHaveBeenCalledWith('asm-1');

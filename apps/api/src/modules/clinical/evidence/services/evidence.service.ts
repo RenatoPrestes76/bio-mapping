@@ -2,7 +2,8 @@ import { ForbiddenException, Inject, Injectable, NotFoundException, Unprocessabl
 import { EvidenceType, AssessmentStatus } from '@bio/database';
 import { PrismaService } from '../../../../database/prisma.service';
 import { AuditLogService, AuditContext } from '../../../../common/audit/audit-log.service';
-import { EVIDENCE_STORAGE, EvidenceStorageProvider } from '../providers/storage.interface';
+import { EVIDENCE_STORAGE } from '../providers/storage.interface';
+import type { EvidenceStorageProvider } from '../providers/storage.interface';
 import { EvidenceResponseDto, toEvidenceResponse } from '../dto/evidence-response.dto';
 
 interface Actor { sub: string; role: string }

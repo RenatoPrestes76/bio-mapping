@@ -18,6 +18,7 @@ import { InvitesModule } from './modules/invites/invites.module';
 import { VitalsModule } from './modules/vitals/vitals.module';
 import { BiomarkersModule } from './modules/biomarkers/biomarkers.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
+import { DevicesModule } from './modules/devices/devices.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -42,6 +43,7 @@ import { AppService } from './app.service';
     VitalsModule,
     BiomarkersModule,
     ClinicalModule,
+    DevicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

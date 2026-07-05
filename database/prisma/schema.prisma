@@ -109,6 +109,29 @@ enum BiomarkerStatus {
   CRITICAL
 }
 
+// Sprint 6 — HERMES (Device Integration)
+enum ConnectionType {
+  BLE
+  USB
+  WIFI
+  API
+  MANUAL
+}
+
+enum DeviceStatus {
+  DISCOVERED
+  PAIRED
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum DeviceSessionStatus {
+  ACTIVE
+  ENDED
+  ERROR
+}
+
 // Sprint 5 — ATHENA (Assessment Engine)
 enum AssessmentStatus {
   DRAFT
@@ -181,6 +204,7 @@ model User {
   memberships       Membership[]
   invitesSent       Invite[]             @relation("InvitesSent")
   createdTemplates  AssessmentTemplate[] @relation("TemplateCreator")
+  pairedDevices     Device[]             @relation("DevicePairedBy")
 
   @@index([status])
   @@index([deletedAt])
@@ -271,6 +295,7 @@ model Patient {
   primaryProfessional Professional? @relation("PrimaryProfessional", fields: [primaryProfessionalId], references: [id])
   vitalRecords        VitalRecord[]
   assessments         Assessment[]
+  devices             Device[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -292,6 +317,7 @@ model Organization {
   vitalRecords        VitalRecord[]
   assessmentTemplates AssessmentTemplate[]
   assessments         Assessment[]
+  devices             Device[]
 
   @@index([status])
   @@index([deletedAt])
@@ -636,4 +662,83 @@ model AssessmentHistory {
   @@index([changedBy])
   @@index([changedAt])
   @@map("assessment_history")
+}
+
+// ─── Sprint 6 — HERMES (Device Integration) ──────────────────────────────────
+
+model Device {
+  id              String         @id @default(uuid())
+  organizationId  String?        @map("organization_id")
+  patientId       String?        @map("patient_id")
+
+  name            String
+  manufacturer    String?
+  model           String?
+  serialNumber    String?        @map("serial_number")
+  firmwareVersion String?        @map("firmware_version")
+
+  connectionType  ConnectionType @default(BLE) @map("connection_type")
+  status          DeviceStatus   @default(DISCOVERED)
+
+  lastSeen        DateTime?      @map("last_seen")
+  batteryLevel    Int?           @map("battery_level")
+  macAddress      String?        @map("mac_address")
+
+  // RSSI / signal tracking
+  rssi            Int?
+  signalStrength  String?        @map("signal_strength")
+
+  // Telemetria
+  totalConnections   Int   @default(0) @map("total_connections")
+  totalReconnections Int   @default(0) @map("total_reconnections")
+  totalErrors        Int   @default(0) @map("total_errors")
+  avgSignalQuality   Float? @map("avg_signal_quality")
+  avgLatencyMs       Float? @map("avg_latency_ms")
+
+  pairedBy   String?   @map("paired_by")
+  pairedAt   DateTime? @map("paired_at")
+
+  // Config JSON por dispositivo (herda da org, pode sobrescrever)
+  orgConfig  Json?     @map("org_config")
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  patient      Patient?      @relation(fields: [patientId], references: [id])
+  pairedByUser User?         @relation("DevicePairedBy", fields: [pairedBy], references: [id])
+  sessions     DeviceSession[]
+
+  @@index([organizationId])
+  @@index([patientId])
+  @@index([status])
+  @@index([connectionType])
+  @@index([macAddress])
+  @@index([deletedAt])
+  @@map("devices")
+}
+
+model DeviceSession {
+  id       String              @id @default(uuid())
+  deviceId String              @map("device_id")
+
+  startedAt     DateTime            @default(now()) @map("started_at")
+  endedAt       DateTime?           @map("ended_at")
+  status        DeviceSessionStatus @default(ACTIVE)
+
+  error         String?
+  bytesReceived BigInt  @default(0) @map("bytes_received")
+  bytesSent     BigInt  @default(0) @map("bytes_sent")
+
+  reconnections Int    @default(0)
+  signalQuality Float? @map("signal_quality")
+  latencyMs     Float? @map("latency_ms")
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("device_sessions")
 }
