@@ -59,7 +59,11 @@ export type AuditAction =
   | 'DEVICE_DISCONNECTED'
   | 'DEVICE_ERROR'
   | 'SESSION_STARTED'
-  | 'SESSION_ENDED';
+  | 'SESSION_ENDED'
+  | 'MEASUREMENT_PROCESSED'
+  | 'MEASUREMENT_REJECTED'
+  | 'CALIBRATION_CREATED'
+  | 'CALIBRATION_EXPIRED';
 
 export interface AuditContext {
   userId?: string;

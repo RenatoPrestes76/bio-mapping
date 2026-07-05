@@ -24,9 +24,21 @@ import { SessionsService } from './sessions/services/sessions.service';
 import { RegistryService } from './registry/services/registry.service';
 import { RegistryController } from './registry/controllers/registry.controller';
 
+// Sprint 7 — ORACLE
+import { MeasurementNormalizerService } from './normalizers/measurement-normalizer.service';
+import { MeasurementValidationService } from './validation/measurement-validation.service';
+import { ClinicalMapperService } from './mappers/clinical-mapper.service';
+import { CalibrationService } from './calibration/calibration.service';
+import { IngestionPipelineService } from './ingestion/ingestion-pipeline.service';
+import { MockDeviceService } from './drivers/mock/mock-device.service';
+import { MockDeviceController } from './drivers/mock/mock-device.controller';
+import { DashboardService } from './dashboard/dashboard.service';
+import { DashboardController } from './dashboard/dashboard.controller';
+
 @Module({
   imports: [DatabaseModule, AuditLogModule],
   providers: [
+    // Sprint 6
     DeviceEventBusService,
     BleManagerService,
     SyncQueueService,
@@ -34,14 +46,33 @@ import { RegistryController } from './registry/controllers/registry.controller';
     PairingService,
     SessionsService,
     RegistryService,
+    // Sprint 7
+    MeasurementNormalizerService,
+    MeasurementValidationService,
+    ClinicalMapperService,
+    CalibrationService,
+    IngestionPipelineService,
+    MockDeviceService,
+    DashboardService,
   ],
-  controllers: [DiscoveryController, PairingController, RegistryController],
+  controllers: [
+    DiscoveryController,
+    PairingController,
+    RegistryController,
+    MockDeviceController,
+    DashboardController,
+  ],
   exports: [
     DeviceEventBusService,
     BleManagerService,
     SyncQueueService,
     RegistryService,
     SessionsService,
+    IngestionPipelineService,
+    MeasurementNormalizerService,
+    MeasurementValidationService,
+    CalibrationService,
+    MockDeviceService,
   ],
 })
 export class DevicesModule {}

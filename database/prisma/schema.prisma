@@ -109,6 +109,14 @@ enum BiomarkerStatus {
   CRITICAL
 }
 
+// Sprint 7 — ORACLE (Device Drivers)
+enum MeasurementStatus {
+  PENDING
+  VALIDATED
+  REJECTED
+  PROCESSED
+}
+
 // Sprint 6 — HERMES (Device Integration)
 enum ConnectionType {
   BLE
@@ -296,6 +304,7 @@ model Patient {
   vitalRecords        VitalRecord[]
   assessments         Assessment[]
   devices             Device[]
+  deviceMeasurements  DeviceMeasurement[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -705,10 +714,12 @@ model Device {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  patient      Patient?      @relation(fields: [patientId], references: [id])
-  pairedByUser User?         @relation("DevicePairedBy", fields: [pairedBy], references: [id])
-  sessions     DeviceSession[]
+  organization  Organization?       @relation(fields: [organizationId], references: [id])
+  patient       Patient?            @relation(fields: [patientId], references: [id])
+  pairedByUser  User?               @relation("DevicePairedBy", fields: [pairedBy], references: [id])
+  sessions      DeviceSession[]
+  measurements  DeviceMeasurement[]
+  calibrations  DeviceCalibration[]
 
   @@index([organizationId])
   @@index([patientId])
@@ -742,3 +753,54 @@ model DeviceSession {
   @@index([startedAt])
   @@map("device_sessions")
 }
+
+// Sprint 7 — ORACLE (Device Drivers + Ingestion Pipeline)
+model DeviceMeasurement {
+  id              String            @id @default(uuid())
+  deviceId        String            @map("device_id")
+  sessionId       String?           @map("session_id")
+  patientId       String?           @map("patient_id")
+  organizationId  String?           @map("organization_id")
+  recordedBy      String?           @map("recorded_by")
+  driverName      String            @map("driver_name")
+  measurementType String            @map("measurement_type")
+  status          MeasurementStatus @default(PENDING)
+  rawData         Json              @map("raw_data")
+  normalizedData  Json              @map("normalized_data")
+  unit            String?
+  validationFlags Json?             @map("validation_flags")
+  vitalRecordId   String?           @map("vital_record_id")
+  processedAt     DateTime?         @map("processed_at")
+  recordedAt      DateTime          @default(now()) @map("recorded_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  device Device  @relation(fields: [deviceId], references: [id])
+  patient Patient? @relation(fields: [patientId], references: [id])
+
+  @@index([deviceId])
+  @@index([patientId])
+  @@index([status])
+  @@index([measurementType])
+  @@index([recordedAt])
+  @@map("device_measurements")
+}
+
+model DeviceCalibration {
+  id              String    @id @default(uuid())
+  deviceId        String    @map("device_id")
+  calibratedBy    String    @map("calibrated_by")
+  calibratedAt    DateTime  @default(now()) @map("calibrated_at")
+  expiresAt       DateTime? @map("expires_at")
+  notes           String?
+  referenceValues Json?     @map("reference_values")
+  isValid         Boolean   @default(true) @map("is_valid")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
+  @@index([isValid])
+  @@index([expiresAt])
+  @@map("device_calibrations")
+}
+
