@@ -109,6 +109,53 @@ enum BiomarkerStatus {
   CRITICAL
 }
 
+// Sprint 5 — ATHENA (Assessment Engine)
+enum AssessmentStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  VALIDATED
+  LOCKED
+}
+
+enum TemplateCategory {
+  PHYSICAL
+  NUTRITIONAL
+  CLINICAL
+  FUNCTIONAL
+  POSTURAL
+  CARDIOVASCULAR
+  RESPIRATORY
+  PSYCHOLOGICAL
+  SPORTS_PERFORMANCE
+  CUSTOM
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  DECIMAL
+  BOOLEAN
+  DATE
+  TIME
+  SELECT
+  MULTISELECT
+  RADIO
+  CHECKBOX
+  SLIDER
+  FILE
+  PHOTO
+}
+
+enum EvidenceType {
+  PHOTO
+  PDF
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -132,7 +179,8 @@ model User {
   sessions          Session[]
   auditLogs         AuditLog[]
   memberships       Membership[]
-  invitesSent       Invite[]     @relation("InvitesSent")
+  invitesSent       Invite[]             @relation("InvitesSent")
+  createdTemplates  AssessmentTemplate[] @relation("TemplateCreator")
 
   @@index([status])
   @@index([deletedAt])
@@ -199,6 +247,7 @@ model Professional {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   patients     Patient[]     @relation("PrimaryProfessional")
   vitalRecords VitalRecord[] @relation("VitalsByProfessional")
+  assessments  Assessment[]  @relation("AssessmentsByProfessional")
 
   @@index([specialty])
   @@index([deletedAt])
@@ -221,6 +270,7 @@ model Patient {
   user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   primaryProfessional Professional? @relation("PrimaryProfessional", fields: [primaryProfessionalId], references: [id])
   vitalRecords        VitalRecord[]
+  assessments         Assessment[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -237,9 +287,11 @@ model Organization {
   createdAt DateTime           @default(now()) @map("created_at")
   updatedAt DateTime           @updatedAt @map("updated_at")
 
-  memberships  Membership[]
-  invites      Invite[]
-  vitalRecords VitalRecord[]
+  memberships         Membership[]
+  invites             Invite[]
+  vitalRecords        VitalRecord[]
+  assessmentTemplates AssessmentTemplate[]
+  assessments         Assessment[]
 
   @@index([status])
   @@index([deletedAt])
@@ -417,4 +469,171 @@ model VitalRecordHistory {
   @@index([changedBy])
   @@index([changedAt])
   @@map("vital_record_history")
+}
+
+// ─── Sprint 5 — ATHENA (Assessment Engine) ───────────────────────────────────
+
+model AssessmentTemplate {
+  id             String           @id @default(uuid())
+  name           String
+  description    String?
+  category       TemplateCategory
+  version        Int              @default(1)
+  isActive       Boolean          @default(true) @map("is_active")
+  organizationId String?          @map("organization_id")
+  createdBy      String           @map("created_by")
+  scoringEngine  String           @default("weighted-sum") @map("scoring_engine")
+  scoringConfig  Json?            @map("scoring_config")
+  deletedAt      DateTime?        @map("deleted_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  organization Organization?     @relation(fields: [organizationId], references: [id])
+  creator      User              @relation("TemplateCreator", fields: [createdBy], references: [id])
+  sections     AssessmentSection[]
+  assessments  Assessment[]
+
+  @@index([category])
+  @@index([organizationId])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("assessment_templates")
+}
+
+model AssessmentSection {
+  id          String    @id @default(uuid())
+  templateId  String    @map("template_id")
+  title       String
+  description String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  template AssessmentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  fields   AssessmentField[]
+
+  @@index([templateId])
+  @@map("assessment_sections")
+}
+
+model AssessmentField {
+  id              String    @id @default(uuid())
+  sectionId       String    @map("section_id")
+  label           String
+  description     String?
+  placeholder     String?
+  fieldType       FieldType @map("field_type")
+  required        Boolean   @default(false)
+  order           Int       @default(0)
+  min             Float?
+  max             Float?
+  unit            String?
+  defaultValue    String?   @map("default_value")
+  options         Json?
+  validationRules Json?     @map("validation_rules")
+  scoringWeight   Float?    @map("scoring_weight")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  section AssessmentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  answers AssessmentAnswer[]
+
+  @@index([sectionId])
+  @@map("assessment_fields")
+}
+
+model Assessment {
+  id             String           @id @default(uuid())
+  patientId      String           @map("patient_id")
+  professionalId String?          @map("professional_id")
+  organizationId String?          @map("organization_id")
+  templateId     String           @map("template_id")
+  status         AssessmentStatus @default(DRAFT)
+  performedAt    DateTime?        @map("performed_at")
+  validatedAt    DateTime?        @map("validated_at")
+  lockedAt       DateTime?        @map("locked_at")
+  lockedBy       String?          @map("locked_by")
+  notes          String?
+  totalScore     Float?           @map("total_score")
+  maxScore       Float?           @map("max_score")
+  scorePercent   Float?           @map("score_percent")
+  classification String?
+  riskLevel      String?          @map("risk_level")
+  deletedAt      DateTime?        @map("deleted_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  patient      Patient            @relation(fields: [patientId], references: [id])
+  professional Professional?      @relation("AssessmentsByProfessional", fields: [professionalId], references: [id])
+  organization Organization?      @relation(fields: [organizationId], references: [id])
+  template     AssessmentTemplate @relation(fields: [templateId], references: [id])
+  answers      AssessmentAnswer[]
+  evidence     AssessmentEvidence[]
+  history      AssessmentHistory[]
+
+  @@index([patientId])
+  @@index([professionalId])
+  @@index([organizationId])
+  @@index([templateId])
+  @@index([performedAt])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("assessments")
+}
+
+model AssessmentAnswer {
+  id           String   @id @default(uuid())
+  assessmentId String   @map("assessment_id")
+  fieldId      String   @map("field_id")
+  value        String?
+  score        Float?
+  comment      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  assessment Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  field      AssessmentField @relation(fields: [fieldId], references: [id])
+
+  @@unique([assessmentId, fieldId])
+  @@index([assessmentId])
+  @@index([fieldId])
+  @@map("assessment_answers")
+}
+
+model AssessmentEvidence {
+  id           String       @id @default(uuid())
+  assessmentId String       @map("assessment_id")
+  type         EvidenceType
+  filename     String
+  originalName String       @map("original_name")
+  mimeType     String       @map("mime_type")
+  size         Int
+  url          String
+  uploadedBy   String       @map("uploaded_by")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@map("assessment_evidence")
+}
+
+// Cada UPDATE em Assessment gera entradas — dados clínicos nunca sobrescritos silenciosamente.
+model AssessmentHistory {
+  id           String   @id @default(uuid())
+  assessmentId String   @map("assessment_id")
+  field        String
+  previousValue String? @map("previous_value")
+  newValue     String?  @map("new_value")
+  changedBy    String   @map("changed_by")
+  ip           String?
+  userAgent    String?  @map("user_agent")
+  changedAt    DateTime @default(now()) @map("changed_at")
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@index([changedBy])
+  @@index([changedAt])
+  @@map("assessment_history")
 }
