@@ -20,6 +20,7 @@
     "seed": "pnpm --filter @bio/database seed"
   },
   "dependencies": {
+    "multer": "^2.0.2",
     "@bio/database": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
