@@ -1,0 +1,56 @@
+# =============================================================================
+# .dockerignore — Bio Mapping
+# Reduz o build context enviado ao Docker daemon para acelerar o build e
+# evitar que arquivos sensíveis ou desnecessários entrem na imagem.
+# =============================================================================
+
+# ── Dependências instaladas (reinstaladas nos stages de build) ────────────────
+**/node_modules
+
+# ── Artifacts de compilação (gerados nos stages) ─────────────────────────────
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+
+# ── Arquivos de teste e cobertura ─────────────────────────────────────────────
+**/*.spec.ts
+**/*.test.ts
+**/coverage
+
+# ── Variáveis de ambiente — NUNCA copiar secrets para a imagem ───────────────
+.env
+.env.*
+!.env.example
+
+# ── Controle de versão ────────────────────────────────────────────────────────
+.git
+.gitignore
+.github
+
+# ── IDEs e ferramentas locais ─────────────────────────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# ── Documentação ──────────────────────────────────────────────────────────────
+docs
+*.md
+
+# ── Configurações de CI/CD e monorepo não usadas no build ────────────────────
+turbo.json
+.dockerignore
+
+# ── Uploads locais (persistidos em volume Docker ou storage externo) ──────────
+uploads
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── macOS / Windows ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

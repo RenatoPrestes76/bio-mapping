@@ -1,0 +1,420 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PROFESSIONAL
+  PATIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  PENDING
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum Specialty {
+  DOCTOR
+  NUTRITIONIST
+  PHYSICAL_EDUCATOR
+  PHYSIOTHERAPIST
+  BIOMEDICAL
+  PSYCHOLOGIST
+  NURSE
+  COACH
+  OTHER
+}
+
+enum OrganizationPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  PROFESSIONAL
+  ASSISTANT
+  PATIENT
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+// Sprint 4 — VITALS
+enum VitalSource {
+  MANUAL
+  BLUETOOTH
+  IMPORT
+  API
+}
+
+enum VitalStatus {
+  DRAFT
+  VALIDATED
+  ARCHIVED
+}
+
+enum BiomarkerStatus {
+  NORMAL
+  HIGH
+  LOW
+  CRITICAL
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  name         String
+  birthDate    DateTime?  @map("birth_date") @db.Date
+  gender       Gender?
+  role         Role       @default(PATIENT)
+  status       UserStatus @default(ACTIVE)
+  lastLogin    DateTime?  @map("last_login")
+  deletedAt    DateTime?  @map("deleted_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  biologicalProfile BiologicalProfile?
+  profile           Profile?
+  professional      Professional?
+  patient           Patient?
+  sessions          Session[]
+  auditLogs         AuditLog[]
+  memberships       Membership[]
+  invitesSent       Invite[]     @relation("InvitesSent")
+
+  @@index([status])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Profile {
+  id        String    @id @default(uuid())
+  userId    String    @unique @map("user_id")
+  fullName  String    @map("full_name")
+  cpf       String?   @unique
+  birthDate DateTime? @map("birth_date") @db.Date
+  gender    Gender?
+  phone     String?
+  photo     String?
+  address   String?
+  city      String?
+  state     String?
+  country   String?   @default("BR")
+  zipcode   String?
+  timezone  String?   @default("America/Sao_Paulo")
+  language  String?   @default("pt-BR")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model BiologicalProfile {
+  id               String         @id @default(uuid())
+  userId           String         @unique @map("user_id")
+  height           Float?
+  weight           Float?
+  bodyFat          Float?         @map("body_fat")
+  muscleMass       Float?         @map("muscle_mass")
+  restingHeartRate Int?           @map("resting_heart_rate")
+  bloodType        BloodType?     @map("blood_type")
+  goal             String?
+  activityLevel    ActivityLevel? @map("activity_level")
+  deletedAt        DateTime?      @map("deleted_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("biological_profiles")
+}
+
+model Professional {
+  id            String    @id @default(uuid())
+  userId        String    @unique @map("user_id")
+  specialty     Specialty
+  licenseNumber String?   @map("license_number")
+  licenseState  String?   @map("license_state")
+  institution   String?
+  bio           String?
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patients     Patient[]     @relation("PrimaryProfessional")
+  vitalRecords VitalRecord[] @relation("VitalsByProfessional")
+
+  @@index([specialty])
+  @@index([deletedAt])
+  @@map("professionals")
+}
+
+model Patient {
+  id                    String     @id @default(uuid())
+  userId                String     @unique @map("user_id")
+  registrationCode      String?    @unique @map("registration_code")
+  bloodType             BloodType? @map("blood_type")
+  height                Float?
+  weight                Float?
+  primaryProfessionalId String?    @map("primary_professional_id")
+  notes                 String?
+  deletedAt             DateTime?  @map("deleted_at")
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryProfessional Professional? @relation("PrimaryProfessional", fields: [primaryProfessionalId], references: [id])
+  vitalRecords        VitalRecord[]
+
+  @@index([deletedAt])
+  @@map("patients")
+}
+
+model Organization {
+  id        String             @id @default(uuid())
+  name      String
+  document  String?            @unique
+  logo      String?
+  plan      OrganizationPlan   @default(FREE)
+  status    OrganizationStatus @default(ACTIVE)
+  deletedAt DateTime?          @map("deleted_at")
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  memberships  Membership[]
+  invites      Invite[]
+  vitalRecords VitalRecord[]
+
+  @@index([status])
+  @@index([deletedAt])
+  @@map("organizations")
+}
+
+model Membership {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  userId         String         @map("user_id")
+  role           MembershipRole
+  deletedAt      DateTime?      @map("deleted_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("memberships")
+}
+
+model Invite {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  invitedBy      String         @map("invited_by")
+  email          String
+  role           MembershipRole
+  token          String         @unique
+  status         InviteStatus   @default(PENDING)
+  expiresAt      DateTime       @map("expires_at")
+  acceptedAt     DateTime?      @map("accepted_at")
+  rejectedAt     DateTime?      @map("rejected_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter      User         @relation("InvitesSent", fields: [invitedBy], references: [id])
+
+  @@index([email])
+  @@index([organizationId])
+  @@index([status])
+  @@map("invites")
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  deviceName       String?   @map("device_name")
+  deviceType       String?   @map("device_type")
+  ip               String?
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  rememberMe       Boolean   @default(false) @map("remember_me")
+  expiresAt        DateTime  @map("expires_at")
+  lastSeenAt       DateTime  @default(now()) @map("last_seen_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  ip        String?
+  userAgent String?  @map("user_agent")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Sprint 4 — VITALS ───────────────────────────────────────────────────────
+
+model VitalRecord {
+  id             String      @id @default(uuid())
+  patientId      String      @map("patient_id")
+  professionalId String?     @map("professional_id")
+  organizationId String?     @map("organization_id")
+  recordedAt     DateTime    @map("recorded_at")
+  source         VitalSource @default(MANUAL)
+  status         VitalStatus @default(DRAFT)
+  notes          String?
+
+  // Medidas Antropométricas
+  height             Float?
+  weight             Float?
+  bmi                Float?
+  bodyFatPercentage  Float?  @map("body_fat_percentage")
+  leanMass           Float?  @map("lean_mass")
+  fatMass            Float?  @map("fat_mass")
+  visceralFat        Float?  @map("visceral_fat")
+  waistCircumference Float?  @map("waist_circumference")
+  hipCircumference   Float?  @map("hip_circumference")
+  neckCircumference  Float?  @map("neck_circumference")
+  chestCircumference Float?  @map("chest_circumference")
+  armCircumference   Float?  @map("arm_circumference")
+  thighCircumference Float?  @map("thigh_circumference")
+  calfCircumference  Float?  @map("calf_circumference")
+
+  // Sinais Vitais
+  heartRate              Int?   @map("heart_rate")
+  bloodPressureSystolic  Int?   @map("blood_pressure_systolic")
+  bloodPressureDiastolic Int?   @map("blood_pressure_diastolic")
+  respiratoryRate        Int?   @map("respiratory_rate")
+  bodyTemperature        Float? @map("body_temperature")
+  oxygenSaturation       Float? @map("oxygen_saturation")
+  bloodGlucose           Float? @map("blood_glucose")
+
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  professional Professional? @relation("VitalsByProfessional", fields: [professionalId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  biomarkers   Biomarker[]
+  history      VitalRecordHistory[]
+
+  @@index([patientId])
+  @@index([patientId, recordedAt])
+  @@index([professionalId])
+  @@index([organizationId])
+  @@index([recordedAt])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("vital_records")
+}
+
+model Biomarker {
+  id            String          @id @default(uuid())
+  vitalRecordId String          @map("vital_record_id")
+  name          String
+  value         Float
+  unit          String
+  referenceMin  Float?          @map("reference_min")
+  referenceMax  Float?          @map("reference_max")
+  status        BiomarkerStatus @default(NORMAL)
+  notes         String?
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  vitalRecord VitalRecord @relation(fields: [vitalRecordId], references: [id], onDelete: Cascade)
+
+  @@index([vitalRecordId])
+  @@index([name])
+  @@map("biomarkers")
+}
+
+// Cada UPDATE em VitalRecord gera entradas aqui — dados clínicos nunca são
+// sobrescritos silenciosamente.
+model VitalRecordHistory {
+  id            String   @id @default(uuid())
+  vitalRecordId String   @map("vital_record_id")
+  field         String
+  previousValue String?  @map("previous_value")
+  newValue      String?  @map("new_value")
+  changedBy     String   @map("changed_by")
+  changedAt     DateTime @default(now()) @map("changed_at")
+
+  vitalRecord VitalRecord @relation(fields: [vitalRecordId], references: [id], onDelete: Cascade)
+
+  @@index([vitalRecordId])
+  @@index([changedBy])
+  @@index([changedAt])
+  @@map("vital_record_history")
+}

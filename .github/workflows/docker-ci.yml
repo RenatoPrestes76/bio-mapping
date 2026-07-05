@@ -1,0 +1,213 @@
+name: Docker Build, Scan & Sign
+
+# =============================================================================
+# Pipeline de CI/CD para a imagem Docker do Bio Mapping API
+#
+# Etapas:
+#   1. Build da imagem (sem push) para validação local
+#   2. Trivy: scan de vulnerabilidades (falha em CRITICAL não-corrigíveis)
+#   3. Docker Scout: CVEs + recomendações de base image (OBRIGATÓRIO)
+#   4. Syft: geração de SBOM (Software Bill of Materials) em SPDX
+#   5. Push para GitHub Container Registry (somente em develop/master)
+#   6. Cosign: assinatura keyless da imagem via Sigstore OIDC (sem secrets)
+#
+# Secrets necessários:
+#   DOCKERHUB_USERNAME — usuário Docker Hub (para Docker Scout)
+#   DOCKERHUB_TOKEN    — Personal Access Token do Docker Hub (read-only)
+#   GITHUB_TOKEN       — gerado automaticamente pelo Actions
+# =============================================================================
+
+on:
+  push:
+    branches: [develop, master]
+    paths:
+      - "apps/api/**"
+      - "database/**"
+      - "apps/api/Dockerfile"
+      - "docker-compose.yml"
+      - ".dockerignore"
+      - ".github/workflows/docker-ci.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "apps/api/**"
+      - "database/**"
+      - "apps/api/Dockerfile"
+      - "docker-compose.yml"
+      - ".dockerignore"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/api
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write  # upload SARIF para a aba Security
+  id-token: write         # Cosign keyless signing via OIDC (sem secrets privados)
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Build, Scan, SBOM, Push e Sign
+  # ---------------------------------------------------------------------------
+  build-and-scan:
+    name: Build · Scan · Sign
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Gera tags e labels OCI com base no contexto do git (branch, sha, semver)
+      - name: Extrair metadata (tags e labels OCI)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      # Login no GHCR para publicar a imagem
+      - name: Login no GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Login no Docker Hub necessário para o Docker Scout (tier gratuito incluso)
+      - name: Login no Docker Hub (Docker Scout)
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build local (sem push) — o scan roda na imagem local antes de publicar
+      - name: Build da imagem (local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          load: true
+          tags: biomapping-api:${{ github.sha }}
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            GIT_SHA=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Trivy: Scanner de CVEs open-source ───────────────────────────────
+      # exit-code: "1" faz o pipeline falhar se houver CVEs CRÍTICOS com fix disponível
+      # ignore-unfixed: true ignora CVEs sem correção disponível (não há ação possível)
+      - name: Trivy — scan de vulnerabilidades
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: biomapping-api:${{ github.sha }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Trivy — upload SARIF para aba Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      # ── Docker Scout: CVEs + recomendações de base image (OBRIGATÓRIO) ───
+      # Monitora novas CVEs em OpenSSL, musl, busybox, Node.js e dependências.
+      # Configura DOCKERHUB_USERNAME + DOCKERHUB_TOKEN nos secrets do repositório.
+      - name: Docker Scout — CVEs e recomendações
+        uses: docker/scout-action@v1
+        with:
+          command: cves,recommendations
+          image: biomapping-api:${{ github.sha }}
+          only-severities: critical,high
+          exit-code: true
+          write-comment: ${{ github.event_name == 'pull_request' }}
+
+      # ── Syft: SBOM (Software Bill of Materials) ──────────────────────────
+      # Gera inventário completo de dependências em formato SPDX-JSON.
+      # Facilita auditorias de segurança, compliance e rastreabilidade.
+      - name: Syft — gerar SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: biomapping-api:${{ github.sha }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+          artifact-name: sbom-${{ github.sha }}.spdx.json
+          upload-artifact: true
+          upload-artifact-retention: 30
+
+      # ── Push para GHCR (somente após scans aprovados) ─────────────────────
+      - name: Push para GitHub Container Registry
+        id: push
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            GIT_SHA=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Cosign: assinatura keyless via Sigstore OIDC ───────────────────────
+      # Não requer nenhum secret privado. Usa o OIDC token do GitHub Actions para
+      # provar que a imagem foi produzida neste workflow. A assinatura é registrada
+      # no transparency log público do Sigstore (Rekor), auditável por qualquer um.
+      # Verificação: cosign verify --certificate-identity-regexp="github.com/..." <image>
+      - name: Instalar Cosign
+        if: github.event_name == 'push'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Cosign — assinar imagem (keyless via OIDC)
+        if: github.event_name == 'push'
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          cosign sign --yes \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+
+      # Anexa o SBOM à imagem no registry como OCI attestation
+      - name: Cosign — anexar SBOM como attestation
+        if: github.event_name == 'push'
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          cosign attest --yes \
+            --predicate sbom.spdx.json \
+            --type spdxjson \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Valida sintaxe do docker-compose.yml
+  # ---------------------------------------------------------------------------
+  compose-validate:
+    name: Validate Compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validar docker-compose.yml
+        run: |
+          echo "JWT_SECRET=ci-placeholder" > .env
+          docker compose config --quiet
