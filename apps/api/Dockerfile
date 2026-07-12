@@ -126,9 +126,9 @@ COPY --from=prod-deps --chown=biomapping:biomapping /app/node_modules ./node_mod
 COPY --from=builder --chown=biomapping:biomapping /app/apps/api/dist ./apps/api/dist
 
 # Prisma Client gerado: engine Wasm + tipos TypeScript.
-# database/package.json exporta ./node_modules/.prisma/client/index.js
+# database/package.json exporta ./generated/client/index.js
 COPY --from=builder --chown=biomapping:biomapping \
-     /app/database/node_modules/.prisma ./database/node_modules/.prisma
+     /app/database/generated ./database/generated
 
 # package.json do workspace @bio/database: necessário para resolução dos exports.
 # O symlink node_modules/@bio/database aponta para ./database/ — este arquivo
