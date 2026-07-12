@@ -9,6 +9,9 @@
       "outputs": ["generated/**"],
       "cache": true
     },
+    "web#build": {
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
