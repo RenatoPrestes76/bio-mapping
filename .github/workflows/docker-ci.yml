@@ -110,7 +110,7 @@ jobs:
       # exit-code: "1" faz o pipeline falhar se houver CVEs CRÍTICOS com fix disponível
       # ignore-unfixed: true ignora CVEs sem correção disponível (não há ação possível)
       - name: Trivy — scan de vulnerabilidades
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: biomapping-api:${{ github.sha }}
           format: sarif
