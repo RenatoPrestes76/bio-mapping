@@ -18,6 +18,7 @@
     "onlyBuiltDependencies": ["@prisma/engines", "prisma", "bcrypt", "sharp", "unrs-resolver"]
   },
   "devDependencies": {
-    "turbo": "^2.10.0"
+    "turbo": "^2.10.0",
+    "next": "16.2.9"
   }
 }
