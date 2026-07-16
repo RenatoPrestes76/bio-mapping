@@ -20,6 +20,7 @@ import { BiomarkersModule } from './modules/biomarkers/biomarkers.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
 import { DevicesModule } from './modules/devices/devices.module';
 import { BioScoreModule } from './modules/bioscore/bioscore.module';
+import { OracleModule } from './modules/oracle/oracle.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -46,6 +47,7 @@ import { AppService } from './app.service';
     ClinicalModule,
     DevicesModule,
     BioScoreModule,
+    OracleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

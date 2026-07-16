@@ -313,6 +313,8 @@ model Patient {
   sportMetrics        SportMetrics[]
   trendAnalyses       TrendAnalysis[]
   alerts              Alert[]
+  healthSources       HealthSource[]
+  normalizedHealthData NormalizedHealthData[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -1036,5 +1038,151 @@ model Alert {
   @@index([patientId, isRead, triggeredAt])
   @@index([patientId, type])
   @@map("alerts")
+}
+
+// ─── Sprint ORACLE — Health Platform Integrations ─────────────────────────────
+
+enum HealthPlatform {
+  APPLE_HEALTH
+  GOOGLE_FIT
+  GOOGLE_HEALTH_CONNECT
+  GARMIN
+  POLAR
+  FITBIT
+  AMAZFIT
+  SAMSUNG_HEALTH
+  SIMULATOR
+}
+
+enum HealthSourceStatus {
+  CONNECTED
+  DISCONNECTED
+  PENDING
+  ERROR
+  REVOKED
+}
+
+enum OracleSyncStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum OracleMetricType {
+  HEART_RATE
+  HRV
+  STEPS
+  CALORIES
+  SLEEP
+  WEIGHT
+  BODY_FAT
+  SPO2
+  BLOOD_PRESSURE
+  TEMPERATURE
+}
+
+model HealthSource {
+  id             String             @id @default(uuid())
+  patientId      String             @map("patient_id")
+  platform       HealthPlatform
+  status         HealthSourceStatus @default(PENDING)
+  accessToken    String?            @map("access_token")
+  refreshToken   String?            @map("refresh_token")
+  tokenExpiresAt DateTime?          @map("token_expires_at")
+  scopes         String[]           @default([])
+  externalUserId String?            @map("external_user_id")
+  lastSyncAt     DateTime?          @map("last_sync_at")
+  metadata       Json?
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  patient  Patient         @relation(fields: [patientId], references: [id])
+  syncJobs SyncJob[]
+  rawData  RawHealthData[]
+
+  @@unique([patientId, platform])
+  @@index([patientId, status])
+  @@map("health_sources")
+}
+
+model RawHealthData {
+  id          String           @id @default(uuid())
+  sourceId    String           @map("source_id")
+  patientId   String           @map("patient_id")
+  platform    HealthPlatform
+  metricType  OracleMetricType @map("metric_type")
+  rawPayload  Json             @map("raw_payload")
+  recordedAt  DateTime         @map("recorded_at")
+  receivedAt  DateTime         @default(now()) @map("received_at")
+  isProcessed Boolean          @default(false) @map("is_processed")
+
+  source     HealthSource          @relation(fields: [sourceId], references: [id])
+  normalized NormalizedHealthData?
+
+  @@index([sourceId, isProcessed])
+  @@index([patientId, metricType, recordedAt])
+  @@map("raw_health_data")
+}
+
+model NormalizedHealthData {
+  id               String           @id @default(uuid())
+  rawDataId        String?          @unique @map("raw_data_id")
+  patientId        String           @map("patient_id")
+  metricType       OracleMetricType @map("metric_type")
+  value            Float
+  unit             String
+  recordedAt       DateTime         @map("recorded_at")
+  source           HealthPlatform
+  qualifier        String?
+  isDuplicate      Boolean          @default(false) @map("is_duplicate")
+  isValid          Boolean          @default(true) @map("is_valid")
+  validationErrors String[]         @default([]) @map("validation_errors")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  rawData RawHealthData? @relation(fields: [rawDataId], references: [id])
+  patient Patient        @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, metricType, recordedAt])
+  @@index([patientId, isDuplicate, isValid])
+  @@map("normalized_health_data")
+}
+
+model SyncJob {
+  id              String           @id @default(uuid())
+  sourceId        String           @map("source_id")
+  patientId       String           @map("patient_id")
+  platform        HealthPlatform
+  status          OracleSyncStatus @default(PENDING)
+  startedAt       DateTime         @default(now()) @map("started_at")
+  completedAt     DateTime?        @map("completed_at")
+  rawRecordsCount Int              @default(0) @map("raw_records_count")
+  normalizedCount Int              @default(0) @map("normalized_count")
+  errorCount      Int              @default(0) @map("error_count")
+  errorMessage    String?          @map("error_message")
+  metadata        Json?
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  source HealthSource @relation(fields: [sourceId], references: [id])
+  logs   SyncLog[]
+
+  @@index([sourceId, status])
+  @@index([patientId, startedAt])
+  @@map("sync_jobs")
+}
+
+model SyncLog {
+  id        String   @id @default(uuid())
+  jobId     String   @map("job_id")
+  level     String   @default("INFO")
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  job SyncJob @relation(fields: [jobId], references: [id])
+
+  @@index([jobId, level])
+  @@map("sync_logs")
 }
 
