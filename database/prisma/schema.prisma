@@ -305,6 +305,14 @@ model Patient {
   assessments         Assessment[]
   devices             Device[]
   deviceMeasurements  DeviceMeasurement[]
+  bioScores           BioScore[]
+  healthMetrics       HealthMetrics[]
+  cardioMetrics       CardioMetrics[]
+  sleepMetrics        SleepMetrics[]
+  recoveryMetrics     RecoveryMetrics[]
+  sportMetrics        SportMetrics[]
+  trendAnalyses       TrendAnalysis[]
+  alerts              Alert[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -802,5 +810,231 @@ model DeviceCalibration {
   @@index([isValid])
   @@index([expiresAt])
   @@map("device_calibrations")
+}
+
+// ─── Sprint BIOSCORE ─────────────────────────────────────────────────────────
+
+enum AlertType {
+  ELEVATED_HEART_RATE
+  PERFORMANCE_DROP
+  INSUFFICIENT_RECOVERY
+  RAPID_WEIGHT_GAIN
+  PROLONGED_SEDENTARISM
+  SLEEP_DEFICIT
+  OVERTRAINING
+  BLOOD_PRESSURE_CONCERN
+  GLUCOSE_CONCERN
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum SportType {
+  RUNNING
+  CYCLING
+  SWIMMING
+  STRENGTH
+  OTHER
+}
+
+model BioScore {
+  id               String   @id @default(uuid())
+  patientId        String   @map("patient_id")
+  calculatedAt     DateTime @default(now()) @map("calculated_at")
+  periodStart      DateTime @map("period_start")
+  periodEnd        DateTime @map("period_end")
+  healthScore      Float    @map("health_score")
+  recoveryScore    Float    @map("recovery_score")
+  cardioScore      Float    @map("cardio_score")
+  bodyScore        Float    @map("body_score")
+  sleepScore       Float    @map("sleep_score")
+  activityScore    Float    @map("activity_score")
+  consistencyScore Float    @map("consistency_score")
+  metadata         Json?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, calculatedAt])
+  @@map("bio_scores")
+}
+
+model HealthMetrics {
+  id                 String   @id @default(uuid())
+  patientId          String   @map("patient_id")
+  recordedAt         DateTime @map("recorded_at")
+  bmi                Float?
+  bmiClassification  String?  @map("bmi_classification")
+  idealWeightKg      Float?   @map("ideal_weight_kg")
+  bodyFatPct         Float?   @map("body_fat_pct")
+  leanMassKg         Float?   @map("lean_mass_kg")
+  fatMassKg          Float?   @map("fat_mass_kg")
+  waistHeightRatio   Float?   @map("waist_height_ratio")
+  bmr                Int?
+  tdee               Int?
+  obesityIndex       Float?   @map("obesity_index")
+  bodyClassification String?  @map("body_classification")
+  score              Float?
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, recordedAt])
+  @@map("health_metrics")
+}
+
+model CardioMetrics {
+  id                 String   @id @default(uuid())
+  patientId          String   @map("patient_id")
+  recordedAt         DateTime @map("recorded_at")
+  restingHr          Int?     @map("resting_hr")
+  maxHrEstimated     Int?     @map("max_hr_estimated")
+  maxHrMeasured      Int?     @map("max_hr_measured")
+  zone1Min           Int?     @map("zone1_min")
+  zone1Max           Int?     @map("zone1_max")
+  zone2Min           Int?     @map("zone2_min")
+  zone2Max           Int?     @map("zone2_max")
+  zone3Min           Int?     @map("zone3_min")
+  zone3Max           Int?     @map("zone3_max")
+  zone4Min           Int?     @map("zone4_min")
+  zone4Max           Int?     @map("zone4_max")
+  zone5Min           Int?     @map("zone5_min")
+  zone5Max           Int?     @map("zone5_max")
+  hrvMs              Float?   @map("hrv_ms")
+  cardiacRecoveryBpm Int?     @map("cardiac_recovery_bpm")
+  vo2maxEstimated    Float?   @map("vo2max_estimated")
+  classification     String?
+  score              Float?
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, recordedAt])
+  @@map("cardio_metrics")
+}
+
+model SleepMetrics {
+  id             String   @id @default(uuid())
+  patientId      String   @map("patient_id")
+  date           DateTime @db.Date
+  bedtime        DateTime?
+  wakeTime       DateTime? @map("wake_time")
+  totalMinutes   Int?     @map("total_minutes")
+  deepMinutes    Int?     @map("deep_minutes")
+  remMinutes     Int?     @map("rem_minutes")
+  lightMinutes   Int?     @map("light_minutes")
+  awakeMinutes   Int?     @map("awake_minutes")
+  efficiency     Float?
+  sleepDebtMin   Int?     @map("sleep_debt_min")
+  classification String?
+  source         String   @default("MANUAL")
+  score          Float?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, date])
+  @@index([patientId, date])
+  @@map("sleep_metrics")
+}
+
+model RecoveryMetrics {
+  id                    String   @id @default(uuid())
+  patientId             String   @map("patient_id")
+  recordedAt            DateTime @map("recorded_at")
+  recoveryScore         Float    @map("recovery_score")
+  sleepScore            Float?   @map("sleep_score")
+  hrvScore              Float?   @map("hrv_score")
+  hrScore               Float?   @map("hr_score")
+  trainingLoadScore     Float?   @map("training_load_score")
+  acuteLoad             Float?   @map("acute_load")
+  chronicLoad           Float?   @map("chronic_load")
+  trainingStressBalance Float?   @map("training_stress_balance")
+  recommendation        String?
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, recordedAt])
+  @@map("recovery_metrics")
+}
+
+model SportMetrics {
+  id                 String    @id @default(uuid())
+  patientId          String    @map("patient_id")
+  recordedAt         DateTime  @map("recorded_at")
+  sport              SportType
+  avgPaceSecPerKm    Int?      @map("avg_pace_sec_per_km")
+  maxPaceSecPerKm    Int?      @map("max_pace_sec_per_km")
+  vo2maxEstimated    Float?    @map("vo2max_estimated")
+  weeklyDistanceM    Int?      @map("weekly_distance_m")
+  weeklyLoadPoints   Float?    @map("weekly_load_points")
+  estimatedFtpWatts  Float?    @map("estimated_ftp_watts")
+  avgCadenceRpm      Int?      @map("avg_cadence_rpm")
+  avgSpeedKph        Float?    @map("avg_speed_kph")
+  avgPacePer100mSec  Int?      @map("avg_pace_per_100m_sec")
+  swolf              Int?
+  weeklyVolumeSets   Int?      @map("weekly_volume_sets")
+  weeklyTonnageKg    Float?    @map("weekly_tonnage_kg")
+  loadProgressionPct Float?    @map("load_progression_pct")
+  sessionCount       Int?      @map("session_count")
+  activeDays         Int?      @map("active_days")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, recordedAt, sport])
+  @@map("sport_metrics")
+}
+
+model TrendAnalysis {
+  id                String   @id @default(uuid())
+  patientId         String   @map("patient_id")
+  metric            String
+  period            String
+  periodStart       DateTime @map("period_start")
+  periodEnd         DateTime @map("period_end")
+  valueStart        Float    @map("value_start")
+  valueEnd          Float    @map("value_end")
+  changePct         Float    @map("change_pct")
+  trend             String
+  movingAverage     Float?   @map("moving_average")
+  isPersonalRecord  Boolean  @default(false) @map("is_personal_record")
+  isPlateauDetected Boolean  @default(false) @map("is_plateau_detected")
+  regressionSlope   Float?   @map("regression_slope")
+  dataPoints        Int      @map("data_points")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, metric, periodStart])
+  @@map("trend_analyses")
+}
+
+model Alert {
+  id          String        @id @default(uuid())
+  patientId   String        @map("patient_id")
+  type        AlertType
+  severity    AlertSeverity
+  title       String
+  message     String
+  metric      String?
+  value       Float?
+  threshold   Float?
+  isRead      Boolean       @default(false) @map("is_read")
+  isResolved  Boolean       @default(false) @map("is_resolved")
+  resolvedAt  DateTime?     @map("resolved_at")
+  triggeredAt DateTime      @default(now()) @map("triggered_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, isRead, triggeredAt])
+  @@index([patientId, type])
+  @@map("alerts")
 }
 

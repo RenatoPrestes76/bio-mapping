@@ -1,0 +1,60 @@
+// Centralized classification thresholds — single source of truth
+
+export const BMI_THRESHOLDS = {
+  UNDERWEIGHT: 18.5,
+  NORMAL: 25,
+  OVERWEIGHT: 30,
+  OBESE_I: 35,
+  OBESE_II: 40,
+} as const;
+
+export const BLOOD_PRESSURE_THRESHOLDS = {
+  NORMAL_SBP: 120,
+  NORMAL_DBP: 80,
+  ELEVATED_SBP: 129,
+  STAGE1_SBP: 139,
+  STAGE1_DBP: 89,
+  STAGE2_SBP: 180,
+  STAGE2_DBP: 120,
+} as const;
+
+export const RESTING_HR_THRESHOLDS = {
+  EXCELLENT: 55,
+  VERY_GOOD: 65,
+  GOOD: 70,
+  REGULAR: 75,
+} as const;
+
+export const SLEEP_THRESHOLDS = {
+  EXCELLENT_EFFICIENCY: 90,
+  GOOD_EFFICIENCY: 85,
+  REGULAR_EFFICIENCY: 75,
+  EXCELLENT_HOURS: 7,
+  GOOD_HOURS: 6.5,
+  REGULAR_HOURS: 6,
+  TARGET_NIGHTLY_HOURS: 8,
+} as const;
+
+export const RECOVERY_THRESHOLDS = {
+  INTENSE: 80,
+  MODERATE: 60,
+  LIGHT: 40,
+} as const;
+
+export const BODY_FAT_THRESHOLDS = {
+  MALE: { OPTIMAL_MIN: 10, OPTIMAL_MAX: 18, ATHLETE: 6, HIGH: 25 },
+  FEMALE: { OPTIMAL_MIN: 18, OPTIMAL_MAX: 26, ATHLETE: 14, HIGH: 32 },
+} as const;
+
+export const WAIST_HEIGHT_RATIO_THRESHOLDS = {
+  HEALTHY: 0.5,
+  HIGH_RISK: 0.6,
+} as const;
+
+export const ACTIVITY_MULTIPLIERS = {
+  SEDENTARY: 1.2,
+  LIGHT: 1.375,
+  MODERATE: 1.55,
+  ACTIVE: 1.725,
+  VERY_ACTIVE: 1.9,
+} as const;

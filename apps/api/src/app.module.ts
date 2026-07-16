@@ -19,6 +19,7 @@ import { VitalsModule } from './modules/vitals/vitals.module';
 import { BiomarkersModule } from './modules/biomarkers/biomarkers.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
 import { DevicesModule } from './modules/devices/devices.module';
+import { BioScoreModule } from './modules/bioscore/bioscore.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -44,6 +45,7 @@ import { AppService } from './app.service';
     BiomarkersModule,
     ClinicalModule,
     DevicesModule,
+    BioScoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],

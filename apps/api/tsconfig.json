@@ -22,7 +22,8 @@
     "noFallthroughCasesInSwitch": false,
     "types": ["jest", "node", "multer"],
     "paths": {
-      "@bio/database": ["../../database/generated/client/index"]
+      "@bio/database": ["../../database/generated/client/index"],
+      "@bio/bioscore-engine": ["../../packages/bioscore-engine/src/index"]
     }
   }
 }

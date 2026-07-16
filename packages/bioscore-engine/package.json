@@ -1,0 +1,19 @@
+{
+  "name": "@bio/bioscore-engine",
+  "version": "0.1.0",
+  "description": "Scientific health scoring engine for Bio Mapping",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

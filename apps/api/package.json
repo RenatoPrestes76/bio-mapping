@@ -22,6 +22,7 @@
   "dependencies": {
     "multer": "^2.0.2",
     "@bio/database": "workspace:*",
+    "@bio/bioscore-engine": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -87,7 +88,9 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^@bio/database$": "<rootDir>/../../../database/generated/client/index.js"
+      "^@bio/database$": "<rootDir>/../../../database/generated/client/index.js",
+      "^@bio/bioscore-engine$": "<rootDir>/../../../packages/bioscore-engine/src/index.ts",
+      "^(\\.{1,2}/.+)\\.js$": "$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
