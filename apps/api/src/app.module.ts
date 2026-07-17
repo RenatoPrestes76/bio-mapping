@@ -25,6 +25,7 @@ import { OracleModule } from './modules/oracle/oracle.module';
 import { PulseModule } from './modules/pulse/pulse.module';
 import { AegisModule } from './modules/aegis/aegis.module';
 import { ApolloModule } from './modules/apollo/apollo.module.js';
+import { TitanModule } from './modules/titan/titan.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -56,6 +57,7 @@ import { AppService } from './app.service';
     PulseModule,
     AegisModule,
     ApolloModule,
+    TitanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

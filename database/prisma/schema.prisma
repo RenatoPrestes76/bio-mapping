@@ -60,6 +60,16 @@ enum Specialty {
   OTHER
 }
 
+enum OrganizationType {
+  CLINIC
+  GYM
+  COMPANY
+  HOSPITAL
+  INSURER
+  CORPORATE
+  OTHER
+}
+
 enum OrganizationPlan {
   FREE
   STARTER
@@ -76,9 +86,11 @@ enum OrganizationStatus {
 enum MembershipRole {
   OWNER
   ADMIN
+  MANAGER
   PROFESSIONAL
   ASSISTANT
   PATIENT
+  AUDITOR
 }
 
 enum InviteStatus {
@@ -339,6 +351,7 @@ model Patient {
 model Organization {
   id        String             @id @default(uuid())
   name      String
+  type      OrganizationType   @default(OTHER)
   document  String?            @unique
   logo      String?
   plan      OrganizationPlan   @default(FREE)
@@ -353,27 +366,76 @@ model Organization {
   assessmentTemplates AssessmentTemplate[]
   assessments         Assessment[]
   devices             Device[]
+  branches            Branch[]
+  settings            OrganizationSettings?
+  auditLogs           AuditLog[]
 
   @@index([status])
   @@index([deletedAt])
   @@map("organizations")
 }
 
+model Branch {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  name           String
+  address        String?
+  phone          String?
+  city           String?
+  state          String?
+  isActive       Boolean   @default(true) @map("is_active")
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships  Membership[]
+
+  @@index([organizationId])
+  @@index([deletedAt])
+  @@map("branches")
+}
+
+model OrganizationSettings {
+  id                  String   @id @default(uuid())
+  organizationId      String   @unique @map("organization_id")
+  maxUsers            Int?     @map("max_users")
+  maxBranches         Int?     @map("max_branches")
+  apiCallsMonthly     Int?     @map("api_calls_monthly")
+  ssoEnabled          Boolean  @default(false) @map("sso_enabled")
+  ssoProvider         String?  @map("sso_provider")
+  ssoConfig           Json?    @map("sso_config")
+  allowedDomains      String[] @map("allowed_domains")
+  webhookUrl          String?  @map("webhook_url")
+  notifyOnLogin       Boolean  @default(false) @map("notify_on_login")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
+}
+
 model Membership {
   id             String         @id @default(uuid())
   organizationId String         @map("organization_id")
   userId         String         @map("user_id")
+  branchId       String?        @map("branch_id")
   role           MembershipRole
+  validFrom      DateTime?      @map("valid_from")
+  validUntil     DateTime?      @map("valid_until")
   deletedAt      DateTime?      @map("deleted_at")
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch       Branch?      @relation(fields: [branchId], references: [id])
 
   @@unique([organizationId, userId])
   @@index([organizationId])
   @@index([userId])
+  @@index([branchId])
   @@index([deletedAt])
   @@map("memberships")
 }
@@ -420,17 +482,20 @@ model Session {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?  @map("user_id")
-  action    String
-  ip        String?
-  userAgent String?  @map("user_agent")
-  metadata  Json?
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  userId         String?  @map("user_id")
+  organizationId String?  @map("organization_id")
+  action         String
+  ip             String?
+  userAgent      String?  @map("user_agent")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([organizationId])
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
