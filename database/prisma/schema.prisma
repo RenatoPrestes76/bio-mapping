@@ -280,6 +280,8 @@ model Professional {
   patients     Patient[]     @relation("PrimaryProfessional")
   vitalRecords VitalRecord[] @relation("VitalsByProfessional")
   assessments  Assessment[]  @relation("AssessmentsByProfessional")
+  supervisedEnrollments ProgramEnrollment[]
+  clinicalNotes         ClinicalNote[]
 
   @@index([specialty])
   @@index([deletedAt])
@@ -323,6 +325,12 @@ model Patient {
   userGoals            UserGoal[]
   goalHistory          GoalHistory[]
   healthPredictions    HealthPrediction[]
+  enrollments          ProgramEnrollment[]
+  milestones           Milestone[]
+  patientTasks         Task[]
+  taskCompletions      TaskCompletion[]
+  apolloNotes          ClinicalNote[]
+  questionnaireAnswers Answer[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -1434,5 +1442,289 @@ model HealthPrediction {
   @@index([patientId, metric])
   @@index([patientId, generatedAt])
   @@map("health_predictions")
+}
+
+// ─── Sprint 11 — APOLLO (Care Programs & Clinical Workflow) ───────────────────
+
+enum ProgramCategory {
+  WEIGHT_LOSS
+  HYPERTENSION
+  DIABETES
+  RUNNING_5K
+  RUNNING_10K
+  MARATHON
+  REHABILITATION
+  PREGNANCY
+  CORPORATE_HEALTH
+  CUSTOM
+}
+
+enum ProgramStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  ACHIEVED
+  MISSED
+}
+
+enum TaskRecurrence {
+  ONCE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  SKIPPED
+  EXPIRED
+}
+
+model CareProgram {
+  id                  String          @id @default(uuid())
+  name                String
+  description         String?
+  category            ProgramCategory @default(CUSTOM)
+  durationDays        Int?            @map("duration_days")
+  objectives          String[]        @default([])
+  completionCriteria  String?         @map("completion_criteria")
+  status              ProgramStatus   @default(DRAFT)
+  organizationId      String?         @map("organization_id")
+  createdBy           String          @map("created_by")
+  isTemplate          Boolean         @default(false) @map("is_template")
+  metadata            Json?
+  deletedAt           DateTime?       @map("deleted_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  phases      ProgramPhase[]
+  enrollments ProgramEnrollment[]
+  taskTemplates Task[]             @relation("ProgramTaskTemplates")
+
+  @@index([category])
+  @@index([status])
+  @@index([organizationId])
+  @@map("care_programs")
+}
+
+model ProgramPhase {
+  id           String   @id @default(uuid())
+  programId    String   @map("program_id")
+  name         String
+  description  String?
+  order        Int      @default(0)
+  durationDays Int?     @map("duration_days")
+  objectives   String[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  program CareProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@index([programId])
+  @@map("program_phases")
+}
+
+model ProgramEnrollment {
+  id              String           @id @default(uuid())
+  programId       String           @map("program_id")
+  patientId       String           @map("patient_id")
+  professionalId  String?          @map("professional_id")
+  status          EnrollmentStatus @default(ACTIVE)
+  currentPhase    Int              @default(1) @map("current_phase")
+  progressPct     Float            @default(0) @map("progress_pct")
+  adherencePct    Float            @default(0) @map("adherence_pct")
+  startDate       DateTime         @map("start_date") @db.Date
+  expectedEndDate DateTime?        @map("expected_end_date") @db.Date
+  completedAt     DateTime?        @map("completed_at")
+  pausedAt        DateTime?        @map("paused_at")
+  cancelledAt     DateTime?        @map("cancelled_at")
+  notes           String?
+  metadata        Json?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  program      CareProgram   @relation(fields: [programId], references: [id])
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  milestones   Milestone[]
+  tasks        Task[]        @relation("EnrollmentTasks")
+  clinicalNotes ClinicalNote[]
+
+  @@index([patientId, status])
+  @@index([programId])
+  @@index([professionalId])
+  @@map("program_enrollments")
+}
+
+model Milestone {
+  id           String          @id @default(uuid())
+  enrollmentId String          @map("enrollment_id")
+  patientId    String          @map("patient_id")
+  title        String
+  description  String?
+  metric       String?
+  targetValue  Float?          @map("target_value")
+  currentValue Float?          @map("current_value")
+  unit         String?
+  status       MilestoneStatus @default(PENDING)
+  order        Int             @default(0)
+  dueDate      DateTime?       @map("due_date") @db.Date
+  achievedAt   DateTime?       @map("achieved_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  enrollment ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  patient    Patient           @relation(fields: [patientId], references: [id])
+
+  @@index([enrollmentId])
+  @@index([patientId, status])
+  @@map("milestones")
+}
+
+model Task {
+  id            String         @id @default(uuid())
+  programId     String?        @map("program_id")
+  enrollmentId  String?        @map("enrollment_id")
+  patientId     String         @map("patient_id")
+  title         String
+  description   String?
+  category      String         @default("OTHER")
+  recurrence    TaskRecurrence @default(ONCE)
+  priority      TaskPriority   @default(MEDIUM)
+  status        TaskStatus     @default(PENDING)
+  isTemplate    Boolean        @default(false) @map("is_template")
+  dueDate       DateTime?      @map("due_date") @db.Date
+  notes         String?
+  metadata      Json?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  program     CareProgram?       @relation("ProgramTaskTemplates", fields: [programId], references: [id])
+  enrollment  ProgramEnrollment? @relation("EnrollmentTasks", fields: [enrollmentId], references: [id])
+  patient     Patient            @relation(fields: [patientId], references: [id])
+  completions TaskCompletion[]
+
+  @@index([patientId, status, dueDate])
+  @@index([enrollmentId, status])
+  @@map("tasks")
+}
+
+model TaskCompletion {
+  id          String   @id @default(uuid())
+  taskId      String   @map("task_id")
+  patientId   String   @map("patient_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+  value       Float?
+  notes       String?
+
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([taskId])
+  @@index([patientId, completedAt])
+  @@map("task_completions")
+}
+
+model ClinicalNote {
+  id             String    @id @default(uuid())
+  enrollmentId   String    @map("enrollment_id")
+  patientId      String    @map("patient_id")
+  professionalId String    @map("professional_id")
+  title          String
+  content        String
+  noteType       String    @default("EVOLUTION") @map("note_type")
+  attachments    Json?
+  isPrivate      Boolean   @default(false) @map("is_private")
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  enrollment   ProgramEnrollment @relation(fields: [enrollmentId], references: [id])
+  patient      Patient           @relation(fields: [patientId], references: [id])
+  professional Professional      @relation(fields: [professionalId], references: [id])
+
+  @@index([enrollmentId])
+  @@index([patientId])
+  @@index([professionalId])
+  @@map("clinical_notes")
+}
+
+model Questionnaire {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  category    String   @default("CUSTOM")
+  version     Int      @default(1)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  questions Question[]
+  answers   Answer[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("questionnaires")
+}
+
+model Question {
+  id              String   @id @default(uuid())
+  questionnaireId String   @map("questionnaire_id")
+  text            String
+  questionType    String   @default("TEXT") @map("question_type")
+  required        Boolean  @default(true)
+  order           Int      @default(0)
+  options         Json?
+  minValue        Float?   @map("min_value")
+  maxValue        Float?   @map("max_value")
+  unit            String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  questionnaire Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+  answers       Answer[]
+
+  @@index([questionnaireId])
+  @@map("questions")
+}
+
+model Answer {
+  id              String   @id @default(uuid())
+  questionnaireId String   @map("questionnaire_id")
+  questionId      String   @map("question_id")
+  patientId       String   @map("patient_id")
+  enrollmentId    String?  @map("enrollment_id")
+  value           String
+  numericValue    Float?   @map("numeric_value")
+  answeredAt      DateTime @default(now()) @map("answered_at")
+
+  questionnaire Questionnaire @relation(fields: [questionnaireId], references: [id])
+  question      Question      @relation(fields: [questionId], references: [id])
+  patient       Patient       @relation(fields: [patientId], references: [id])
+
+  @@index([questionnaireId, patientId])
+  @@index([questionId])
+  @@map("answers")
 }
 

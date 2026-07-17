@@ -24,6 +24,7 @@ import { BioScoreModule } from './modules/bioscore/bioscore.module';
 import { OracleModule } from './modules/oracle/oracle.module';
 import { PulseModule } from './modules/pulse/pulse.module';
 import { AegisModule } from './modules/aegis/aegis.module';
+import { ApolloModule } from './modules/apollo/apollo.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -54,6 +55,7 @@ import { AppService } from './app.service';
     OracleModule,
     PulseModule,
     AegisModule,
+    ApolloModule,
   ],
   controllers: [AppController],
   providers: [AppService],
