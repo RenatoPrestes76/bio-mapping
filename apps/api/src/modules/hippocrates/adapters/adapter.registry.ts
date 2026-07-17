@@ -14,7 +14,7 @@ export class AdapterRegistry {
     private readonly hl7V2: Hl7V2Adapter,
     private readonly jsonGeneric: JsonGenericAdapter,
   ) {
-    this.adapters = new Map([
+    this.adapters = new Map<InteropAdapter, BaseInteropAdapter>([
       [InteropAdapter.FHIR_R4, fhirR4],
       [InteropAdapter.HL7_V2, hl7V2],
       [InteropAdapter.JSON_GENERIC, jsonGeneric],

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HealthPlatform, OracleMetricType } from '@bio/database';
+import { HealthPlatform, OracleMetricType, Prisma } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 
 @Injectable()
@@ -14,7 +14,9 @@ export class RawHealthDataRepository {
     rawPayload: Record<string, unknown>;
     recordedAt: Date;
   }>) {
-    return this.prisma.rawHealthData.createMany({ data: records });
+    return this.prisma.rawHealthData.createMany({
+      data: records.map((r) => ({ ...r, rawPayload: r.rawPayload as Prisma.InputJsonValue })),
+    });
   }
 
   async findUnprocessed(sourceId: string, limit = 500) {

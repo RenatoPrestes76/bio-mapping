@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 
 @Injectable()
@@ -20,10 +21,12 @@ export class OrgSettingsRepository {
     webhookUrl?: string;
     notifyOnLogin?: boolean;
   }) {
+    const { ssoConfig, ...rest } = data;
+    const jsonConfig = ssoConfig as Prisma.InputJsonValue | undefined;
     return this.prisma.organizationSettings.upsert({
       where: { organizationId },
-      create: { organizationId, ...data },
-      update: data,
+      create: { organizationId, ...rest, ssoConfig: jsonConfig },
+      update: { ...rest, ssoConfig: jsonConfig },
     });
   }
 }

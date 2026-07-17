@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { MembershipRole } from '@bio/database';
 import { JwtAuthGuard } from '../../identity/auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../../identity/auth/decorators/current-user.decorator.js';
 import { MembershipService } from '../../membership/membership.service.js';
@@ -29,7 +30,7 @@ export class MembersController {
   @Post('invite')
   async sendInvite(
     @CurrentUser() user: { sub: string },
-    @Body() body: { organizationId: string; email: string; role: string },
+    @Body() body: { organizationId: string; email: string; role: MembershipRole },
   ) {
     await this.planLimits.assertCanAddUser(body.organizationId);
     return this.invitesService.send(body.organizationId, user.sub, { email: body.email, role: body.role });
@@ -39,7 +40,7 @@ export class MembersController {
   updateMember(
     @Param('userId') targetUserId: string,
     @CurrentUser() user: { sub: string },
-    @Body() body: { organizationId: string; role: string },
+    @Body() body: { organizationId: string; role: MembershipRole },
   ) {
     return this.membershipService.updateRole(body.organizationId, targetUserId, user.sub, { role: body.role });
   }

@@ -38,7 +38,7 @@ export class TaskRepository {
       ];
     }
     return this.prisma.task.findMany({
-      where: where as Parameters<typeof this.prisma.task.findMany>[0]['where'],
+      where: where as NonNullable<Parameters<typeof this.prisma.task.findMany>[0]>['where'],
       include: { completions: { orderBy: { completedAt: 'desc' }, take: 1 } },
       orderBy: [{ priority: 'asc' }, { dueDate: 'asc' }],
     });

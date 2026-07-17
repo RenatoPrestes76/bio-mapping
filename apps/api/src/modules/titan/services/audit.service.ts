@@ -35,14 +35,14 @@ export class AuditService {
 
     const [events, total] = await Promise.all([
       this.prisma.auditLog.findMany({
-        where: where as Parameters<typeof this.prisma.auditLog.findMany>[0]['where'],
+        where: where as NonNullable<Parameters<typeof this.prisma.auditLog.findMany>[0]>['where'],
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.auditLog.count({
-        where: where as Parameters<typeof this.prisma.auditLog.count>[0]['where'],
+        where: where as NonNullable<Parameters<typeof this.prisma.auditLog.count>[0]>['where'],
       }),
     ]);
 

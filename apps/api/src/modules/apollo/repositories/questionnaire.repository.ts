@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 
 @Injectable()
@@ -25,7 +26,9 @@ export class QuestionnaireRepository {
     return this.prisma.questionnaire.create({
       data: {
         ...qData,
-        questions: { create: questions },
+        questions: {
+          create: questions.map((q) => ({ ...q, options: q.options as Prisma.InputJsonValue | undefined })),
+        },
       },
       include: { questions: { orderBy: { order: 'asc' } } },
     });

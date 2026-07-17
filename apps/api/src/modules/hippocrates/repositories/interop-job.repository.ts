@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InteropAdapter, InteropDirection, InteropJobStatus } from '@bio/database';
+import { InteropAdapter, InteropDirection, InteropJobStatus, Prisma } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 
 @Injectable()
@@ -44,7 +44,9 @@ export class InteropJobRepository {
   }
 
   async addLog(jobId: string, level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>) {
-    return this.prisma.interopLog.create({ data: { jobId, level, message, metadata: meta } });
+    return this.prisma.interopLog.create({
+      data: { jobId, level, message, metadata: meta as Prisma.InputJsonValue | undefined },
+    });
   }
 
   async findById(id: string) {

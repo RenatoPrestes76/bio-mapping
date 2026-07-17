@@ -7,6 +7,7 @@ import {
   checkProlongedSedentarism,
   checkRapidWeightGain,
   checkSleepDeficit,
+  type AlertTrigger,
 } from '@bio/bioscore-engine';
 import { AlertsRepository } from '../repositories/alerts.repository.js';
 import { PrismaService } from '../../../database/prisma.service.js';
@@ -47,7 +48,7 @@ export class AlertsService {
       }),
     ]);
 
-    const triggers = [];
+    const triggers: AlertTrigger[] = [];
 
     // Elevated HR
     const hrValues = vitals
