@@ -313,8 +313,11 @@ model Patient {
   sportMetrics        SportMetrics[]
   trendAnalyses       TrendAnalysis[]
   alerts              Alert[]
-  healthSources       HealthSource[]
+  healthSources        HealthSource[]
   normalizedHealthData NormalizedHealthData[]
+  dailyMetrics         DailyMetrics[]
+  dailyHealthScores    DailyHealthScore[]
+  trainingLoads        TrainingLoad[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -826,6 +829,12 @@ enum AlertType {
   OVERTRAINING
   BLOOD_PRESSURE_CONCERN
   GLUCOSE_CONCERN
+  // Sprint PULSE
+  ACTIVITY_DROP
+  PERSISTENT_SLEEP_DECLINE
+  HR_ELEVATION_TREND
+  TRAINING_OVERLOAD
+  SYNC_ABSENCE
 }
 
 enum AlertSeverity {
@@ -1184,5 +1193,79 @@ model SyncLog {
 
   @@index([jobId, level])
   @@map("sync_logs")
+}
+
+// ─── Sprint PULSE — Real-Time Health Intelligence ─────────────────────────────
+
+model DailyMetrics {
+  id                     String   @id @default(uuid())
+  patientId              String   @map("patient_id")
+  date                   DateTime @db.Date
+  steps                  Int?
+  calories               Int?
+  sleepMinutes           Int?     @map("sleep_minutes")
+  avgHeartRate           Float?   @map("avg_heart_rate")
+  minHeartRate           Float?   @map("min_heart_rate")
+  maxHeartRate           Float?   @map("max_heart_rate")
+  restingHr              Float?   @map("resting_hr")
+  hrv                    Float?
+  spo2                   Float?
+  weight                 Float?
+  bodyFat                Float?   @map("body_fat")
+  temperature            Float?
+  bloodPressureSystolic  Float?   @map("blood_pressure_systolic")
+  bloodPressureDiastolic Float?   @map("blood_pressure_diastolic")
+  syncCount              Int      @default(0) @map("sync_count")
+  computedAt             DateTime @default(now()) @map("computed_at")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, date])
+  @@index([patientId, date])
+  @@map("daily_metrics")
+}
+
+model DailyHealthScore {
+  id             String   @id @default(uuid())
+  patientId      String   @map("patient_id")
+  date           DateTime @db.Date
+  overall        Float
+  sleepScore     Float?   @map("sleep_score")
+  stepsScore     Float?   @map("steps_score")
+  exerciseScore  Float?   @map("exercise_score")
+  hrScore        Float?   @map("hr_score")
+  recoveryScore  Float?   @map("recovery_score")
+  hydrationScore Float?   @map("hydration_score")
+  metadata       Json?
+  computedAt     DateTime @default(now()) @map("computed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, date])
+  @@index([patientId, date])
+  @@map("daily_health_scores")
+}
+
+model TrainingLoad {
+  id          String   @id @default(uuid())
+  patientId   String   @map("patient_id")
+  date        DateTime @db.Date
+  dailyLoad   Float    @map("daily_load")
+  weeklyLoad  Float    @map("weekly_load")
+  monthlyLoad Float    @map("monthly_load")
+  atl         Float
+  ctl         Float
+  tsb         Float
+  computedAt  DateTime @default(now()) @map("computed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, date])
+  @@index([patientId, date])
+  @@map("training_load")
 }
 

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from './common/config/config.module';
 import { LoggerModule } from './common/logger/logger.module';
@@ -21,6 +22,7 @@ import { ClinicalModule } from './modules/clinical/clinical.module';
 import { DevicesModule } from './modules/devices/devices.module';
 import { BioScoreModule } from './modules/bioscore/bioscore.module';
 import { OracleModule } from './modules/oracle/oracle.module';
+import { PulseModule } from './modules/pulse/pulse.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -32,6 +34,7 @@ import { AppService } from './app.service';
     DatabaseModule,
     StorageModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ScheduleModule.forRoot(),
     HealthModule,
     AuthModule,
     UsersModule,
@@ -48,6 +51,7 @@ import { AppService } from './app.service';
     DevicesModule,
     BioScoreModule,
     OracleModule,
+    PulseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
