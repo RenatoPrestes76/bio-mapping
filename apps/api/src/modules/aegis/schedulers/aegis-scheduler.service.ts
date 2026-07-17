@@ -1,0 +1,120 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { PrismaService } from '../../../database/prisma.service.js';
+import { InsightEngineService } from '../services/insight-engine.service.js';
+import { RecommendationService } from '../services/recommendation.service.js';
+import { GoalsService } from '../services/goals.service.js';
+import { PredictionsService } from '../services/predictions.service.js';
+
+@Injectable()
+export class AegisSchedulerService {
+  private readonly logger = new Logger(AegisSchedulerService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly insightEngine: InsightEngineService,
+    private readonly recommendations: RecommendationService,
+    private readonly goals: GoalsService,
+    private readonly predictions: PredictionsService,
+  ) {}
+
+  @Cron('0 4 * * *')
+  async generateDailyInsights() {
+    const patients = await this.getActivePatientsWithData();
+    this.logger.log(`Generating insights for ${patients.length} patients`);
+    for (const patientId of patients) {
+      try {
+        await this.insightEngine.generateInsights(patientId);
+      } catch (e) {
+        this.logger.error(`Insight generation failed for ${patientId}`, e);
+      }
+    }
+  }
+
+  @Cron('30 4 * * *')
+  async generateDailyRecommendations() {
+    const patients = await this.getActivePatientsWithData();
+    this.logger.log(`Generating recommendations for ${patients.length} patients`);
+    for (const patientId of patients) {
+      try {
+        const insights = await this.prisma.healthInsight.findMany({
+          where: { patientId, generatedAt: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+        });
+        if (insights.length > 0) {
+          const candidates = insights.map((i) => ({
+            category: i.category,
+            priority: i.priority,
+            insightType: i.insightType,
+            title: i.title,
+            message: i.message,
+            metrics: i.metrics as string[],
+            algorithm: i.algorithm,
+            dataWindow: i.dataWindow,
+          }));
+          const idMap = new Map(insights.map((i) => [i.insightType, i.id]));
+          await this.recommendations.generateFromInsights(patientId, candidates, idMap);
+        }
+      } catch (e) {
+        this.logger.error(`Recommendation generation failed for ${patientId}`, e);
+      }
+    }
+  }
+
+  @Cron('0 5 * * *')
+  async adjustDailyGoals() {
+    const patients = await this.getActivePatientsWithData();
+    this.logger.log(`Auto-adjusting goals for ${patients.length} patients`);
+    for (const patientId of patients) {
+      try {
+        await this.goals.autoAdjustGoals(patientId);
+      } catch (e) {
+        this.logger.error(`Goal adjustment failed for ${patientId}`, e);
+      }
+    }
+  }
+
+  @Cron('30 5 * * *')
+  async computeDailyPredictions() {
+    const patients = await this.getActivePatientsWithData();
+    this.logger.log(`Computing predictions for ${patients.length} patients`);
+    for (const patientId of patients) {
+      try {
+        await this.predictions.computePredictions(patientId);
+      } catch (e) {
+        this.logger.error(`Prediction computation failed for ${patientId}`, e);
+      }
+    }
+  }
+
+  async runAllForPatient(patientId: string) {
+    const insights = await this.insightEngine.generateInsights(patientId);
+    const recentInsights = await this.prisma.healthInsight.findMany({
+      where: { patientId, generatedAt: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+    });
+    if (recentInsights.length > 0) {
+      const candidates = recentInsights.map((i) => ({
+        category: i.category,
+        priority: i.priority,
+        insightType: i.insightType,
+        title: i.title,
+        message: i.message,
+        metrics: i.metrics as string[],
+        algorithm: i.algorithm,
+        dataWindow: i.dataWindow,
+      }));
+      const idMap = new Map(recentInsights.map((i) => [i.insightType, i.id]));
+      await this.recommendations.generateFromInsights(patientId, candidates, idMap);
+    }
+    await this.goals.autoAdjustGoals(patientId);
+    await this.predictions.computePredictions(patientId);
+    return { insights };
+  }
+
+  private async getActivePatientsWithData(): Promise<string[]> {
+    const rows = await this.prisma.dailyMetrics.groupBy({
+      by: ['patientId'],
+      where: { date: { gte: new Date(Date.now() - 30 * 24 * 3600 * 1000) } },
+    });
+    return rows.map((r) => r.patientId);
+  }
+}

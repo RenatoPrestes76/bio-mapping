@@ -23,6 +23,7 @@ import { DevicesModule } from './modules/devices/devices.module';
 import { BioScoreModule } from './modules/bioscore/bioscore.module';
 import { OracleModule } from './modules/oracle/oracle.module';
 import { PulseModule } from './modules/pulse/pulse.module';
+import { AegisModule } from './modules/aegis/aegis.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -52,6 +53,7 @@ import { AppService } from './app.service';
     BioScoreModule,
     OracleModule,
     PulseModule,
+    AegisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

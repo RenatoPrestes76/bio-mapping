@@ -318,6 +318,11 @@ model Patient {
   dailyMetrics         DailyMetrics[]
   dailyHealthScores    DailyHealthScore[]
   trainingLoads        TrainingLoad[]
+  healthInsights       HealthInsight[]
+  recommendations      Recommendation[]
+  userGoals            UserGoal[]
+  goalHistory          GoalHistory[]
+  healthPredictions    HealthPrediction[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -1267,5 +1272,167 @@ model TrainingLoad {
   @@unique([patientId, date])
   @@index([patientId, date])
   @@map("training_load")
+}
+
+// ─── Sprint 9 — AEGIS (Predictive Intelligence) ───────────────────────────────
+
+enum InsightPriority {
+  INFORMATIVO
+  ATENCAO
+  IMPORTANTE
+  ALTA_PRIORIDADE
+}
+
+enum InsightCategory {
+  SLEEP
+  HEART_RATE
+  HRV
+  TRAINING_LOAD
+  ACTIVITY
+  WEIGHT
+  BODY_COMPOSITION
+  RECOVERY
+  CARDIOVASCULAR
+}
+
+enum RecommendationStatus {
+  PENDING
+  ACCEPTED
+  IGNORED
+  COMPLETED
+}
+
+enum GoalType {
+  DAILY_STEPS
+  WEEKLY_TRAINING_SESSIONS
+  SLEEP_DURATION
+  WEIGHT
+  BODY_FAT
+  RESTING_HR
+  HRV
+  WEEKLY_CALORIES
+}
+
+enum GoalStatus {
+  ACTIVE
+  ACHIEVED
+  PAUSED
+  CANCELLED
+}
+
+model HealthInsight {
+  id           String          @id @default(uuid())
+  patientId    String          @map("patient_id")
+  category     InsightCategory
+  priority     InsightPriority
+  insightType  String          @map("insight_type")
+  title        String
+  message      String
+  metrics      Json
+  algorithm    String
+  modelVersion String          @default("1.0.0") @map("model_version")
+  dataWindow   Int             @map("data_window")
+  isRead       Boolean         @default(false) @map("is_read")
+  expiresAt    DateTime?       @map("expires_at")
+  generatedAt  DateTime        @default(now()) @map("generated_at")
+
+  patient         Patient          @relation(fields: [patientId], references: [id])
+  recommendations Recommendation[]
+
+  @@index([patientId, generatedAt])
+  @@index([patientId, isRead])
+  @@index([patientId, category])
+  @@index([patientId, insightType])
+  @@map("health_insights")
+}
+
+model Recommendation {
+  id          String               @id @default(uuid())
+  patientId   String               @map("patient_id")
+  insightId   String?              @map("insight_id")
+  priority    InsightPriority
+  title       String
+  description String
+  rationale   String
+  metrics     Json
+  action      String
+  status      RecommendationStatus @default(PENDING)
+  acceptedAt  DateTime?            @map("accepted_at")
+  ignoredAt   DateTime?            @map("ignored_at")
+  completedAt DateTime?            @map("completed_at")
+  generatedAt DateTime             @default(now()) @map("generated_at")
+
+  patient Patient        @relation(fields: [patientId], references: [id])
+  insight HealthInsight? @relation(fields: [insightId], references: [id])
+
+  @@index([patientId, status])
+  @@index([patientId, generatedAt])
+  @@map("recommendations")
+}
+
+model UserGoal {
+  id           String     @id @default(uuid())
+  patientId    String     @map("patient_id")
+  type         GoalType
+  target       Float
+  unit         String
+  currentValue Float?     @map("current_value")
+  startValue   Float?     @map("start_value")
+  progressPct  Float?     @map("progress_pct")
+  status       GoalStatus @default(ACTIVE)
+  startDate    DateTime   @map("start_date") @db.Date
+  targetDate   DateTime?  @map("target_date") @db.Date
+  autoAdjust   Boolean    @default(true) @map("auto_adjust")
+  adjustedAt   DateTime?  @map("adjusted_at")
+  achievedAt   DateTime?  @map("achieved_at")
+  notes        String?
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  patient Patient       @relation(fields: [patientId], references: [id])
+  history GoalHistory[]
+
+  @@index([patientId, status])
+  @@index([patientId, type])
+  @@map("user_goals")
+}
+
+model GoalHistory {
+  id             String   @id @default(uuid())
+  goalId         String   @map("goal_id")
+  patientId      String   @map("patient_id")
+  previousTarget Float?   @map("previous_target")
+  newTarget      Float    @map("new_target")
+  reason         String
+  adjustedAt     DateTime @default(now()) @map("adjusted_at")
+
+  goal    UserGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  patient Patient  @relation(fields: [patientId], references: [id])
+
+  @@index([goalId])
+  @@index([patientId])
+  @@map("goal_history")
+}
+
+model HealthPrediction {
+  id             String   @id @default(uuid())
+  patientId      String   @map("patient_id")
+  metric         String
+  horizon        String
+  currentValue   Float?   @map("current_value")
+  predictedValue Float    @map("predicted_value")
+  confidence     Float
+  trend          String
+  riskLevel      String   @map("risk_level")
+  explanation    String
+  algorithm      String
+  generatedAt    DateTime @default(now()) @map("generated_at")
+  expiresAt      DateTime @map("expires_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, metric])
+  @@index([patientId, generatedAt])
+  @@map("health_predictions")
 }
 
