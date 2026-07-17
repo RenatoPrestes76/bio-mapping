@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InsightCategory, InsightPriority } from '@bio/database';
+import { WellnessInsightCategory, InsightPriority } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { HealthInsightRepository } from '../repositories/health-insight.repository.js';
 import { avg, linearSlope, daysAgo } from '../utils/math.utils.js';
 
 export interface InsightCandidate {
-  category: InsightCategory;
+  category: WellnessInsightCategory;
   priority: InsightPriority;
   insightType: string;
   title: string;
@@ -91,7 +91,7 @@ export class InsightEngineService {
 
       if (changePct <= -0.20) {
         results.push({
-          category: InsightCategory.SLEEP,
+          category: WellnessInsightCategory.SLEEP,
           priority: InsightPriority.IMPORTANTE,
           insightType: 'SLEEP_DECLINE_SIGNIFICANT',
           title: 'Queda significativa no sono',
@@ -102,7 +102,7 @@ export class InsightEngineService {
         });
       } else if (changePct <= -0.10) {
         results.push({
-          category: InsightCategory.SLEEP,
+          category: WellnessInsightCategory.SLEEP,
           priority: InsightPriority.ATENCAO,
           insightType: 'SLEEP_DECLINE_MILD',
           title: 'Leve redução no sono',
@@ -113,7 +113,7 @@ export class InsightEngineService {
         });
       } else if (changePct >= 0.10) {
         results.push({
-          category: InsightCategory.SLEEP,
+          category: WellnessInsightCategory.SLEEP,
           priority: InsightPriority.INFORMATIVO,
           insightType: 'SLEEP_IMPROVING',
           title: 'Sono melhorando',
@@ -128,7 +128,7 @@ export class InsightEngineService {
     const recentAvg = avg(recent7);
     if (recentAvg < 360 && recentAvg > 0) {
       results.push({
-        category: InsightCategory.SLEEP,
+        category: WellnessInsightCategory.SLEEP,
         priority: InsightPriority.ATENCAO,
         insightType: 'SLEEP_INSUFFICIENT',
         title: 'Sono insuficiente',
@@ -156,7 +156,7 @@ export class InsightEngineService {
 
     if (totalChange <= -3 && slope < 0) {
       return [{
-        category: InsightCategory.HEART_RATE,
+        category: WellnessInsightCategory.HEART_RATE,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'HR_IMPROVING',
         title: 'Frequência cardíaca de repouso em queda',
@@ -169,7 +169,7 @@ export class InsightEngineService {
 
     if (totalChange >= 5 && slope > 0) {
       return [{
-        category: InsightCategory.HEART_RATE,
+        category: WellnessInsightCategory.HEART_RATE,
         priority: InsightPriority.IMPORTANTE,
         insightType: 'HR_ELEVATION',
         title: 'Aumento contínuo da frequência cardíaca',
@@ -199,7 +199,7 @@ export class InsightEngineService {
 
     if (changePct >= 0.05) {
       return [{
-        category: InsightCategory.HRV,
+        category: WellnessInsightCategory.HRV,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'HRV_IMPROVING',
         title: 'HRV em melhora',
@@ -212,7 +212,7 @@ export class InsightEngineService {
 
     if (changePct <= -0.10) {
       return [{
-        category: InsightCategory.HRV,
+        category: WellnessInsightCategory.HRV,
         priority: InsightPriority.ATENCAO,
         insightType: 'HRV_DECLINING',
         title: 'HRV em declínio',
@@ -244,7 +244,7 @@ export class InsightEngineService {
 
     if (changePct <= -0.50) {
       return [{
-        category: InsightCategory.ACTIVITY,
+        category: WellnessInsightCategory.ACTIVITY,
         priority: InsightPriority.ALTA_PRIORIDADE,
         insightType: 'ACTIVITY_DROP_CRITICAL',
         title: 'Queda crítica de atividade física',
@@ -257,7 +257,7 @@ export class InsightEngineService {
 
     if (changePct <= -0.20) {
       return [{
-        category: InsightCategory.ACTIVITY,
+        category: WellnessInsightCategory.ACTIVITY,
         priority: InsightPriority.ATENCAO,
         insightType: 'ACTIVITY_DROP',
         title: 'Queda de atividade física',
@@ -270,7 +270,7 @@ export class InsightEngineService {
 
     if (changePct >= 0.20) {
       return [{
-        category: InsightCategory.ACTIVITY,
+        category: WellnessInsightCategory.ACTIVITY,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'ACTIVITY_IMPROVING',
         title: 'Atividade física em alta',
@@ -291,7 +291,7 @@ export class InsightEngineService {
 
     if (tsb < -30) {
       return [{
-        category: InsightCategory.TRAINING_LOAD,
+        category: WellnessInsightCategory.TRAINING_LOAD,
         priority: InsightPriority.ALTA_PRIORIDADE,
         insightType: 'TRAINING_OVERLOAD_CRITICAL',
         title: 'Risco elevado de overtraining',
@@ -304,7 +304,7 @@ export class InsightEngineService {
 
     if (tsb < -20) {
       return [{
-        category: InsightCategory.TRAINING_LOAD,
+        category: WellnessInsightCategory.TRAINING_LOAD,
         priority: InsightPriority.IMPORTANTE,
         insightType: 'TRAINING_OVERLOAD_HIGH',
         title: 'Carga de treino elevada',
@@ -317,7 +317,7 @@ export class InsightEngineService {
 
     if (tsb >= 10 && tsb <= 25 && (ctl ?? 0) > 15) {
       return [{
-        category: InsightCategory.TRAINING_LOAD,
+        category: WellnessInsightCategory.TRAINING_LOAD,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'TRAINING_OPTIMAL',
         title: 'Boa forma de treino',
@@ -347,7 +347,7 @@ export class InsightEngineService {
 
     if (Math.abs(change) < 0.5) {
       return [{
-        category: InsightCategory.WEIGHT,
+        category: WellnessInsightCategory.WEIGHT,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'WEIGHT_STABLE',
         title: 'Peso estável',
@@ -360,7 +360,7 @@ export class InsightEngineService {
 
     if (change < -0.5) {
       return [{
-        category: InsightCategory.WEIGHT,
+        category: WellnessInsightCategory.WEIGHT,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'WEIGHT_REDUCING',
         title: 'Peso em redução',
@@ -393,7 +393,7 @@ export class InsightEngineService {
 
     if (hrChange < -2 && hrvImprovingPct >= 0.03) {
       return [{
-        category: InsightCategory.CARDIOVASCULAR,
+        category: WellnessInsightCategory.CARDIOVASCULAR,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'CARDIOVASCULAR_PROGRESS',
         title: 'Capacidade cardiovascular em evolução',
@@ -423,7 +423,7 @@ export class InsightEngineService {
 
     if (changePct >= 0.08) {
       return [{
-        category: InsightCategory.RECOVERY,
+        category: WellnessInsightCategory.RECOVERY,
         priority: InsightPriority.INFORMATIVO,
         insightType: 'RECOVERY_IMPROVING',
         title: 'Recuperação melhorando',
@@ -436,7 +436,7 @@ export class InsightEngineService {
 
     if (changePct <= -0.10) {
       return [{
-        category: InsightCategory.RECOVERY,
+        category: WellnessInsightCategory.RECOVERY,
         priority: InsightPriority.ATENCAO,
         insightType: 'RECOVERY_DECLINING',
         title: 'Recuperação em queda',

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InsightCategory, InsightPriority } from '@bio/database';
+import { WellnessInsightCategory, InsightPriority } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 
 @Injectable()
@@ -7,7 +7,7 @@ export class HealthInsightRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(patientId: string, data: {
-    category: InsightCategory;
+    category: WellnessInsightCategory;
     priority: InsightPriority;
     insightType: string;
     title: string;

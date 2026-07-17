@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-biomapping_dev}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -65,10 +65,10 @@ services:
         limits:
           cpus: "1.0"
           memory: 512M
+          pids: 200
         reservations:
           cpus: "0.25"
           memory: 128M
-    pids_limit: 200
 
     depends_on:
       db:

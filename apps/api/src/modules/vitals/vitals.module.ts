@@ -7,6 +7,6 @@ import { VitalsRepository } from './repositories/vitals.repository';
 @Module({
   controllers: [VitalsController],
   providers: [VitalsService, VitalCalculationsService, VitalsRepository],
-  exports: [VitalCalculationsService],
+  exports: [VitalCalculationsService, VitalsRepository],
 })
 export class VitalsModule {}

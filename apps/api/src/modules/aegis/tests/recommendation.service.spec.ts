@@ -1,5 +1,5 @@
 import { RecommendationService } from '../services/recommendation.service';
-import { InsightCategory, InsightPriority, RecommendationStatus } from '@bio/database';
+import { WellnessInsightCategory, InsightPriority, RecommendationStatus } from '@bio/database';
 import { InsightCandidate } from '../services/insight-engine.service';
 
 function makeRepo() {
@@ -14,7 +14,7 @@ function makeRepo() {
 
 function makeInsight(insightType: string, priority = InsightPriority.IMPORTANTE): InsightCandidate {
   return {
-    category: InsightCategory.SLEEP,
+    category: WellnessInsightCategory.SLEEP,
     priority,
     insightType,
     title: 'Test insight',

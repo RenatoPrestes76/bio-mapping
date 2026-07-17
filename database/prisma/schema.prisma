@@ -1363,7 +1363,7 @@ enum InsightPriority {
   ALTA_PRIORIDADE
 }
 
-enum InsightCategory {
+enum WellnessInsightCategory {
   SLEEP
   HEART_RATE
   HRV
@@ -1373,6 +1373,18 @@ enum InsightCategory {
   BODY_COMPOSITION
   RECOVERY
   CARDIOVASCULAR
+}
+
+// Reservado para a Sprint 14.3+ (Clinical Risk Engine / Recommendation Engine).
+// Nenhum model usa este enum ainda — existe só o tipo, conforme Sprint 14.1 (Decisão 1).
+enum ClinicalInsightCategory {
+  METABOLIC
+  CARDIOVASCULAR
+  COGNITIVE
+  NUTRITION
+  MENTAL_HEALTH
+  PREVENTIVE_CARE
+  MEDICATION_ADHERENCE
 }
 
 enum RecommendationStatus {
@@ -1403,7 +1415,7 @@ enum GoalStatus {
 model HealthInsight {
   id           String          @id @default(uuid())
   patientId    String          @map("patient_id")
-  category     InsightCategory
+  category     WellnessInsightCategory
   priority     InsightPriority
   insightType  String          @map("insight_type")
   title        String

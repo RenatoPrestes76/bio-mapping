@@ -1,5 +1,5 @@
 import { InsightEngineService } from '../services/insight-engine.service';
-import { InsightCategory, InsightPriority } from '@bio/database';
+import { WellnessInsightCategory, InsightPriority } from '@bio/database';
 
 function makeMetrics(overrides: Array<Record<string, unknown>> = []) {
   return overrides.map((o) => ({
@@ -117,7 +117,7 @@ describe('InsightEngineService', () => {
       const metrics = makeMetrics([...prior7, ...recent7]);
       const results = service.analyzeHRV(metrics);
       expect(results.some((r) => r.insightType === 'HRV_IMPROVING')).toBe(true);
-      expect(results[0].category).toBe(InsightCategory.HRV);
+      expect(results[0].category).toBe(WellnessInsightCategory.HRV);
       expect(results[0].priority).toBe(InsightPriority.INFORMATIVO);
     });
 

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../../database/prisma.service.js';
+import { DecisionEngineService } from '../../gaia/decision-engine.service.js';
 import { InsightEngineService } from '../services/insight-engine.service.js';
 import { RecommendationService } from '../services/recommendation.service.js';
 import { GoalsService } from '../services/goals.service.js';
@@ -16,6 +17,7 @@ export class AegisSchedulerService {
     private readonly recommendations: RecommendationService,
     private readonly goals: GoalsService,
     private readonly predictions: PredictionsService,
+    private readonly decisionEngine: DecisionEngineService,
   ) {}
 
   @Cron('0 4 * * *')
@@ -86,28 +88,26 @@ export class AegisSchedulerService {
     }
   }
 
+  /**
+   * Sprint 14.1 (T7): insights/recomendações/previsões passam pelo pipeline
+   * genérico do Decision Engine (que por baixo delega 100% para
+   * InsightEngineService/RecommendationService/PredictionsService — mesmos
+   * efeitos colaterais de antes). autoAdjustGoals continua chamado
+   * diretamente: metas não fazem parte do contrato DecisionProvider nesta
+   * sprint.
+   */
   async runAllForPatient(patientId: string) {
-    const insights = await this.insightEngine.generateInsights(patientId);
-    const recentInsights = await this.prisma.healthInsight.findMany({
-      where: { patientId, generatedAt: { gte: new Date(Date.now() - 24 * 3600 * 1000) } },
+    const decisionResult = await this.decisionEngine.runPipeline(patientId, {
+      providers: ['aegis-wellness'],
     });
-    if (recentInsights.length > 0) {
-      const candidates = recentInsights.map((i) => ({
-        category: i.category,
-        priority: i.priority,
-        insightType: i.insightType,
-        title: i.title,
-        message: i.message,
-        metrics: i.metrics as string[],
-        algorithm: i.algorithm,
-        dataWindow: i.dataWindow,
-      }));
-      const idMap = new Map(recentInsights.map((i) => [i.insightType, i.id]));
-      await this.recommendations.generateFromInsights(patientId, candidates, idMap);
-    }
     await this.goals.autoAdjustGoals(patientId);
-    await this.predictions.computePredictions(patientId);
-    return { insights };
+
+    const wellnessRun = decisionResult.results.find((r) => r.provider === 'aegis-wellness');
+
+    return {
+      insights: wellnessRun?.insights.length ?? 0,
+      decisionResult,
+    };
   }
 
   private async getActivePatientsWithData(): Promise<string[]> {

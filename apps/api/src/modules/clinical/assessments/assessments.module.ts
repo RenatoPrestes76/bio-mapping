@@ -10,6 +10,6 @@ import { ScoringModule } from '../scoring/scoring.module';
   imports: [DatabaseModule, AuditLogModule, ScoringModule],
   providers: [AssessmentsService, AssessmentsRepository],
   controllers: [AssessmentsController],
-  exports: [AssessmentsService],
+  exports: [AssessmentsService, AssessmentsRepository],
 })
 export class AssessmentsModule {}
