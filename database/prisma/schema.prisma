@@ -343,6 +343,12 @@ model Patient {
   taskCompletions      TaskCompletion[]
   apolloNotes          ClinicalNote[]
   questionnaireAnswers Answer[]
+  clinicalRecords      ClinicalRecord[]
+  clinicalObservations ClinicalObservation[]
+  medications          Medication[]
+  allergies            Allergy[]
+  procedures           Procedure[]
+  consents             Consent[]
 
   @@index([deletedAt])
   @@map("patients")
@@ -369,6 +375,7 @@ model Organization {
   branches            Branch[]
   settings            OrganizationSettings?
   auditLogs           AuditLog[]
+  consents            Consent[]
 
   @@index([status])
   @@index([deletedAt])
@@ -1791,5 +1798,269 @@ model Answer {
   @@index([questionnaireId, patientId])
   @@index([questionId])
   @@map("answers")
+}
+
+// ─── Sprint 13 — HIPPOCRATES (Healthcare Interoperability) ───────────────────
+
+enum ClinicalRecordType {
+  OBSERVATION
+  VITAL_SIGN
+  LABORATORY
+  MEDICATION_STATEMENT
+  ALLERGY
+  PROCEDURE
+  DIAGNOSIS
+  IMMUNIZATION
+  OTHER
+}
+
+enum ClinicalStatus {
+  ACTIVE
+  INACTIVE
+  RESOLVED
+  CANCELLED
+  UNKNOWN
+}
+
+enum ConsentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum InteropJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum InteropDirection {
+  IMPORT
+  EXPORT
+}
+
+enum InteropAdapter {
+  FHIR_R4
+  HL7_V2
+  CSV
+  JSON_GENERIC
+  CUSTOM
+}
+
+model ClinicalRecord {
+  id             String             @id @default(uuid())
+  patientId      String             @map("patient_id")
+  organizationId String?            @map("organization_id")
+  recordType     ClinicalRecordType
+  status         ClinicalStatus     @default(ACTIVE)
+  code           String?
+  codeSystem     String?            @map("code_system")
+  displayName    String?            @map("display_name")
+  sourceSystem   String?            @map("source_system")
+  sourceId       String?            @map("source_id")
+  effectiveDate  DateTime?          @map("effective_date")
+  payload        Json
+  version        Int                @default(1)
+  checksum       String?
+  importedVia    String?            @map("imported_via")
+  deletedAt      DateTime?          @map("deleted_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  patient      Patient               @relation(fields: [patientId], references: [id])
+  observations ClinicalObservation[]
+  externalIds  ExternalIdentifier[]
+
+  @@index([patientId])
+  @@index([recordType])
+  @@index([patientId, effectiveDate])
+  @@index([sourceSystem, sourceId])
+  @@map("clinical_records")
+}
+
+model ClinicalObservation {
+  id               String    @id @default(uuid())
+  clinicalRecordId String    @map("clinical_record_id")
+  patientId        String    @map("patient_id")
+  code             String?
+  codeSystem       String?   @map("code_system")
+  displayName      String?   @map("display_name")
+  value            String?
+  numericValue     Float?    @map("numeric_value")
+  unit             String?
+  referenceRange   String?   @map("reference_range")
+  interpretation   String?
+  effectiveDate    DateTime? @map("effective_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  record  ClinicalRecord @relation(fields: [clinicalRecordId], references: [id], onDelete: Cascade)
+  patient Patient        @relation(fields: [patientId], references: [id])
+
+  @@index([clinicalRecordId])
+  @@index([patientId])
+  @@map("clinical_observations")
+}
+
+model Medication {
+  id             String         @id @default(uuid())
+  patientId      String         @map("patient_id")
+  organizationId String?        @map("organization_id")
+  name           String
+  code           String?
+  codeSystem     String?        @map("code_system")
+  dosage         String?
+  frequency      String?
+  route          String?
+  status         ClinicalStatus @default(ACTIVE)
+  startDate      DateTime?      @map("start_date")
+  endDate        DateTime?      @map("end_date")
+  prescribedBy   String?        @map("prescribed_by")
+  sourceSystem   String?        @map("source_system")
+  sourceId       String?        @map("source_id")
+  notes          String?
+  deletedAt      DateTime?      @map("deleted_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@map("medications")
+}
+
+model Allergy {
+  id           String         @id @default(uuid())
+  patientId    String         @map("patient_id")
+  allergen     String
+  code         String?
+  codeSystem   String?        @map("code_system")
+  reaction     String?
+  severity     String?
+  status       ClinicalStatus @default(ACTIVE)
+  onsetDate    DateTime?      @map("onset_date")
+  verifiedDate DateTime?      @map("verified_date")
+  sourceSystem String?        @map("source_system")
+  sourceId     String?        @map("source_id")
+  notes        String?
+  deletedAt    DateTime?      @map("deleted_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@map("allergies")
+}
+
+model Procedure {
+  id             String         @id @default(uuid())
+  patientId      String         @map("patient_id")
+  organizationId String?        @map("organization_id")
+  name           String
+  code           String?
+  codeSystem     String?        @map("code_system")
+  status         ClinicalStatus @default(ACTIVE)
+  performedDate  DateTime?      @map("performed_date")
+  performedBy    String?        @map("performed_by")
+  location       String?
+  outcome        String?
+  notes          String?
+  sourceSystem   String?        @map("source_system")
+  sourceId       String?        @map("source_id")
+  deletedAt      DateTime?      @map("deleted_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@map("procedures")
+}
+
+model Consent {
+  id             String        @id @default(uuid())
+  patientId      String        @map("patient_id")
+  organizationId String        @map("organization_id")
+  grantedBy      String        @map("granted_by")
+  scopes         String[]
+  status         ConsentStatus @default(ACTIVE)
+  validFrom      DateTime      @default(now()) @map("valid_from")
+  validUntil     DateTime?     @map("valid_until")
+  revokedAt      DateTime?     @map("revoked_at")
+  revokedBy      String?       @map("revoked_by")
+  revokeReason   String?       @map("revoke_reason")
+  ipAddress      String?       @map("ip_address")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([patientId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("consents")
+}
+
+model InteropJob {
+  id               String           @id @default(uuid())
+  organizationId   String?          @map("organization_id")
+  patientId        String?          @map("patient_id")
+  direction        InteropDirection
+  adapter          InteropAdapter
+  status           InteropJobStatus @default(PENDING)
+  sourceSystem     String?          @map("source_system")
+  totalRecords     Int              @default(0) @map("total_records")
+  processedRecords Int              @default(0) @map("processed_records")
+  failedRecords    Int              @default(0) @map("failed_records")
+  conflictsFound   Int              @default(0) @map("conflicts_found")
+  startedAt        DateTime?        @map("started_at")
+  completedAt      DateTime?        @map("completed_at")
+  errorMessage     String?          @map("error_message")
+  metadata         Json?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  logs InteropLog[]
+
+  @@index([organizationId])
+  @@index([patientId])
+  @@index([status])
+  @@map("interop_jobs")
+}
+
+model InteropLog {
+  id        String   @id @default(uuid())
+  jobId     String   @map("job_id")
+  level     String
+  message   String
+  recordId  String?  @map("record_id")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  job InteropJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("interop_logs")
+}
+
+model ExternalIdentifier {
+  id               String   @id @default(uuid())
+  clinicalRecordId String   @map("clinical_record_id")
+  system           String
+  value            String
+  use              String?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  record ClinicalRecord @relation(fields: [clinicalRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([system, value])
+  @@index([clinicalRecordId])
+  @@map("external_identifiers")
 }
 
