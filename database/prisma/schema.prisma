@@ -2191,3 +2191,88 @@ model ClinicalDecision {
   @@map("clinical_decisions")
 }
 
+// ─── Sprint 14.8 — Clinical Pathways Engine ──────────────────────────────────
+
+enum PathwayStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum StepActionType {
+  ASSESSMENT
+  LABORATORY
+  MEDICATION
+  LIFESTYLE
+  NUTRITION
+  EXERCISE
+  FOLLOW_UP
+  REFERRAL
+  EDUCATION
+  MONITORING
+}
+
+enum StepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+model ClinicalPathway {
+  id                String        @id @default(uuid())
+  tenantId          String?       @map("tenant_id")
+  patientId         String        @map("patient_id")
+  name              String
+  description       String?
+  status            PathwayStatus @default(ACTIVE)
+  priority          String?
+  triggerDecisionId String?       @map("trigger_decision_id")
+  templateId        String        @map("template_id")
+  clinicalCode      String?       @map("clinical_code")
+  knowledgeId       String?       @map("knowledge_id")
+  currentStep       Int           @default(0) @map("current_step")
+  totalSteps        Int           @map("total_steps")
+  startedAt         DateTime      @default(now()) @map("started_at")
+  completedAt       DateTime?     @map("completed_at")
+  metadata          Json?
+  createdBy         String?       @map("created_by")
+  updatedBy         String?       @map("updated_by")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  steps ClinicalPathwayStep[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([tenantId])
+  @@index([templateId])
+  @@index([patientId, templateId, status])
+  @@map("clinical_pathways")
+}
+
+model ClinicalPathwayStep {
+  id          String         @id @default(uuid())
+  pathwayId   String         @map("pathway_id")
+  sequence    Int
+  title       String
+  description String?
+  actionType  StepActionType @map("action_type")
+  status      StepStatus     @default(PENDING)
+  dueDate     DateTime?      @map("due_date")
+  completedAt DateTime?      @map("completed_at")
+  knowledgeId String?        @map("knowledge_id")
+  decisionId  String?        @map("decision_id")
+  metadata    Json?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  pathway ClinicalPathway @relation(fields: [pathwayId], references: [id], onDelete: Cascade)
+
+  @@index([pathwayId])
+  @@index([status])
+  @@index([sequence])
+  @@map("clinical_pathway_steps")
+}
+

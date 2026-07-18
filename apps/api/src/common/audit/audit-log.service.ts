@@ -79,7 +79,11 @@ export type AuditAction =
   | 'KNOWLEDGE_UPDATED'
   | 'KNOWLEDGE_DELETED'
   | 'DECISION_CREATED'
-  | 'DECISION_STATUS_UPDATED';
+  | 'DECISION_STATUS_UPDATED'
+  | 'PATHWAY_STARTED'
+  | 'PATHWAY_STEP_ADVANCED'
+  | 'PATHWAY_COMPLETED'
+  | 'PATHWAY_CANCELLED';
 
 export interface AuditContext {
   userId?: string;
