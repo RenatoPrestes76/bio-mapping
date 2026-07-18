@@ -92,7 +92,7 @@ jobs:
 
       # Build local (sem push) — o scan roda na imagem local antes de publicar
       - name: Build da imagem (local)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/api/Dockerfile
@@ -154,7 +154,7 @@ jobs:
       - name: Push para GitHub Container Registry
         id: push
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/api/Dockerfile
