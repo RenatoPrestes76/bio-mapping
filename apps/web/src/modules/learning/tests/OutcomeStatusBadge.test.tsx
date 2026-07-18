@@ -42,7 +42,7 @@ describe('OutcomeStatusBadge', () => {
   });
 
   it('has data-outcome attribute', () => {
-    const { container } = render(<OutcomeStatusBadge outcome="HIGH" as any />);
+    const { container } = render(<OutcomeStatusBadge outcome={"HIGH" as any} />);
     // just ensure the component renders
     expect(container.querySelector('[data-testid="outcome-status-badge"]')).toBeTruthy();
   });

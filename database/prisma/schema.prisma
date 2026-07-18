@@ -2890,3 +2890,211 @@ model PerformanceSnapshot {
   @@index([tenantId, snapshotDate])
   @@map("performance_snapshots")
 }
+
+// ─── Sprint 14.17 — Precision Medicine & Personalized Care Engine ─────────────
+
+enum LifestyleType {
+  SEDENTARY
+  LIGHTLY_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  ATHLETE
+}
+
+enum AlcoholConsumption {
+  NONE
+  OCCASIONAL
+  MODERATE
+  HEAVY
+}
+
+enum BiologicalSex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PersonalizedRiskLevel {
+  VERY_LOW
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+}
+
+enum RecommendationCategory {
+  NUTRITION
+  EXERCISE
+  MEDICATION
+  MONITORING
+  LIFESTYLE
+  PREVENTIVE
+  SPECIALIST_REFERRAL
+}
+
+enum CarePlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  SUSPENDED
+}
+
+model PatientProfile {
+  id           String              @id @default(uuid())
+  tenantId     String?             @map("tenant_id")
+  patientId    String              @unique @map("patient_id")
+  age          Int?
+  sex          BiologicalSex?
+  weight       Float?
+  height       Float?
+  bmi          Float?
+  lifestyle    LifestyleType?      @default(SEDENTARY)
+  smoking      Boolean             @default(false)
+  alcohol      AlcoholConsumption  @default(NONE)
+  pregnant     Boolean             @default(false)
+  menopausal   Boolean             @default(false)
+  familyHistory Json?              @map("family_history")
+  conditions   Json?
+  medications  Json?
+  occupation   String?
+  version      String              @default("1.0")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  @@index([patientId])
+  @@index([tenantId])
+  @@map("patient_profiles")
+}
+
+model PersonalizedRisk {
+  id               String                @id @default(uuid())
+  tenantId         String?               @map("tenant_id")
+  patientId        String                @map("patient_id")
+  profileId        String                @map("profile_id")
+  baseRiskScore    Float                 @map("base_risk_score")
+  familyHistoryAdj Float                 @default(0) @map("family_history_adj")
+  lifestyleAdj     Float                 @default(0) @map("lifestyle_adj")
+  trendAdj         Float                 @default(0) @map("trend_adj")
+  finalRiskScore   Float                 @map("final_risk_score")
+  riskLevel        PersonalizedRiskLevel @map("risk_level")
+  factors          Json?
+  version          String                @default("1.0")
+  createdAt        DateTime              @default(now()) @map("created_at")
+
+  @@index([patientId, createdAt])
+  @@index([tenantId, riskLevel])
+  @@map("personalized_risks")
+}
+
+model PersonalizedRecommendation {
+  id              String                 @id @default(uuid())
+  tenantId        String?                @map("tenant_id")
+  patientId       String                 @map("patient_id")
+  profileId       String                 @map("profile_id")
+  category        RecommendationCategory
+  priority        String                 @default("MODERATE")
+  title           String
+  description     String
+  reason          String
+  expectedBenefit String?                @map("expected_benefit")
+  personalized    Boolean                @default(true)
+  rulesTriggered  Json?                  @map("rules_triggered")
+  version         String                 @default("1.0")
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  @@index([patientId, category])
+  @@index([tenantId, priority])
+  @@map("personalized_recommendations")
+}
+
+model CarePlan {
+  id                String         @id @default(uuid())
+  tenantId          String?        @map("tenant_id")
+  patientId         String         @map("patient_id")
+  profileId         String         @map("profile_id")
+  title             String
+  description       String?
+  status            CarePlanStatus @default(DRAFT)
+  startDate         DateTime       @map("start_date")
+  endDate           DateTime?      @map("end_date")
+  followUpDays      Int            @default(30) @map("follow_up_days")
+  successIndicators Json?          @map("success_indicators")
+  version           String         @default("1.0")
+  createdBy         String         @map("created_by")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  @@index([patientId, status])
+  @@index([tenantId, createdAt])
+  @@map("care_plans")
+}
+
+model CarePlanGoal {
+  id          String    @id @default(uuid())
+  carePlanId  String    @map("care_plan_id")
+  title       String
+  description String?
+  targetValue Float?    @map("target_value")
+  unit        String?
+  deadline    DateTime?
+  achieved    Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([carePlanId])
+  @@map("care_plan_goals")
+}
+
+model LongitudinalMetric {
+  id         String   @id @default(uuid())
+  tenantId   String?  @map("tenant_id")
+  patientId  String   @map("patient_id")
+  metricName String   @map("metric_name")
+  value      Float
+  unit       String?
+  recordedAt DateTime @map("recorded_at")
+  source     String?
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([patientId, metricName, recordedAt])
+  @@index([tenantId, metricName])
+  @@map("longitudinal_metrics")
+}
+
+model ReferenceRange {
+  id         String         @id @default(uuid())
+  tenantId   String?        @map("tenant_id")
+  biomarker  String
+  minAge     Int?           @map("min_age")
+  maxAge     Int?           @map("max_age")
+  sex        BiologicalSex?
+  pregnant   Boolean        @default(false)
+  lowerBound Float?         @map("lower_bound")
+  upperBound Float?         @map("upper_bound")
+  unit       String
+  source     String?
+
+  @@index([biomarker])
+  @@index([tenantId, biomarker])
+  @@map("reference_ranges")
+}
+
+model PersonalizationRule {
+  id            String   @id @default(uuid())
+  tenantId      String?  @map("tenant_id")
+  name          String
+  description   String?
+  conditions    Json
+  conjunction   String   @default("AND")
+  action        String
+  actionPayload Json?    @map("action_payload")
+  priority      Int      @default(0)
+  active        Boolean  @default(true)
+  version       String   @default("1.0")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([active, priority])
+  @@index([tenantId, active])
+  @@map("personalization_rules")
+}
