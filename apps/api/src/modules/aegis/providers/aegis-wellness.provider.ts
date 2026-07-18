@@ -9,65 +9,14 @@ import {
   PredictionOutput,
   RecommendationCandidate,
 } from '../../gaia/contracts/index.js';
+import { ExplainabilityBuilder, ExplainabilityEngine } from '../../gaia/explainability/index.js';
 import { InsightEngineService } from '../services/insight-engine.service.js';
 import { RecommendationService } from '../services/recommendation.service.js';
 import { PredictionsService } from '../services/predictions.service.js';
 
 const PROVIDER_NAME = 'aegis-wellness';
+const PROVIDER_VERSION = '1.0.0';
 const RECENT_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-function toInsightSignal(insight: HealthInsight): InsightSignal {
-  return {
-    insightId: insight.id,
-    provider: PROVIDER_NAME,
-    domain: 'WELLNESS',
-    category: insight.category,
-    priority: insight.priority,
-    title: insight.title,
-    message: insight.message,
-    evidence: [
-      { source: 'aegis.dailyMetrics', field: 'dataWindow', value: insight.dataWindow, recordedAt: insight.generatedAt },
-    ],
-    confidence: null,
-  };
-}
-
-function toRecommendationCandidate(recommendation: Recommendation): RecommendationCandidate {
-  const metrics = Array.isArray(recommendation.metrics) ? (recommendation.metrics as string[]) : [];
-  return {
-    recommendationId: recommendation.id,
-    provider: PROVIDER_NAME,
-    priority: recommendation.priority,
-    category: 'WELLNESS',
-    title: recommendation.title,
-    description: recommendation.description,
-    rationale: recommendation.rationale,
-    evidence: metrics.map((field) => ({ source: 'aegis', field, value: null })),
-    actions: [recommendation.action],
-    confidence: null,
-  };
-}
-
-function toPredictionOutput(prediction: HealthPrediction): PredictionOutput {
-  return {
-    predictionType: prediction.metric,
-    currentValue: prediction.currentValue ?? null,
-    predictedValue: prediction.predictedValue,
-    predictionDate: prediction.generatedAt,
-    confidence: prediction.confidence,
-    modelVersion: prediction.algorithm,
-    explainability: {
-      confidence: prediction.confidence,
-      reasoning: prediction.explanation,
-      evidence: [],
-      sourceProvider: PROVIDER_NAME,
-      generatedAt: prediction.generatedAt,
-      guidelineReferences: [],
-      limitations: [],
-      warnings: [],
-    },
-  };
-}
 
 /**
  * Generaliza o `aegis` para o contrato DecisionProvider (Sprint 14.1,
@@ -76,17 +25,22 @@ function toPredictionOutput(prediction: HealthPrediction): PredictionOutput {
  * traduz a entrada/saída para os contratos genéricos do gaia. Nenhuma lógica
  * de negócio nova; os mesmos efeitos colaterais (linhas criadas em
  * HealthInsight/Recommendation/HealthPrediction) acontecem, na mesma ordem.
+ *
+ * Sprint 14.2: todo objeto Explainability é montado via ExplainabilityBuilder
+ * — nenhum literal `{ ... }` de explicabilidade é escrito à mão aqui.
  */
 @Injectable()
 export class AegisWellnessProvider implements DecisionProvider {
   readonly name = PROVIDER_NAME;
   readonly domain: DecisionDomain = 'WELLNESS';
+  readonly version = PROVIDER_VERSION;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly insightEngine: InsightEngineService,
     private readonly recommendationService: RecommendationService,
     private readonly predictionsService: PredictionsService,
+    private readonly explainabilityEngine: ExplainabilityEngine,
   ) {}
 
   supports(): boolean {
@@ -96,7 +50,7 @@ export class AegisWellnessProvider implements DecisionProvider {
   async generateInsights(context: ClinicalContext): Promise<InsightSignal[]> {
     await this.insightEngine.generateInsights(context.patientId);
     const recent = await this.fetchRecentInsights(context.patientId);
-    return recent.map(toInsightSignal);
+    return recent.map((insight) => this.toInsightSignal(insight, context));
   }
 
   async generateRecommendations(
@@ -124,12 +78,83 @@ export class AegisWellnessProvider implements DecisionProvider {
       context.patientId,
       RecommendationStatus.PENDING,
     );
-    return pending.map(toRecommendationCandidate);
+    return pending.map((recommendation) => this.toRecommendationCandidate(recommendation, context));
   }
 
   async generatePredictions(context: ClinicalContext): Promise<PredictionOutput[]> {
     const saved = await this.predictionsService.computePredictions(context.patientId);
-    return saved.map(toPredictionOutput);
+    return saved.map((prediction) => this.toPredictionOutput(prediction, context));
+  }
+
+  private toInsightSignal(insight: HealthInsight, context: ClinicalContext): InsightSignal {
+    const explainability = new ExplainabilityBuilder(this.explainabilityEngine, PROVIDER_NAME, context)
+      .withReasoning(insight.message)
+      .withEvidence([
+        {
+          source: 'aegis.dailyMetrics',
+          field: 'dataWindow',
+          value: insight.dataWindow,
+          recordedAt: insight.generatedAt,
+        },
+      ])
+      .withConfidenceScore(null)
+      .withMetadata('algorithm', insight.algorithm)
+      .withMetadata('insightType', insight.insightType)
+      .build();
+
+    return {
+      insightId: insight.id,
+      provider: PROVIDER_NAME,
+      domain: 'WELLNESS',
+      category: insight.category,
+      priority: insight.priority,
+      title: insight.title,
+      message: insight.message,
+      explainability,
+    };
+  }
+
+  private toRecommendationCandidate(
+    recommendation: Recommendation,
+    context: ClinicalContext,
+  ): RecommendationCandidate {
+    const metrics = Array.isArray(recommendation.metrics) ? (recommendation.metrics as string[]) : [];
+    const explainability = new ExplainabilityBuilder(this.explainabilityEngine, PROVIDER_NAME, context)
+      .withReasoning(recommendation.rationale)
+      .withEvidence(metrics.map((field) => ({ source: 'aegis', field, value: null })))
+      .withConfidenceScore(null)
+      .build();
+
+    return {
+      recommendationId: recommendation.id,
+      provider: PROVIDER_NAME,
+      priority: recommendation.priority,
+      category: 'WELLNESS',
+      title: recommendation.title,
+      description: recommendation.description,
+      rationale: recommendation.rationale,
+      actions: [recommendation.action],
+      explainability,
+    };
+  }
+
+  private toPredictionOutput(prediction: HealthPrediction, context: ClinicalContext): PredictionOutput {
+    const explainability = new ExplainabilityBuilder(this.explainabilityEngine, PROVIDER_NAME, context)
+      .withReasoning(prediction.explanation)
+      .withConfidenceScore(prediction.confidence)
+      .withMetadata('algorithm', prediction.algorithm)
+      .withMetadata('trend', prediction.trend)
+      .withMetadata('riskLevel', prediction.riskLevel)
+      .build();
+
+    return {
+      predictionType: prediction.metric,
+      currentValue: prediction.currentValue ?? null,
+      predictedValue: prediction.predictedValue,
+      predictionDate: prediction.generatedAt,
+      modelVersion: prediction.algorithm,
+      explainability,
+    };
   }
 
   private fetchRecentInsights(patientId: string): Promise<HealthInsight[]> {

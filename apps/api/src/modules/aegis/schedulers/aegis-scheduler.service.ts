@@ -95,10 +95,14 @@ export class AegisSchedulerService {
    * efeitos colaterais de antes). autoAdjustGoals continua chamado
    * diretamente: metas não fazem parte do contrato DecisionProvider nesta
    * sprint.
+   *
+   * Sprint 14.3 (T8/T9 Diretriz 9): ordem de execução explícita — Aegis
+   * primeiro, Clinical Risk depois. Nenhuma regra do Aegis muda aqui, só a
+   * lista de providers que o pipeline genérico despacha.
    */
   async runAllForPatient(patientId: string) {
     const decisionResult = await this.decisionEngine.runPipeline(patientId, {
-      providers: ['aegis-wellness'],
+      providers: ['aegis-wellness', 'clinical-risk'],
     });
     await this.goals.autoAdjustGoals(patientId);
 

@@ -31,20 +31,25 @@ describe('AegisSchedulerService', () => {
     scheduler = module.get(AegisSchedulerService);
   });
 
-  describe('runAllForPatient (Sprint 14.1, T7)', () => {
-    it('delegates insights/recommendations/predictions to the aegis-wellness provider via the pipeline', async () => {
+  describe('runAllForPatient (Sprint 14.1, T7 — providers list extended in 14.3, T8/Diretriz 9)', () => {
+    it('delegates insights/recommendations/predictions to aegis-wellness and clinical-risk, in that order', async () => {
       decisionEngine.runPipeline.mockResolvedValue({
         patientId: 'patient-1',
         generatedAt: new Date(),
-        providersRun: ['aegis-wellness'],
-        results: [{ provider: 'aegis-wellness', insights: [{ insightId: 'i1' }, { insightId: 'i2' }], recommendations: [], predictions: [] }],
+        providersRun: ['aegis-wellness', 'clinical-risk'],
+        results: [
+          { provider: 'aegis-wellness', insights: [{ insightId: 'i1' }, { insightId: 'i2' }], recommendations: [], predictions: [] },
+          { provider: 'clinical-risk', insights: [{ insightId: 'i3' }], recommendations: [], predictions: [] },
+        ],
       });
 
       const result = await scheduler.runAllForPatient('patient-1');
 
-      expect(decisionEngine.runPipeline).toHaveBeenCalledWith('patient-1', { providers: ['aegis-wellness'] });
+      expect(decisionEngine.runPipeline).toHaveBeenCalledWith('patient-1', {
+        providers: ['aegis-wellness', 'clinical-risk'],
+      });
       expect(result.insights).toBe(2);
-      expect(result.decisionResult.providersRun).toEqual(['aegis-wellness']);
+      expect(result.decisionResult.providersRun).toEqual(['aegis-wellness', 'clinical-risk']);
     });
 
     it('still calls autoAdjustGoals directly (goals are not part of the DecisionProvider contract yet)', async () => {

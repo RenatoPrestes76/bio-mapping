@@ -5,6 +5,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { InsightEngineService } from '../services/insight-engine.service';
 import { RecommendationService } from '../services/recommendation.service';
 import { PredictionsService } from '../services/predictions.service';
+import { ExplainabilityEngine } from '../../gaia/explainability';
 import { ClinicalContext } from '../../gaia/contracts';
 
 describe('AegisWellnessProvider', () => {
@@ -44,6 +45,7 @@ describe('AegisWellnessProvider', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AegisWellnessProvider,
+        ExplainabilityEngine,
         { provide: PrismaService, useValue: prisma },
         { provide: InsightEngineService, useValue: insightEngine },
         { provide: RecommendationService, useValue: recommendationService },
@@ -57,6 +59,7 @@ describe('AegisWellnessProvider', () => {
   it('declares itself as the wellness domain provider', () => {
     expect(provider.name).toBe('aegis-wellness');
     expect(provider.domain).toBe('WELLNESS');
+    expect(provider.version).toBe('1.0.0');
   });
 
   it('supports() is always true (no gating in this sprint)', () => {
@@ -74,6 +77,8 @@ describe('AegisWellnessProvider', () => {
           title: 'Sono insuficiente',
           message: 'msg',
           dataWindow: 7,
+          algorithm: 'sleep-threshold-v1',
+          insightType: 'SLEEP_INSUFFICIENT',
           generatedAt,
         },
       ]);
@@ -90,8 +95,25 @@ describe('AegisWellnessProvider', () => {
           priority: 'ATENCAO',
           title: 'Sono insuficiente',
           message: 'msg',
-          evidence: [{ source: 'aegis.dailyMetrics', field: 'dataWindow', value: 7, recordedAt: generatedAt }],
-          confidence: null,
+          explainability: {
+            decisionId: expect.any(String),
+            confidence: {
+              score: 0,
+              level: 'LOW',
+              factors: ['completeness: 0%'],
+              missingInformation: ['Missing Labs', 'Missing Wearable Data', 'Missing Medication History'],
+              dataQuality: null,
+              completeness: 0,
+            },
+            reasoning: 'msg',
+            evidence: [{ source: 'aegis.dailyMetrics', field: 'dataWindow', value: 7, recordedAt: generatedAt }],
+            sourceProvider: 'aegis-wellness',
+            generatedAt: expect.any(Date),
+            guidelineReferences: [],
+            limitations: [],
+            warnings: [],
+            metadata: { algorithm: 'sleep-threshold-v1', insightType: 'SLEEP_INSUFFICIENT' },
+          },
         },
       ]);
     });
@@ -125,9 +147,26 @@ describe('AegisWellnessProvider', () => {
           title: 'Priorize o sono',
           description: 'desc',
           rationale: 'rationale',
-          evidence: [{ source: 'aegis', field: 'sleepMinutes', value: null }],
           actions: ['durma mais'],
-          confidence: null,
+          explainability: {
+            decisionId: expect.any(String),
+            confidence: {
+              score: 0,
+              level: 'LOW',
+              factors: ['completeness: 0%'],
+              missingInformation: ['Missing Labs', 'Missing Wearable Data', 'Missing Medication History'],
+              dataQuality: null,
+              completeness: 0,
+            },
+            reasoning: 'rationale',
+            evidence: [{ source: 'aegis', field: 'sleepMinutes', value: null }],
+            sourceProvider: 'aegis-wellness',
+            generatedAt: expect.any(Date),
+            guidelineReferences: [],
+            limitations: [],
+            warnings: [],
+            metadata: {},
+          },
         },
       ]);
     });
@@ -179,6 +218,8 @@ describe('AegisWellnessProvider', () => {
           confidence: 0.7,
           explanation: 'tendência de queda',
           algorithm: 'linear-regression-v1',
+          trend: 'DOWN',
+          riskLevel: 'MEDIUM',
           generatedAt,
         },
       ]);
@@ -192,17 +233,25 @@ describe('AegisWellnessProvider', () => {
           currentValue: 420,
           predictedValue: 400,
           predictionDate: generatedAt,
-          confidence: 0.7,
           modelVersion: 'linear-regression-v1',
           explainability: {
-            confidence: 0.7,
+            decisionId: expect.any(String),
+            confidence: {
+              score: 0.7,
+              level: 'HIGH',
+              factors: ['completeness: 0%'],
+              missingInformation: ['Missing Labs', 'Missing Wearable Data', 'Missing Medication History'],
+              dataQuality: null,
+              completeness: 0,
+            },
             reasoning: 'tendência de queda',
             evidence: [],
             sourceProvider: 'aegis-wellness',
-            generatedAt,
+            generatedAt: expect.any(Date),
             guidelineReferences: [],
             limitations: [],
             warnings: [],
+            metadata: { algorithm: 'linear-regression-v1', trend: 'DOWN', riskLevel: 'MEDIUM' },
           },
         },
       ]);

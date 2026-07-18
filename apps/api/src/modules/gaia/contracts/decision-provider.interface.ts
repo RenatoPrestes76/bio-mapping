@@ -15,6 +15,7 @@ export type DecisionDomain = 'WELLNESS' | 'CLINICAL';
 export interface DecisionProvider {
   readonly name: string;
   readonly domain: DecisionDomain;
+  readonly version: string;
 
   supports(context: ClinicalContext): boolean;
 

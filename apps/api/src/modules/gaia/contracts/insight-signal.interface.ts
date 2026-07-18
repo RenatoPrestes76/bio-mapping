@@ -1,9 +1,10 @@
-import { DataPointRef } from './data-point-ref.interface';
+import { Explainability } from './explainability.interface';
 
 /**
  * Generalized insight shape, symmetric to RecommendationCandidate — the
  * intermediate artifact a DecisionProvider produces before turning it into
- * recommendations/predictions.
+ * recommendations/predictions. Since Sprint 14.2, carries a full
+ * Explainability instead of loose evidence/confidence fields.
  */
 export interface InsightSignal {
   insightId: string;
@@ -13,6 +14,5 @@ export interface InsightSignal {
   priority: string;
   title: string;
   message: string;
-  evidence: DataPointRef[];
-  confidence: number | null;
+  explainability: Explainability;
 }
