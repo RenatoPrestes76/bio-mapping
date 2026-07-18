@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Gera tags e labels OCI com base no contexto do git (branch, sha, semver)
       - name: Extrair metadata (tags e labels OCI)
