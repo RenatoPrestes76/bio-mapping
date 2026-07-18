@@ -2501,3 +2501,107 @@ model BioCircleNotification {
   @@index([userId, createdAt])
   @@map("biocircle_notifications")
 }
+
+// ─── Sprint 14.14 — BioTeams Foundation ──────────────────────────────────────
+
+enum TeamCategory {
+  GYM
+  RUNNING
+  CYCLING
+  SWIMMING
+  TRIATHLON
+  BODYBUILDING
+  CROSSFIT
+  MARTIAL_ARTS
+  SPORTS_CLUB
+  CLINIC
+  CORPORATE_WELLNESS
+  CUSTOM
+}
+
+enum TeamVisibility {
+  PRIVATE
+  INVITE_ONLY
+  PUBLIC
+}
+
+enum TeamMemberRole {
+  OWNER
+  ADMINISTRATOR
+  COACH
+  TRAINER
+  NUTRITIONIST
+  PHYSICIAN
+  MEMBER
+  GUEST
+}
+
+enum TeamMemberStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum TeamEventType {
+  TRAINING
+  COMPETITION
+  MEETING
+  ASSESSMENT
+  CHALLENGE
+  CONSULTATION
+}
+
+model BioTeam {
+  id          String         @id @default(uuid())
+  tenantId    String?        @map("tenant_id")
+  name        String
+  description String?
+  category    TeamCategory
+  visibility  TeamVisibility @default(INVITE_ONLY)
+  ownerId     String         @map("owner_id")
+  coverImage  String?        @map("cover_image")
+  logo        String?
+  inviteCode  String?        @unique @map("invite_code")
+  maxMembers  Int?           @map("max_members")
+  settings    Json?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@index([ownerId])
+  @@index([category])
+  @@index([visibility])
+  @@map("bio_teams")
+}
+
+model BioTeamMember {
+  id       String           @id @default(uuid())
+  teamId   String           @map("team_id")
+  userId   String           @map("user_id")
+  role     TeamMemberRole   @default(MEMBER)
+  status   TeamMemberStatus @default(PENDING)
+  joinedAt DateTime         @default(now()) @map("joined_at")
+
+  @@unique([teamId, userId])
+  @@index([teamId, status])
+  @@index([userId, status])
+  @@map("bio_team_members")
+}
+
+model BioTeamEvent {
+  id          String        @id @default(uuid())
+  teamId      String        @map("team_id")
+  title       String
+  description String?
+  eventType   TeamEventType @map("event_type")
+  startDate   DateTime      @map("start_date")
+  endDate     DateTime?     @map("end_date")
+  location    String?
+  createdBy   String        @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([teamId, startDate])
+  @@index([teamId, eventType])
+  @@map("bio_team_events")
+}

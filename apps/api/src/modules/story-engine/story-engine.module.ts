@@ -8,5 +8,6 @@ import { StoryEngineController } from './controllers/story-engine.controller.js'
   imports: [DatabaseModule],
   providers: [StoryEngineRepository, StoryEngineService],
   controllers: [StoryEngineController],
+  exports: [StoryEngineService, StoryEngineRepository],
 })
 export class StoryEngineModule {}

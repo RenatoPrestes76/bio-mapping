@@ -36,6 +36,7 @@ import { PatientMonitoringModule } from './modules/patient-monitoring/patient-mo
 import { ClinicalTrendsModule } from './modules/clinical-trends/clinical-trends.module.js';
 import { StoryEngineModule } from './modules/story-engine/story-engine.module.js';
 import { BioCircleModule } from './modules/biocircle/biocircle.module.js';
+import { BioTeamsModule } from './modules/bioteams/bioteams.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -78,6 +79,7 @@ import { AppService } from './app.service';
     ClinicalTrendsModule,
     StoryEngineModule,
     BioCircleModule,
+    BioTeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
