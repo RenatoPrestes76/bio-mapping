@@ -32,6 +32,7 @@ import { HippocratesModule } from './modules/hippocrates/hippocrates.module.js';
 import { ClinicalKnowledgeModule } from './modules/clinical-knowledge/clinical-knowledge.module.js';
 import { ClinicalDecisionSupportModule } from './modules/clinical-decision-support/clinical-decision-support.module.js';
 import { ClinicalPathwaysModule } from './modules/clinical-pathways/clinical-pathways.module.js';
+import { PatientMonitoringModule } from './modules/patient-monitoring/patient-monitoring.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -70,6 +71,7 @@ import { AppService } from './app.service';
     ClinicalKnowledgeModule,
     ClinicalDecisionSupportModule,
     ClinicalPathwaysModule,
+    PatientMonitoringModule,
   ],
   controllers: [AppController],
   providers: [AppService],

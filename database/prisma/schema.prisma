@@ -2276,3 +2276,51 @@ model ClinicalPathwayStep {
   @@map("clinical_pathway_steps")
 }
 
+// ─── Sprint 14.9 — Patient Monitoring & Care Timeline ────────────────────────
+
+enum TimelineEventType {
+  DECISION_CREATED
+  DECISION_ACKNOWLEDGED
+  DECISION_RESOLVED
+  PATHWAY_STARTED
+  PATHWAY_STEP_COMPLETED
+  PATHWAY_COMPLETED
+  PATHWAY_CANCELLED
+  INSIGHT_GENERATED
+  RECOMMENDATION_CREATED
+  RECOMMENDATION_ACCEPTED
+  RECOMMENDATION_COMPLETED
+  PREDICTION_GENERATED
+  ALERT_TRIGGERED
+  MANUAL_NOTE
+}
+
+enum TimelineEventSeverity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model PatientTimelineEvent {
+  id          String                @id @default(uuid())
+  tenantId    String?               @map("tenant_id")
+  patientId   String                @map("patient_id")
+  eventType   TimelineEventType     @map("event_type")
+  severity    TimelineEventSeverity @default(INFO)
+  title       String
+  description String?
+  sourceId    String?               @map("source_id")
+  sourceTable String?               @map("source_table")
+  metadata    Json?
+  occurredAt  DateTime              @default(now()) @map("occurred_at")
+  createdBy   String?               @map("created_by")
+  createdAt   DateTime              @default(now()) @map("created_at")
+
+  @@index([patientId, occurredAt])
+  @@index([patientId, eventType])
+  @@index([patientId, severity])
+  @@map("patient_timeline_events")
+}
+
