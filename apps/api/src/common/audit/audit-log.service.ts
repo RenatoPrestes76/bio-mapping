@@ -108,7 +108,13 @@ export type AuditAction =
   | 'TEAM_EVENT_CREATED'
   | 'TEAM_EVENT_UPDATED'
   | 'TEAM_EVENT_DELETED'
-  | 'TEAM_CHAPTER_GENERATED';
+  | 'TEAM_CHAPTER_GENERATED'
+  | 'CDS_EVALUATED'
+  | 'CDS_RECALCULATED'
+  | 'CDS_RULE_CREATED'
+  | 'CDS_RULE_UPDATED'
+  | 'CDS_ALERT_CREATED'
+  | 'CDS_FEEDBACK_ADDED';
 
 export interface AuditContext {
   userId?: string;

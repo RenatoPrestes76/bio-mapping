@@ -2605,3 +2605,102 @@ model BioTeamEvent {
   @@index([teamId, eventType])
   @@map("bio_team_events")
 }
+
+// ─── Sprint 14.15 — Clinical Decision Support Engine (CDS) ────────────────────
+
+enum CdsPriority {
+  LOW
+  MODERATE
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum CdsAlertType {
+  INFORMATIVE
+  PREVENTIVE
+  IMPORTANT
+  URGENT
+  CRITICAL
+}
+
+model CdsEvaluation {
+  id                    String       @id @default(uuid())
+  tenantId              String?      @map("tenant_id")
+  patientId             String       @map("patient_id")
+  evaluatedBy           String?      @map("evaluated_by")
+  priority              CdsPriority
+  confidence            Float
+  recommendation        String
+  reasons               Json
+  evidenceLevel         EvidenceLevel @map("evidence_level")
+  requiresMedicalReview Boolean       @default(false) @map("requires_medical_review")
+  variables             Json?
+  weights               Json?
+  rulesTriggered        Json?        @map("rules_triggered")
+  modelsUsed            Json?        @map("models_used")
+  references            Json?
+  inputData             Json?        @map("input_data")
+  processingTimeMs      Int?         @map("processing_time_ms")
+  version               String       @default("1.0")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+
+  @@index([patientId, createdAt])
+  @@index([patientId, priority])
+  @@index([tenantId, createdAt])
+  @@map("cds_evaluations")
+}
+
+model CdsRule {
+  id             String       @id @default(uuid())
+  tenantId       String?      @map("tenant_id")
+  name           String
+  description    String?
+  conditions     Json
+  conjunction    String       @default("AND")
+  priority       CdsPriority
+  recommendation String
+  evidenceLevel  EvidenceLevel @map("evidence_level")
+  active         Boolean      @default(true)
+  version        String       @default("1.0")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([active])
+  @@index([priority])
+  @@index([tenantId, active])
+  @@map("cds_rules")
+}
+
+model CdsAlert {
+  id           String       @id @default(uuid())
+  tenantId     String?      @map("tenant_id")
+  patientId    String       @map("patient_id")
+  evaluationId String       @map("evaluation_id")
+  alertType    CdsAlertType @map("alert_type")
+  priority     CdsPriority
+  reason       String
+  origin       String
+  expiresAt    DateTime?    @map("expires_at")
+  read         Boolean      @default(false)
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  @@index([patientId, read])
+  @@index([patientId, createdAt])
+  @@index([evaluationId])
+  @@map("cds_alerts")
+}
+
+model CdsFeedback {
+  id           String   @id @default(uuid())
+  evaluationId String   @map("evaluation_id")
+  userId       String   @map("user_id")
+  rating       Int
+  comment      String?
+  outcome      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([evaluationId])
+  @@map("cds_feedback")
+}
