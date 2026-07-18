@@ -2420,3 +2420,84 @@ model ChapterShare {
   @@index([sharedWith])
   @@map("chapter_shares")
 }
+
+// ─── Sprint 14.13 — BioCircle Foundation ─────────────────────────────────────
+
+enum ConnectionRelationshipType {
+  FRIEND
+  COACH
+  TRAINER
+  NUTRITIONIST
+  PHYSICIAN
+  FAMILY
+  TEAMMATE
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+  REMOVED
+}
+
+enum PrivacyVisibility {
+  EVERYONE
+  CONNECTIONS
+  NOBODY
+}
+
+enum BioCircleNotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  CHAPTER_SHARED
+  ACHIEVEMENT_SHARED
+  METRIC_SHARED
+  GOAL_SHARED
+}
+
+model BioConnection {
+  id               String                     @id @default(uuid())
+  tenantId         String?                    @map("tenant_id")
+  requesterId      String                     @map("requester_id")
+  receiverId       String                     @map("receiver_id")
+  relationshipType ConnectionRelationshipType @map("relationship_type")
+  status           ConnectionStatus           @default(PENDING)
+  acceptedAt       DateTime?                  @map("accepted_at")
+  createdAt        DateTime                   @default(now()) @map("created_at")
+  updatedAt        DateTime                   @updatedAt @map("updated_at")
+
+  @@unique([requesterId, receiverId])
+  @@index([requesterId, status])
+  @@index([receiverId, status])
+  @@map("bio_connections")
+}
+
+model UserPrivacySettings {
+  id                  String            @id @default(uuid())
+  userId              String            @unique @map("user_id")
+  discoverableBy      PrivacyVisibility @default(EVERYONE) @map("discoverable_by")
+  invitesFrom         PrivacyVisibility @default(EVERYONE) @map("invites_from")
+  bioBookVisible      PrivacyVisibility @default(CONNECTIONS) @map("bio_book_visible")
+  photosVisible       PrivacyVisibility @default(CONNECTIONS) @map("photos_visible")
+  metricsVisible      PrivacyVisibility @default(CONNECTIONS) @map("metrics_visible")
+  achievementsVisible PrivacyVisibility @default(CONNECTIONS) @map("achievements_visible")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  @@map("user_privacy_settings")
+}
+
+model BioCircleNotification {
+  id            String                    @id @default(uuid())
+  userId        String                    @map("user_id")
+  type          BioCircleNotificationType
+  referenceId   String?                   @map("reference_id")
+  referenceType String?                   @map("reference_type")
+  read          Boolean                   @default(false)
+  createdAt     DateTime                  @default(now()) @map("created_at")
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("biocircle_notifications")
+}

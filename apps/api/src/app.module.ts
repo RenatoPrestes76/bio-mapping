@@ -35,6 +35,7 @@ import { ClinicalPathwaysModule } from './modules/clinical-pathways/clinical-pat
 import { PatientMonitoringModule } from './modules/patient-monitoring/patient-monitoring.module.js';
 import { ClinicalTrendsModule } from './modules/clinical-trends/clinical-trends.module.js';
 import { StoryEngineModule } from './modules/story-engine/story-engine.module.js';
+import { BioCircleModule } from './modules/biocircle/biocircle.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -76,6 +77,7 @@ import { AppService } from './app.service';
     PatientMonitoringModule,
     ClinicalTrendsModule,
     StoryEngineModule,
+    BioCircleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

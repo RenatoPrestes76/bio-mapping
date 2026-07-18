@@ -91,7 +91,13 @@ export type AuditAction =
   | 'TREND_RECALCULATED'
   | 'CHAPTER_GENERATED'
   | 'CHAPTER_UPDATED'
-  | 'CHAPTER_SHARED';
+  | 'CHAPTER_SHARED'
+  | 'CONNECTION_REQUESTED'
+  | 'CONNECTION_ACCEPTED'
+  | 'CONNECTION_REJECTED'
+  | 'CONNECTION_BLOCKED'
+  | 'CONNECTION_REMOVED'
+  | 'PRIVACY_UPDATED';
 
 export interface AuditContext {
   userId?: string;
