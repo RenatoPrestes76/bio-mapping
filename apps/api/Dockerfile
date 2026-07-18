@@ -43,6 +43,7 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/api/package.json           ./apps/api/
 COPY database/package.json           ./database/
+COPY packages/bioscore-engine/package.json ./packages/bioscore-engine/
 
 RUN corepack prepare pnpm@${PNPM_VERSION} --activate && \
     pnpm install --frozen-lockfile
@@ -50,13 +51,18 @@ RUN corepack prepare pnpm@${PNPM_VERSION} --activate && \
 # -----------------------------------------------------------------------------
 # Stage 3 — builder
 # Gera o Prisma Client (engine Wasm para driver adapters) e compila TypeScript.
+# @bio/bioscore-engine é um workspace package sem publicação própria — precisa
+# ser compilado (tsc) ANTES do build da api, que consome seu dist/ já pronto
+# (ver package.json: main/exports apontam para ./dist, não para ./src).
 # -----------------------------------------------------------------------------
 FROM deps AS builder
 
 COPY database/ ./database/
+COPY packages/bioscore-engine/ ./packages/bioscore-engine/
 COPY apps/api/ ./apps/api/
 
 RUN pnpm --filter @bio/database generate && \
+    pnpm --filter @bio/bioscore-engine build && \
     pnpm --filter api build
 
 # -----------------------------------------------------------------------------
@@ -75,6 +81,7 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/api/package.json           ./apps/api/
 COPY database/package.json           ./database/
+COPY packages/bioscore-engine/package.json ./packages/bioscore-engine/
 
 RUN corepack prepare pnpm@${PNPM_VERSION} --activate && \
     pnpm install --frozen-lockfile --prod
@@ -118,9 +125,18 @@ RUN mkdir -p /app/uploads && chown biomapping:biomapping /app/uploads
 
 # ── Artefatos de produção ──────────────────────────────────────────────────
 
-# node_modules de produção: inclui virtual store pnpm (.pnpm/) e o symlink
-# de workspace node_modules/@bio/database → ../../database/
+# node_modules de produção: raiz contém o virtual store pnpm (.pnpm/) e os
+# poucos pacotes hoisted via public-hoist-pattern (.npmrc).
 COPY --from=prod-deps --chown=biomapping:biomapping /app/node_modules ./node_modules
+
+# pnpm NÃO faz hoist por padrão (sem shamefully-hoist) — cada pacote do
+# workspace tem seu próprio node_modules com os symlinks reais para o virtual
+# store (ex: apps/api/node_modules/@nestjs/core → ../../../node_modules/.pnpm/...).
+# main.js roda de /app/apps/api/dist/main.js e a resolução do Node sobe o
+# diretório até achar node_modules — sem este COPY, apps/api/node_modules
+# nunca existe na imagem e o processo falha com "Cannot find module '@nestjs/core'".
+COPY --from=prod-deps --chown=biomapping:biomapping /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=prod-deps --chown=biomapping:biomapping /app/database/node_modules ./database/node_modules
 
 # JavaScript compilado pelo NestJS CLI (tsc)
 COPY --from=builder --chown=biomapping:biomapping /app/apps/api/dist ./apps/api/dist
@@ -134,6 +150,14 @@ COPY --from=builder --chown=biomapping:biomapping \
 # O symlink node_modules/@bio/database aponta para ./database/ — este arquivo
 # contém o campo "exports" que Node.js usa para localizar o Prisma Client.
 COPY --chown=biomapping:biomapping database/package.json ./database/package.json
+
+# @bio/bioscore-engine compilado (dist/ + package.json com exports para dist/).
+# O JS emitido pela api usa require("@bio/bioscore-engine") (specifier não é
+# reescrito pelo tsc) — em runtime isso resolve via node_modules/@bio/bioscore-engine
+# (symlink do workspace pnpm) até este package.json, que agora aponta para dist/.
+COPY --from=builder --chown=biomapping:biomapping \
+     /app/packages/bioscore-engine/dist ./packages/bioscore-engine/dist
+COPY --chown=biomapping:biomapping packages/bioscore-engine/package.json ./packages/bioscore-engine/package.json
 
 USER biomapping
 

@@ -7,6 +7,8 @@ import { OracleModule } from '../oracle/oracle.module.js';
 import { AssessmentsModule } from '../clinical/assessments/assessments.module';
 import { ClinicalContextBuilder } from './clinical-context.builder';
 import { DecisionEngineService } from './decision-engine.service';
+import { ExplainabilityModule } from './explainability/explainability.module';
+import { RecommendationEngineModule } from './recommendations/recommendation-engine.module';
 
 @Module({
   imports: [
@@ -16,8 +18,14 @@ import { DecisionEngineService } from './decision-engine.service';
     ApolloModule,
     OracleModule,
     AssessmentsModule,
+    ExplainabilityModule,
+    RecommendationEngineModule,
   ],
   providers: [ClinicalContextBuilder, DecisionEngineService],
-  exports: [ClinicalContextBuilder, DecisionEngineService],
+  // Nest só permite re-exportar um provider vindo de um módulo importado se o
+  // MÓDULO em si estiver em `exports` — exportar a classe do provider direto
+  // (ExplainabilityEngine/RecommendationEngine) falha em runtime com
+  // UnknownExportException, mesmo compilando sem erro no TypeScript.
+  exports: [ClinicalContextBuilder, DecisionEngineService, ExplainabilityModule, RecommendationEngineModule],
 })
 export class GaiaModule {}
