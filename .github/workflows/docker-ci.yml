@@ -64,7 +64,7 @@ jobs:
       # Gera tags e labels OCI com base no contexto do git (branch, sha, semver)
       - name: Extrair metadata (tags e labels OCI)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
