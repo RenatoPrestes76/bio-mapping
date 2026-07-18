@@ -2704,3 +2704,189 @@ model CdsFeedback {
   @@index([evaluationId])
   @@map("cds_feedback")
 }
+
+// ─── Sprint 14.16 — Continuous Learning & Outcome Validation Engine ───────────
+
+enum OutcomeCategory {
+  IMPROVED
+  STABLE
+  WORSENED
+  HOSPITALIZED
+  RESOLVED
+  UNKNOWN
+}
+
+enum RecommendationAdherence {
+  FOLLOWED
+  PARTIALLY_FOLLOWED
+  IGNORED
+}
+
+enum FeedbackClassification {
+  CORRECT
+  PARTIALLY_CORRECT
+  INCORRECT
+  INCONCLUSIVE
+}
+
+enum DriftType {
+  DATA_DRIFT
+  CONCEPT_DRIFT
+  FEATURE_DRIFT
+  POPULATION_DRIFT
+}
+
+enum FeedbackRole {
+  PHYSICIAN
+  NUTRITIONIST
+  HEALTH_PROFESSIONAL
+  PATIENT
+}
+
+model ClinicalOutcome {
+  id           String          @id @default(uuid())
+  tenantId     String?         @map("tenant_id")
+  decisionId   String          @map("decision_id")
+  patientId    String          @map("patient_id")
+  followUpDate DateTime        @map("follow_up_date")
+  outcome      OutcomeCategory
+  validatedBy  String          @map("validated_by")
+  comments     String?
+  modelVersion String          @default("1.0") @map("model_version")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  @@index([decisionId])
+  @@index([patientId, createdAt])
+  @@index([tenantId, outcome])
+  @@map("clinical_outcomes")
+}
+
+model PredictionValidation {
+  id             String   @id @default(uuid())
+  tenantId       String?  @map("tenant_id")
+  outcomeId      String   @map("outcome_id")
+  decisionId     String   @map("decision_id")
+  predictedValue String   @map("predicted_value")
+  actualValue    String   @map("actual_value")
+  difference     Float?
+  accuracy       Float?
+  modelVersion   String   @default("1.0") @map("model_version")
+  variables      Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([decisionId])
+  @@index([outcomeId])
+  @@index([tenantId, createdAt])
+  @@map("prediction_validations")
+}
+
+model RecommendationValidation {
+  id              String                  @id @default(uuid())
+  tenantId        String?                 @map("tenant_id")
+  outcomeId       String                  @map("outcome_id")
+  decisionId      String                  @map("decision_id")
+  recommendation  String
+  adherence       RecommendationAdherence
+  outcomeAchieved OutcomeCategory         @map("outcome_achieved")
+  notes           String?
+  modelVersion    String                  @default("1.0") @map("model_version")
+  createdAt       DateTime                @default(now()) @map("created_at")
+
+  @@index([decisionId])
+  @@index([tenantId, adherence])
+  @@map("recommendation_validations")
+}
+
+model ModelMetrics {
+  id           String   @id @default(uuid())
+  tenantId     String?  @map("tenant_id")
+  modelName    String   @map("model_name")
+  modelVersion String   @map("model_version")
+  accuracy     Float?
+  precision    Float?
+  recall       Float?
+  specificity  Float?
+  sensitivity  Float?
+  f1Score      Float?   @map("f1_score")
+  rocAuc       Float?   @map("roc_auc")
+  calibration  Float?
+  sampleSize   Int      @default(0) @map("sample_size")
+  computedAt   DateTime @default(now()) @map("computed_at")
+
+  @@index([modelName, computedAt])
+  @@index([tenantId, computedAt])
+  @@map("model_metrics")
+}
+
+model ModelDriftEvent {
+  id         String    @id @default(uuid())
+  tenantId   String?   @map("tenant_id")
+  modelName  String    @map("model_name")
+  driftType  DriftType @map("drift_type")
+  driftScore Float     @map("drift_score")
+  threshold  Float
+  features   Json?
+  severity   String    @default("MODERATE")
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([modelName, createdAt])
+  @@index([tenantId, resolved])
+  @@index([driftType, resolved])
+  @@map("model_drift_events")
+}
+
+model LearningFeedback {
+  id              String                 @id @default(uuid())
+  tenantId        String?                @map("tenant_id")
+  decisionId      String                 @map("decision_id")
+  userId          String                 @map("user_id")
+  role            FeedbackRole
+  classification  FeedbackClassification
+  comment         String?
+  suggestedAction String?                @map("suggested_action")
+  modelVersion    String                 @default("1.0") @map("model_version")
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  @@index([decisionId])
+  @@index([userId, createdAt])
+  @@index([tenantId, classification])
+  @@map("learning_feedback")
+}
+
+model ContinuousLearningStatistics {
+  id                  String   @id @default(uuid())
+  tenantId            String?  @map("tenant_id")
+  periodStart         DateTime @map("period_start")
+  periodEnd           DateTime @map("period_end")
+  totalDecisions      Int      @default(0) @map("total_decisions")
+  totalOutcomes       Int      @default(0) @map("total_outcomes")
+  overallAccuracy     Float?   @map("overall_accuracy")
+  driftEventsCount    Int      @default(0) @map("drift_events_count")
+  feedbackCount       Int      @default(0) @map("feedback_count")
+  positiveOutcomeRate Float?   @map("positive_outcome_rate")
+  averageConfidence   Float?   @map("average_confidence")
+  summary             Json?
+  computedAt          DateTime @default(now()) @map("computed_at")
+
+  @@index([tenantId, periodStart])
+  @@map("continuous_learning_statistics")
+}
+
+model PerformanceSnapshot {
+  id           String   @id @default(uuid())
+  tenantId     String?  @map("tenant_id")
+  modelName    String   @map("model_name")
+  snapshotDate DateTime @map("snapshot_date")
+  metrics      Json
+  outcomeStats Json?    @map("outcome_stats")
+  driftStats   Json?    @map("drift_stats")
+  version      String   @default("1.0")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([modelName, snapshotDate])
+  @@index([tenantId, snapshotDate])
+  @@map("performance_snapshots")
+}

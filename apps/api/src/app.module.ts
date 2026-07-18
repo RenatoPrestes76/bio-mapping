@@ -38,6 +38,7 @@ import { StoryEngineModule } from './modules/story-engine/story-engine.module.js
 import { BioCircleModule } from './modules/biocircle/biocircle.module.js';
 import { BioTeamsModule } from './modules/bioteams/bioteams.module.js';
 import { CdsModule } from './modules/gaia/cds/cds.module.js';
+import { LearningModule } from './modules/gaia/learning/learning.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -82,6 +83,7 @@ import { AppService } from './app.service';
     BioCircleModule,
     BioTeamsModule,
     CdsModule,
+    LearningModule,
   ],
   controllers: [AppController],
   providers: [AppService],
