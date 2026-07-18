@@ -111,7 +111,8 @@ LABEL org.opencontainers.image.base.name="docker.io/library/node:22-alpine"
 
 # tini: init process leve que repassa SIGTERM/SIGINT corretamente ao Node.
 # curl: necessário para o probe do HEALTHCHECK.
-RUN apk add --no-cache tini curl
+# apk upgrade: aplica patches de segurança disponíveis no Alpine (elimina CVEs fixáveis).
+RUN apk upgrade --no-cache && apk add --no-cache tini curl
 
 # Usuário não-root dedicado (princípio do menor privilégio).
 # Nunca executar a API como root em produção.
