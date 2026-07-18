@@ -2324,3 +2324,50 @@ model PatientTimelineEvent {
   @@map("patient_timeline_events")
 }
 
+// ─── Sprint 14.10 — Clinical Trends & Longitudinal Analytics ─────────────────
+
+enum TrendType {
+  IMPROVING
+  STABLE
+  WORSENING
+  FLUCTUATING
+  INSUFFICIENT_DATA
+}
+
+enum TrendDirection {
+  INCREASING
+  DECREASING
+  STABLE
+}
+
+enum TrendStatus {
+  ACTIVE
+  RESOLVED
+  ARCHIVED
+}
+
+model ClinicalTrend {
+  id           String         @id @default(uuid())
+  tenantId     String?        @map("tenant_id")
+  patientId    String         @map("patient_id")
+  metric       String
+  trendType    TrendType      @map("trend_type")
+  direction    TrendDirection
+  status       TrendStatus    @default(ACTIVE)
+  startDate    DateTime       @map("start_date")
+  endDate      DateTime?      @map("end_date")
+  confidence   Float          @default(0)
+  sourceModule String         @map("source_module")
+  summary      String
+  metadata     Json?
+  createdBy    String?        @map("created_by")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  @@index([patientId, metric])
+  @@index([patientId, status])
+  @@index([patientId, trendType])
+  @@index([tenantId])
+  @@map("clinical_trends")
+}
+

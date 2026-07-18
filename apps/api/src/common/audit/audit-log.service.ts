@@ -85,7 +85,10 @@ export type AuditAction =
   | 'PATHWAY_COMPLETED'
   | 'PATHWAY_CANCELLED'
   | 'TIMELINE_QUERIED'
-  | 'SUMMARY_QUERIED';
+  | 'SUMMARY_QUERIED'
+  | 'TREND_ANALYZED'
+  | 'TREND_ARCHIVED'
+  | 'TREND_RECALCULATED';
 
 export interface AuditContext {
   userId?: string;

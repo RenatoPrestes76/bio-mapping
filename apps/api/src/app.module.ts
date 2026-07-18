@@ -33,6 +33,7 @@ import { ClinicalKnowledgeModule } from './modules/clinical-knowledge/clinical-k
 import { ClinicalDecisionSupportModule } from './modules/clinical-decision-support/clinical-decision-support.module.js';
 import { ClinicalPathwaysModule } from './modules/clinical-pathways/clinical-pathways.module.js';
 import { PatientMonitoringModule } from './modules/patient-monitoring/patient-monitoring.module.js';
+import { ClinicalTrendsModule } from './modules/clinical-trends/clinical-trends.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -72,6 +73,7 @@ import { AppService } from './app.service';
     ClinicalDecisionSupportModule,
     ClinicalPathwaysModule,
     PatientMonitoringModule,
+    ClinicalTrendsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
