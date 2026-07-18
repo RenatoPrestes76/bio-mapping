@@ -34,6 +34,7 @@ import { ClinicalDecisionSupportModule } from './modules/clinical-decision-suppo
 import { ClinicalPathwaysModule } from './modules/clinical-pathways/clinical-pathways.module.js';
 import { PatientMonitoringModule } from './modules/patient-monitoring/patient-monitoring.module.js';
 import { ClinicalTrendsModule } from './modules/clinical-trends/clinical-trends.module.js';
+import { StoryEngineModule } from './modules/story-engine/story-engine.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -74,6 +75,7 @@ import { AppService } from './app.service';
     ClinicalPathwaysModule,
     PatientMonitoringModule,
     ClinicalTrendsModule,
+    StoryEngineModule,
   ],
   controllers: [AppController],
   providers: [AppService],

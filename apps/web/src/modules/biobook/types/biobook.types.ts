@@ -78,3 +78,51 @@ export interface BioBookData {
   circle: CircleData;
   timeline: TimelineEvent[];
 }
+
+// ─── Story Engine ─────────────────────────────────────────────────────────────
+
+export type ChapterType =
+  | 'FIRST_ASSESSMENT'
+  | 'TRANSFORMATION'
+  | 'CHALLENGE'
+  | 'COMPETITION'
+  | 'TRAINING_CYCLE'
+  | 'NUTRITION_PHASE'
+  | 'MEDICAL_FOLLOW_UP'
+  | 'ACHIEVEMENT'
+  | 'RECOVERY'
+  | 'MILESTONE';
+
+export interface BioBookChapter {
+  id: string;
+  userId: string;
+  title: string;
+  subtitle?: string;
+  chapterType: ChapterType;
+  coverImage?: string;
+  summary?: string;
+  startDate: string;
+  endDate?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface ChapterShare {
+  id: string;
+  chapterId: string;
+  sharedBy: string;
+  sharedWith: string;
+  message?: string;
+  createdAt: string;
+}
+
+export interface StoryTimelineEntry {
+  chapter: BioBookChapter;
+  events: TimelineEvent[];
+}
+
+export interface StoryData {
+  chapters: BioBookChapter[];
+  timeline: StoryTimelineEntry[];
+  hasStory: boolean;
+}

@@ -1,4 +1,4 @@
-import type { BioBookData, HealthSummary, TimelineEvent } from '../types/biobook.types';
+import type { BioBookData, HealthSummary, TimelineEvent, BioBookChapter, ChapterShare, StoryTimelineEntry } from '../types/biobook.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -44,6 +44,36 @@ export async function getPatientTrends(patientId: string) {
 
 export async function getPatientPathways(patientId: string) {
   return apiFetch(`/clinical-pathways?patientId=${patientId}&status=ACTIVE`);
+}
+
+export async function generateStoryChapters(): Promise<BioBookChapter[]> {
+  const data = await apiFetch<BioBookChapter[]>('/story-engine/generate');
+  return data ?? [];
+}
+
+export async function getStoryChapters(): Promise<BioBookChapter[]> {
+  const data = await apiFetch<BioBookChapter[]>('/story-engine/chapters');
+  return data ?? [];
+}
+
+export async function getStoryTimeline(): Promise<StoryTimelineEntry[]> {
+  const data = await apiFetch<StoryTimelineEntry[]>('/story-engine/timeline');
+  return data ?? [];
+}
+
+export async function shareChapter(chapterId: string, sharedWith: string, message?: string): Promise<ChapterShare | null> {
+  try {
+    const res = await fetch(`${API_URL}/story-engine/chapters/${chapterId}/share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sharedWith, message }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<ChapterShare>;
+  } catch {
+    return null;
+  }
 }
 
 export function buildDemoBioBookData(): BioBookData {

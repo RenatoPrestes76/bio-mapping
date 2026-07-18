@@ -1,21 +1,25 @@
 "use client";
 
 import { useBioBookData } from '@/modules/biobook/hooks/useBioBookData';
+import { useStory } from '@/modules/biobook/hooks/useStory';
 import { BioBookLayout } from '@/modules/biobook/layouts/BioBookLayout';
 import { LoadingSkeleton } from '@/modules/biobook/widgets/LoadingSkeleton';
 import { BioHeader } from '@/modules/biobook/components/BioHeader';
 import { EvolutionCard } from '@/modules/biobook/components/EvolutionCard';
 import { ProgressWidget } from '@/modules/biobook/components/ProgressWidget';
 import { AchievementTimeline } from '@/modules/biobook/components/AchievementTimeline';
-import { PhotoComparison } from '@/modules/biobook/components/PhotoComparison';
 import { HealthOverview } from '@/modules/biobook/components/HealthOverview';
 import { CircleSummary } from '@/modules/biobook/components/CircleSummary';
+import { PhotoComparison } from '@/modules/biobook/components/PhotoComparison';
+import { StoryHeader } from '@/modules/biobook/components/StoryHeader';
+import { StoryTimeline } from '@/modules/biobook/components/StoryTimeline';
+import { StorySummary } from '@/modules/biobook/components/StorySummary';
 
 export default function BioBookPage() {
-  // patientId would come from auth context in a real session
-  const { data, loading, isDemo } = useBioBookData();
+  const { data, loading: bioLoading, isDemo } = useBioBookData();
+  const { story, loading: storyLoading, generating, generate } = useStory();
 
-  if (loading) {
+  if (bioLoading) {
     return (
       <BioBookLayout>
         <LoadingSkeleton />
@@ -36,29 +40,54 @@ export default function BioBookPage() {
         </div>
       )}
 
-      <div className="space-y-4">
-        {/* Header */}
+      <div className="space-y-6">
+        {/* BioBook overview */}
         <BioHeader {...data.user} />
 
-        {/* Evolution metrics */}
-        <EvolutionCard metrics={data.metrics} />
+        {/* Story Engine section */}
+        {!storyLoading && (
+          <section aria-label="Minha História">
+            <div className="space-y-4">
+              {story.hasStory && (
+                <StoryHeader user={data.user} chapters={story.chapters} />
+              )}
 
-        {/* Two-column: goals + achievements */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProgressWidget goals={data.goals} />
-          <AchievementTimeline achievements={data.achievements} />
-        </div>
-
-        {/* Health + circle */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <HealthOverview health={data.health} />
-          <CircleSummary circle={data.circle} />
-        </div>
-
-        {/* Photo comparison */}
-        {data.photos.length > 0 && (
-          <PhotoComparison photos={data.photos} />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="sm:col-span-2">
+                  <StoryTimeline entries={story.timeline} />
+                </div>
+                <div>
+                  <StorySummary
+                    chapters={story.chapters}
+                    onGenerate={generate}
+                    generating={generating}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
         )}
+
+        {/* Overview data */}
+        <section aria-label="Visão Geral">
+          <div className="space-y-4">
+            <EvolutionCard metrics={data.metrics} />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ProgressWidget goals={data.goals} />
+              <AchievementTimeline achievements={data.achievements} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <HealthOverview health={data.health} />
+              <CircleSummary circle={data.circle} />
+            </div>
+
+            {data.photos.length > 0 && (
+              <PhotoComparison photos={data.photos} />
+            )}
+          </div>
+        </section>
       </div>
     </BioBookLayout>
   );

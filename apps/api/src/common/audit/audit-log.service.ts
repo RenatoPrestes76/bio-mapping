@@ -88,7 +88,10 @@ export type AuditAction =
   | 'SUMMARY_QUERIED'
   | 'TREND_ANALYZED'
   | 'TREND_ARCHIVED'
-  | 'TREND_RECALCULATED';
+  | 'TREND_RECALCULATED'
+  | 'CHAPTER_GENERATED'
+  | 'CHAPTER_UPDATED'
+  | 'CHAPTER_SHARED';
 
 export interface AuditContext {
   userId?: string;

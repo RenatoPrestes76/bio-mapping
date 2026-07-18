@@ -2371,3 +2371,52 @@ model ClinicalTrend {
   @@map("clinical_trends")
 }
 
+
+// ─── Sprint 14.12 — BioBook Story Engine ─────────────────────────────────────
+
+enum ChapterType {
+  FIRST_ASSESSMENT
+  TRANSFORMATION
+  CHALLENGE
+  COMPETITION
+  TRAINING_CYCLE
+  NUTRITION_PHASE
+  MEDICAL_FOLLOW_UP
+  ACHIEVEMENT
+  RECOVERY
+  MILESTONE
+}
+
+model BioBookChapter {
+  id          String      @id @default(uuid())
+  tenantId    String?     @map("tenant_id")
+  userId      String      @map("user_id")
+  title       String
+  subtitle    String?
+  chapterType ChapterType @map("chapter_type")
+  coverImage  String?     @map("cover_image")
+  summary     String?
+  startDate   DateTime    @map("start_date")
+  endDate     DateTime?   @map("end_date")
+  metadata    Json?
+  createdBy   String?     @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@index([userId, startDate])
+  @@index([userId, chapterType])
+  @@map("biobook_chapters")
+}
+
+model ChapterShare {
+  id         String   @id @default(uuid())
+  chapterId  String   @map("chapter_id")
+  sharedBy   String   @map("shared_by")
+  sharedWith String   @map("shared_with")
+  message    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([chapterId])
+  @@index([sharedWith])
+  @@map("chapter_shares")
+}
