@@ -25,9 +25,11 @@ import { OracleModule } from './modules/oracle/oracle.module';
 import { PulseModule } from './modules/pulse/pulse.module';
 import { AegisModule } from './modules/aegis/aegis.module';
 import { ClinicalRiskModule } from './modules/clinical/risk/clinical-risk.module';
+import { PredictionEngineModule } from './modules/gaia/predictions/prediction-engine.module';
 import { ApolloModule } from './modules/apollo/apollo.module.js';
 import { TitanModule } from './modules/titan/titan.module.js';
 import { HippocratesModule } from './modules/hippocrates/hippocrates.module.js';
+import { ClinicalKnowledgeModule } from './modules/clinical-knowledge/clinical-knowledge.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -59,9 +61,11 @@ import { AppService } from './app.service';
     PulseModule,
     AegisModule,
     ClinicalRiskModule,
+    PredictionEngineModule,
     ApolloModule,
     TitanModule,
     HippocratesModule,
+    ClinicalKnowledgeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

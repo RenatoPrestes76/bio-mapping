@@ -2076,3 +2076,61 @@ model ExternalIdentifier {
   @@map("external_identifiers")
 }
 
+// ─── Sprint 14.6 — Clinical Knowledge Base ───────────────────────────────────
+
+enum ClinicalKnowledgeCategory {
+  DISEASE
+  MEDICATION
+  LABORATORY
+  VITAL_SIGNS
+  NUTRITION
+  EXERCISE
+  LIFESTYLE
+  RISK_FACTOR
+  PROTOCOL
+  GUIDELINE
+  DIAGNOSTIC
+  THERAPEUTIC
+}
+
+enum KnowledgeStatus {
+  DRAFT
+  PUBLISHED
+  DEPRECATED
+}
+
+enum EvidenceLevel {
+  A
+  B
+  C
+  D
+  EXPERT_OPINION
+}
+
+model ClinicalKnowledge {
+  id            String                    @id @default(uuid())
+  tenantId      String?                   @map("tenant_id")
+  category      ClinicalKnowledgeCategory
+  title         String
+  description   String?
+  clinicalCode  String?                   @map("clinical_code")
+  source        String?
+  evidenceLevel EvidenceLevel             @map("evidence_level")
+  language      String                    @default("pt-BR")
+  version       Int                       @default(1)
+  status        KnowledgeStatus           @default(DRAFT)
+  tags          String[]
+  metadata      Json?
+  createdBy     String?                   @map("created_by")
+  updatedBy     String?                   @map("updated_by")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([status])
+  @@index([evidenceLevel])
+  @@index([tenantId])
+  @@index([clinicalCode])
+  @@map("clinical_knowledge")
+}
+

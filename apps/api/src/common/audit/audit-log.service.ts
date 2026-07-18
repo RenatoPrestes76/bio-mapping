@@ -74,7 +74,10 @@ export type AuditAction =
   | 'PROGRAM_CREATED'
   | 'PROGRAM_UPDATED'
   | 'ENROLLMENT_CREATED'
-  | 'ENROLLMENT_UPDATED';
+  | 'ENROLLMENT_UPDATED'
+  | 'KNOWLEDGE_CREATED'
+  | 'KNOWLEDGE_UPDATED'
+  | 'KNOWLEDGE_DELETED';
 
 export interface AuditContext {
   userId?: string;
