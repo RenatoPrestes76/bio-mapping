@@ -86,7 +86,7 @@ export class ClinicalPathwayService {
     const completedAt = newStatus === StepStatus.COMPLETED ? new Date() : undefined;
     await this.repo.updateStep(dto.stepId, newStatus, completedAt);
 
-    const completedOrSkipped = new Set([StepStatus.COMPLETED, StepStatus.SKIPPED]);
+    const completedOrSkipped = new Set<StepStatus>([StepStatus.COMPLETED, StepStatus.SKIPPED]);
     const updatedSteps = pathway.steps.map((s) => (s.id === dto.stepId ? { ...s, status: newStatus } : s));
     const nextPendingStep = updatedSteps.find((s) => !completedOrSkipped.has(s.status));
     const nextStep = nextPendingStep ? nextPendingStep.sequence : pathway.totalSteps;
