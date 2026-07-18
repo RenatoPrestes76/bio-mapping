@@ -30,6 +30,7 @@ import { ApolloModule } from './modules/apollo/apollo.module.js';
 import { TitanModule } from './modules/titan/titan.module.js';
 import { HippocratesModule } from './modules/hippocrates/hippocrates.module.js';
 import { ClinicalKnowledgeModule } from './modules/clinical-knowledge/clinical-knowledge.module.js';
+import { ClinicalDecisionSupportModule } from './modules/clinical-decision-support/clinical-decision-support.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -66,6 +67,7 @@ import { AppService } from './app.service';
     TitanModule,
     HippocratesModule,
     ClinicalKnowledgeModule,
+    ClinicalDecisionSupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

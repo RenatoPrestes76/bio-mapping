@@ -2134,3 +2134,60 @@ model ClinicalKnowledge {
   @@map("clinical_knowledge")
 }
 
+// ─── Sprint 14.7 — Clinical Decision Support Engine ──────────────────────────
+
+enum DecisionType {
+  ALERT
+  RECOMMENDATION
+  REMINDER
+  CONTRAINDICATION
+  CARE_GAP
+  FOLLOW_UP
+  PREVENTIVE_ACTION
+}
+
+enum DecisionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DecisionStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+model ClinicalDecision {
+  id             String           @id @default(uuid())
+  tenantId       String?          @map("tenant_id")
+  patientId      String           @map("patient_id")
+  ruleId         String           @map("rule_id")
+  decisionType   DecisionType     @map("decision_type")
+  priority       DecisionPriority
+  status         DecisionStatus   @default(OPEN)
+  title          String
+  description    String?
+  recommendation String?
+  rationale      String?
+  evidenceLevel  EvidenceLevel    @map("evidence_level")
+  knowledgeId    String?          @map("knowledge_id")
+  triggerData    Json?            @map("trigger_data")
+  metadata       Json?
+  createdBy      String?          @map("created_by")
+  updatedBy      String?          @map("updated_by")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@index([patientId])
+  @@index([status])
+  @@index([ruleId])
+  @@index([tenantId])
+  @@index([decisionType])
+  @@index([priority])
+  @@index([patientId, ruleId, status])
+  @@map("clinical_decisions")
+}
+

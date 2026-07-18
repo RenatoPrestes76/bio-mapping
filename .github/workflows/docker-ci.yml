@@ -107,9 +107,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       # ── Trivy: Scanner de CVEs open-source ───────────────────────────────
-      # exit-code: "1" faz o pipeline falhar se houver CVEs CRÍTICOS com fix disponível
-      # ignore-unfixed: true ignora CVEs sem correção disponível (não há ação possível)
-      - name: Trivy — scan de vulnerabilidades
+      # Passo 1: gera o SARIF (sem exit-code, sempre produz o arquivo)
+      - name: Trivy — gerar relatório SARIF
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: biomapping-api:${{ github.sha }}
@@ -117,13 +116,24 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: "0"
 
+      # Passo 2: upload do SARIF para a aba Security (independente do resultado)
       - name: Trivy — upload SARIF para aba Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
+
+      # Passo 3: falha o pipeline se houver CVEs fixáveis CRITICAL/HIGH
+      - name: Trivy — verificar CVEs críticos
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: biomapping-api:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
 
       # ── Docker Scout: CVEs + recomendações de base image (OBRIGATÓRIO) ───
       # Monitora novas CVEs em OpenSSL, musl, busybox, Node.js e dependências.

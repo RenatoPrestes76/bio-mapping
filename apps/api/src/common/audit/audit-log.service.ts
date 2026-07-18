@@ -77,7 +77,9 @@ export type AuditAction =
   | 'ENROLLMENT_UPDATED'
   | 'KNOWLEDGE_CREATED'
   | 'KNOWLEDGE_UPDATED'
-  | 'KNOWLEDGE_DELETED';
+  | 'KNOWLEDGE_DELETED'
+  | 'DECISION_CREATED'
+  | 'DECISION_STATUS_UPDATED';
 
 export interface AuditContext {
   userId?: string;
