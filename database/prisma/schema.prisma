@@ -3238,3 +3238,204 @@ model ScenarioTemplate {
   @@index([active, scenarioType])
   @@map("scenario_templates")
 }
+
+// ─── Sprint 14.19 — Population Health Intelligence ────────────────────────────
+
+enum CohortStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CohortAlertSeverity {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum CohortAlertType {
+  RISK_INCREASE
+  DISEASE_GROWTH
+  ADHERENCE_DROP
+  BIOMARKER_CHANGE
+  TREND_SHIFT
+}
+
+enum MetricType {
+  PREVALENCE
+  INCIDENCE
+  MEAN
+  MEDIAN
+  PERCENTAGE
+  COUNT
+}
+
+enum PopulationSegment {
+  HEALTHY
+  AT_RISK
+  CHRONIC_DISEASES
+  CARDIOMETABOLIC
+  ONCOLOGY
+  MENTAL_HEALTH
+  WOMENS_HEALTH
+  SENIOR
+}
+
+model PopulationCohort {
+  id           String             @id @default(uuid())
+  tenantId     String?            @map("tenant_id")
+  name         String
+  description  String?
+  segment      PopulationSegment?
+  status       CohortStatus       @default(DRAFT)
+  patientCount Int                @default(0) @map("patient_count")
+  filters      Json
+  createdBy    String             @map("created_by")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  cohortFilters  CohortFilter[]
+  cohortMembers  CohortMember[]
+  metrics        PopulationMetric[]
+  trends         PopulationTrend[]
+  alerts         PopulationAlert[]
+  benchmarksAsA  BenchmarkResult[]            @relation("BenchmarkCohortA")
+  benchmarksAsB  BenchmarkResult[]            @relation("BenchmarkCohortB")
+  statistics     EpidemiologicalStatistic[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, segment])
+  @@map("population_cohorts")
+}
+
+model CohortFilter {
+  id             String   @id @default(uuid())
+  cohortId       String   @map("cohort_id")
+  filterKey      String   @map("filter_key")
+  filterOperator String   @map("filter_operator")
+  filterValue    String   @map("filter_value")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  cohort PopulationCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@index([cohortId])
+  @@map("cohort_filters")
+}
+
+model CohortMember {
+  id        String    @id @default(uuid())
+  cohortId  String    @map("cohort_id")
+  patientId String    @map("patient_id")
+  joinedAt  DateTime  @default(now()) @map("joined_at")
+  leftAt    DateTime? @map("left_at")
+  metadata  Json?
+
+  cohort PopulationCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@unique([cohortId, patientId])
+  @@index([cohortId])
+  @@map("cohort_members")
+}
+
+model PopulationMetric {
+  id          String     @id @default(uuid())
+  tenantId    String?    @map("tenant_id")
+  cohortId    String?    @map("cohort_id")
+  metricType  MetricType @map("metric_type")
+  metricKey   String     @map("metric_key")
+  value       Float
+  unit        String?
+  periodStart DateTime   @map("period_start")
+  periodEnd   DateTime   @map("period_end")
+  computedAt  DateTime   @default(now()) @map("computed_at")
+  metadata    Json?
+
+  cohort PopulationCohort? @relation(fields: [cohortId], references: [id])
+
+  @@index([tenantId, metricKey])
+  @@index([cohortId, metricKey])
+  @@map("population_metrics")
+}
+
+model PopulationTrend {
+  id            String   @id @default(uuid())
+  tenantId      String?  @map("tenant_id")
+  cohortId      String?  @map("cohort_id")
+  metricKey     String   @map("metric_key")
+  direction     String
+  changePercent Float    @map("change_percent")
+  periodStart   DateTime @map("period_start")
+  periodEnd     DateTime @map("period_end")
+  isSignificant Boolean  @map("is_significant")
+  confidence    Float
+  computedAt    DateTime @default(now()) @map("computed_at")
+
+  cohort PopulationCohort? @relation(fields: [cohortId], references: [id])
+
+  @@index([tenantId, metricKey])
+  @@index([cohortId])
+  @@map("population_trends")
+}
+
+model PopulationAlert {
+  id             String        @id @default(uuid())
+  tenantId       String?       @map("tenant_id")
+  cohortId       String?       @map("cohort_id")
+  alertType      CohortAlertType     @map("alert_type")
+  severity       CohortAlertSeverity
+  title          String
+  description    String
+  metricKey      String?       @map("metric_key")
+  currentValue   Float?        @map("current_value")
+  previousValue  Float?        @map("previous_value")
+  isActive       Boolean       @default(true) @map("is_active")
+  acknowledgedAt DateTime?     @map("acknowledged_at")
+  acknowledgedBy String?       @map("acknowledged_by")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  cohort PopulationCohort? @relation(fields: [cohortId], references: [id])
+
+  @@index([tenantId, isActive])
+  @@index([tenantId, severity])
+  @@map("population_alerts")
+}
+
+model BenchmarkResult {
+  id           String   @id @default(uuid())
+  tenantId     String?  @map("tenant_id")
+  cohortAId    String   @map("cohort_a_id")
+  cohortBId    String?  @map("cohort_b_id")
+  benchmarkKey String   @map("benchmark_key")
+  valueA       Float    @map("value_a")
+  valueB       Float?   @map("value_b")
+  difference   Float?
+  percentDiff  Float?   @map("percent_diff")
+  period       String
+  computedAt   DateTime @default(now()) @map("computed_at")
+
+  cohortA PopulationCohort  @relation("BenchmarkCohortA", fields: [cohortAId], references: [id])
+  cohortB PopulationCohort? @relation("BenchmarkCohortB", fields: [cohortBId], references: [id])
+
+  @@index([tenantId, cohortAId])
+  @@map("benchmark_results")
+}
+
+model EpidemiologicalStatistic {
+  id                 String   @id @default(uuid())
+  tenantId           String?  @map("tenant_id")
+  cohortId           String?  @map("cohort_id")
+  statKey            String   @map("stat_key")
+  statValue          Float    @map("stat_value")
+  unit               String?
+  confidenceInterval Json?    @map("confidence_interval")
+  sampleSize         Int      @map("sample_size")
+  suppressed         Boolean  @default(false)
+  computedAt         DateTime @default(now()) @map("computed_at")
+
+  cohort PopulationCohort? @relation(fields: [cohortId], references: [id])
+
+  @@index([tenantId, statKey])
+  @@index([cohortId])
+  @@map("epidemiological_statistics")
+}
