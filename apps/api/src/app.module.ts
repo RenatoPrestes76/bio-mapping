@@ -45,6 +45,7 @@ import { PopulationModule } from './modules/gaia/population/population.module.js
 import { MedicalOntologyModule } from './modules/medical-ontology/medical-ontology.module.js';
 import { EvidenceEngineModule } from './modules/evidence-engine/evidence-engine.module.js';
 import { ClinicalReasoningModule } from './modules/clinical-reasoning/clinical-reasoning.module.js';
+import { PersonalizedMedicineModule } from './modules/personalized-medicine/personalized-medicine.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -96,6 +97,7 @@ import { AppService } from './app.service';
     MedicalOntologyModule,
     EvidenceEngineModule,
     ClinicalReasoningModule,
+    PersonalizedMedicineModule,
   ],
   controllers: [AppController],
   providers: [AppService],
