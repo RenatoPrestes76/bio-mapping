@@ -47,6 +47,7 @@ import { EvidenceEngineModule } from './modules/evidence-engine/evidence-engine.
 import { ClinicalReasoningModule } from './modules/clinical-reasoning/clinical-reasoning.module.js';
 import { PersonalizedMedicineModule } from './modules/personalized-medicine/personalized-medicine.module.js';
 import { DigitalTwinModule } from './modules/digital-twin/digital-twin.module.js';
+import { MultiOmicsModule } from './modules/multi-omics/multi-omics.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -100,6 +101,7 @@ import { AppService } from './app.service';
     ClinicalReasoningModule,
     PersonalizedMedicineModule,
     DigitalTwinModule,
+    MultiOmicsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
