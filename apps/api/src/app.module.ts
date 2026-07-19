@@ -40,6 +40,7 @@ import { BioTeamsModule } from './modules/bioteams/bioteams.module.js';
 import { CdsModule } from './modules/gaia/cds/cds.module.js';
 import { LearningModule } from './modules/gaia/learning/learning.module.js';
 import { PrecisionModule } from './modules/gaia/precision/precision.module.js';
+import { SimulationModule } from './modules/gaia/simulation/simulation.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -86,6 +87,7 @@ import { AppService } from './app.service';
     CdsModule,
     LearningModule,
     PrecisionModule,
+    SimulationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

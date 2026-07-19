@@ -3098,3 +3098,143 @@ model PersonalizationRule {
   @@index([tenantId, active])
   @@map("personalization_rules")
 }
+
+// ─── Sprint 14.18 — Digital Twin & Simulation ───────────────────────────────
+
+enum SimulationStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum TimeHorizon {
+  DAYS_30
+  DAYS_90
+  DAYS_180
+  YEAR_1
+  YEAR_2
+  YEAR_5
+}
+
+enum ScenarioType {
+  WEIGHT_LOSS
+  WEIGHT_GAIN
+  EXERCISE_INCREASE
+  ALCOHOL_REDUCTION
+  SMOKING_CESSATION
+  SLEEP_IMPROVEMENT
+  DIETARY_CHANGE
+  TREATMENT_ADHERENCE
+  RISK_FACTOR_REMOVAL
+  CUSTOM
+}
+
+model DigitalTwin {
+  id                   String   @id @default(uuid())
+  tenantId             String?  @map("tenant_id")
+  patientId            String   @unique @map("patient_id")
+  twinVersion          String   @default("1.0") @map("twin_version")
+  demographics         Json
+  clinicalHistory      Json?    @map("clinical_history")
+  biomarkers           Json?
+  riskFactors          Json?    @map("risk_factors")
+  lifestyle            Json?
+  longitudinalData     Json?    @map("longitudinal_data")
+  activeRecommendations Json?   @map("active_recommendations")
+  dataCompleteness     Float    @default(0) @map("data_completeness")
+  missingFields        Json?    @map("missing_fields")
+  lastUpdated          DateTime @default(now()) @map("last_updated")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId, patientId])
+  @@map("digital_twins")
+}
+
+model SimulationRun {
+  id            String           @id @default(uuid())
+  tenantId      String?          @map("tenant_id")
+  patientId     String           @map("patient_id")
+  twinId        String           @map("twin_id")
+  createdBy     String           @map("created_by")
+  scenarioType  ScenarioType     @map("scenario_type")
+  scenarioLabel String           @map("scenario_label")
+  timeHorizon   TimeHorizon      @map("time_horizon")
+  status        SimulationStatus @default(COMPLETED)
+  modelVersion  String           @default("1.0") @map("model_version")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  @@index([patientId, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("simulation_runs")
+}
+
+model SimulationParameters {
+  id             String  @id @default(uuid())
+  runId          String  @map("run_id")
+  parameterKey   String  @map("parameter_key")
+  parameterValue String  @map("parameter_value")
+  unit           String?
+
+  @@index([runId])
+  @@map("simulation_parameters")
+}
+
+model SimulationResult {
+  id                       String   @id @default(uuid())
+  runId                    String   @unique @map("run_id")
+  baselineRiskScore        Float    @map("baseline_risk_score")
+  simulatedRiskScore       Float    @map("simulated_risk_score")
+  expectedRiskVariation    Float    @map("expected_risk_variation")
+  confidence               Float
+  baselineRiskLevel        String   @map("baseline_risk_level")
+  simulatedRiskLevel       String   @map("simulated_risk_level")
+  topFactors               Json?    @map("top_factors")
+  createdAt                DateTime @default(now()) @map("created_at")
+
+  @@map("simulation_results")
+}
+
+model SimulationAssumption {
+  id          String  @id @default(uuid())
+  runId       String  @map("run_id")
+  category    String
+  description String
+  impact      String?
+
+  @@index([runId])
+  @@map("simulation_assumptions")
+}
+
+model SimulationHistory {
+  id        String   @id @default(uuid())
+  tenantId  String?  @map("tenant_id")
+  patientId String   @map("patient_id")
+  runId     String   @map("run_id")
+  userId    String   @map("user_id")
+  action    String
+  summary   String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([patientId, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("simulation_history")
+}
+
+model ScenarioTemplate {
+  id                String       @id @default(uuid())
+  tenantId          String?      @map("tenant_id")
+  name              String
+  scenarioType      ScenarioType @map("scenario_type")
+  description       String
+  defaultParameters Json         @map("default_parameters")
+  assumptions       Json
+  active            Boolean      @default(true)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@index([active, scenarioType])
+  @@map("scenario_templates")
+}
