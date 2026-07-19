@@ -46,6 +46,7 @@ import { MedicalOntologyModule } from './modules/medical-ontology/medical-ontolo
 import { EvidenceEngineModule } from './modules/evidence-engine/evidence-engine.module.js';
 import { ClinicalReasoningModule } from './modules/clinical-reasoning/clinical-reasoning.module.js';
 import { PersonalizedMedicineModule } from './modules/personalized-medicine/personalized-medicine.module.js';
+import { DigitalTwinModule } from './modules/digital-twin/digital-twin.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -98,6 +99,7 @@ import { AppService } from './app.service';
     EvidenceEngineModule,
     ClinicalReasoningModule,
     PersonalizedMedicineModule,
+    DigitalTwinModule,
   ],
   controllers: [AppController],
   providers: [AppService],
