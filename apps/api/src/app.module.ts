@@ -42,6 +42,7 @@ import { LearningModule } from './modules/gaia/learning/learning.module.js';
 import { PrecisionModule } from './modules/gaia/precision/precision.module.js';
 import { SimulationModule } from './modules/gaia/simulation/simulation.module.js';
 import { PopulationModule } from './modules/gaia/population/population.module.js';
+import { MedicalOntologyModule } from './modules/medical-ontology/medical-ontology.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -90,6 +91,7 @@ import { AppService } from './app.service';
     PrecisionModule,
     SimulationModule,
     PopulationModule,
+    MedicalOntologyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
