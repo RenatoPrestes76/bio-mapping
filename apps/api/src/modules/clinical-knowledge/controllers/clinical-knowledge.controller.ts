@@ -3,6 +3,7 @@ import { ClinicalKnowledgeCategory, EvidenceLevel, KnowledgeStatus } from '@bio/
 import { JwtAuthGuard } from '../../identity/auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../../identity/auth/decorators/current-user.decorator.js';
 import { ClinicalKnowledgeService } from '../services/clinical-knowledge.service.js';
+import { CLINICAL_DOMAINS } from '../knowledge/categories.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('clinical-knowledge')
@@ -52,6 +53,33 @@ export class ClinicalKnowledgeController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
+  }
+
+  @Get('search')
+  searchKnowledge(@Query('q') q = '') {
+    return this.service.searchKnowledge(q);
+  }
+
+  @Get('categories')
+  getCategories() {
+    return { categories: CLINICAL_DOMAINS };
+  }
+
+  @Get('rules')
+  getRules(@Query('category') category?: string) {
+    return { rules: this.service.findRules(category) };
+  }
+
+  @Get('guidelines')
+  getGuidelines(@Query('tags') rawTags?: string) {
+    const tags = rawTags ? rawTags.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
+    return { guidelines: this.service.findGuidelines(tags) };
+  }
+
+  @Get('references')
+  getReferences(@Query('tags') rawTags?: string, @Query('language') language?: string) {
+    const tags = rawTags ? rawTags.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
+    return { references: this.service.findReferences({ tags, language }) };
   }
 
   @Get(':id')
