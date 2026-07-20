@@ -49,6 +49,7 @@ import { PersonalizedMedicineModule } from './modules/personalized-medicine/pers
 import { DigitalTwinModule } from './modules/digital-twin/digital-twin.module.js';
 import { MultiOmicsModule } from './modules/multi-omics/multi-omics.module.js';
 import { GenomicInterpretationModule } from './modules/genomic-interpretation/genomic-interpretation.module.js';
+import { PharmacogenomicsModule } from './modules/pharmacogenomics/pharmacogenomics.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -104,6 +105,7 @@ import { AppService } from './app.service';
     DigitalTwinModule,
     MultiOmicsModule,
     GenomicInterpretationModule,
+    PharmacogenomicsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
