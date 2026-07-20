@@ -48,6 +48,7 @@ import { ClinicalReasoningModule } from './modules/clinical-reasoning/clinical-r
 import { PersonalizedMedicineModule } from './modules/personalized-medicine/personalized-medicine.module.js';
 import { DigitalTwinModule } from './modules/digital-twin/digital-twin.module.js';
 import { MultiOmicsModule } from './modules/multi-omics/multi-omics.module.js';
+import { GenomicInterpretationModule } from './modules/genomic-interpretation/genomic-interpretation.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -102,6 +103,7 @@ import { AppService } from './app.service';
     PersonalizedMedicineModule,
     DigitalTwinModule,
     MultiOmicsModule,
+    GenomicInterpretationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
