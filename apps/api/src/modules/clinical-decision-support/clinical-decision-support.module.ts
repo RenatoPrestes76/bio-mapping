@@ -18,6 +18,11 @@ import { ClinicalDecisionSupportProvider } from './providers/clinical-decision-s
 import { GaiaClinicalDecisionService } from './clinical-decision-support.service.js';
 import { GaiaClinicalDecisionController } from './clinical-decision-support.controller.js';
 
+// ATHENA-CDSS layer (Sprint 14.17)
+import { AthenaCdssProvider } from './providers/athena-cdss.provider.js';
+import { AthenaCdssService } from './services/athena-cdss.service.js';
+import { AthenaCdssController } from './athena-cdss.controller.js';
+
 @Module({
   imports: [
     DatabaseModule,
@@ -28,14 +33,16 @@ import { GaiaClinicalDecisionController } from './clinical-decision-support.cont
     PharmacogenomicsModule,
     EvidenceEngineModule,
   ],
-  controllers: [ClinicalDecisionSupportController, GaiaClinicalDecisionController],
+  controllers: [ClinicalDecisionSupportController, GaiaClinicalDecisionController, AthenaCdssController],
   providers: [
     PrismaClinicalDecisionRepository,
     ClinicalDecisionSupportService,
     ClinicalDecisionOrchestrator,
     ClinicalDecisionSupportProvider,
     GaiaClinicalDecisionService,
+    AthenaCdssProvider,
+    AthenaCdssService,
   ],
-  exports: [ClinicalDecisionSupportService, GaiaClinicalDecisionService],
+  exports: [ClinicalDecisionSupportService, GaiaClinicalDecisionService, AthenaCdssService],
 })
 export class ClinicalDecisionSupportModule {}
