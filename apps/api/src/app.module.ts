@@ -52,6 +52,7 @@ import { GenomicInterpretationModule } from './modules/genomic-interpretation/ge
 import { PharmacogenomicsModule } from './modules/pharmacogenomics/pharmacogenomics.module.js';
 import { LongitudinalHealthModule } from './modules/longitudinal-health/longitudinal-health.module.js';
 import { BioBookModule } from './modules/bio-book/bio-book.module.js';
+import { BioBookInsightModule } from './modules/bio-book-insight/bio-book-insight.module.js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -110,6 +111,7 @@ import { AppService } from './app.service';
     PharmacogenomicsModule,
     LongitudinalHealthModule,
     BioBookModule,
+    BioBookInsightModule,
   ],
   controllers: [AppController],
   providers: [AppService],
