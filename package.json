@@ -15,7 +15,10 @@
   "private": "true",
   "packageManager": "pnpm@10.33.4",
   "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/engines", "prisma", "bcrypt", "sharp", "unrs-resolver"]
+    "onlyBuiltDependencies": ["@prisma/engines", "prisma", "bcrypt", "sharp", "unrs-resolver"],
+    "overrides": {
+      "fast-uri": "^3.1.4"
+    }
   },
   "devDependencies": {
     "turbo": "^2.10.0",
