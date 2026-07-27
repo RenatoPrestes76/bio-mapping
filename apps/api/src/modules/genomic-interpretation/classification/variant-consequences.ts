@@ -58,7 +58,7 @@ export function predictConsequenceFromHGVS(hgvsCoding?: string, hgvsProtein?: st
   if (coding.includes('intronic') || coding.match(/c\.\d+[+-]\d+[acgt]/i)) {
     return 'INTRONIC_VARIANT';
   }
-  if (protein.includes('=') || protein.match(/p\.[a-z]+\d+\1/)) {
+  if (protein.includes('=')) {
     return 'SYNONYMOUS_VARIANT';
   }
   if (!hgvsCoding && !hgvsProtein) {

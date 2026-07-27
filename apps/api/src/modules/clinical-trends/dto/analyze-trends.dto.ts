@@ -1,5 +1,5 @@
-export interface AnalyzeTrendsDto {
-  patientId: string;
+export class AnalyzeTrendsDto {
+  patientId!: string;
   metrics?: string[];
   tenantId?: string;
 }

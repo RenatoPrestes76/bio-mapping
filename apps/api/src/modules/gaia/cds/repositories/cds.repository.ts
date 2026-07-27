@@ -27,7 +27,8 @@ export class CdsRepository {
     processingTimeMs?: number;
     version?: string;
   }): Promise<CdsEvaluation> {
-    return this.prisma.cdsEvaluation.create({ data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.prisma.cdsEvaluation.create({ data: data as any });
   }
 
   async findEvaluationById(id: string): Promise<CdsEvaluation | null> {
@@ -74,7 +75,8 @@ export class CdsRepository {
     evidenceLevel: EvidenceLevel;
     version?: string;
   }): Promise<CdsRule> {
-    return this.prisma.cdsRule.create({ data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.prisma.cdsRule.create({ data: data as any });
   }
 
   async updateRule(id: string, data: Partial<{
@@ -86,7 +88,8 @@ export class CdsRepository {
     recommendation: string;
     active: boolean;
   }>): Promise<CdsRule> {
-    return this.prisma.cdsRule.update({ where: { id }, data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.prisma.cdsRule.update({ where: { id }, data: data as any });
   }
 
   // ── Alerts ────────────────────────────────────────────────────────────────────

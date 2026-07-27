@@ -27,7 +27,8 @@ export class BioTeamsRepository {
     maxMembers?: number;
     settings?: Record<string, unknown>;
   }): Promise<BioTeam> {
-    return this.prisma.bioTeam.create({ data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.prisma.bioTeam.create({ data: data as any });
   }
 
   async findById(id: string): Promise<BioTeam | null> {
@@ -47,7 +48,8 @@ export class BioTeamsRepository {
     maxMembers: number;
     settings: Record<string, unknown>;
   }>): Promise<BioTeam> {
-    return this.prisma.bioTeam.update({ where: { id }, data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.prisma.bioTeam.update({ where: { id }, data: data as any });
   }
 
   async deleteTeam(id: string): Promise<BioTeam> {

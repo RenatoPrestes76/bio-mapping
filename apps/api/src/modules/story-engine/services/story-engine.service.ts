@@ -36,7 +36,7 @@ export class StoryEngineService {
       }),
       this.prisma.clinicalPathway.findMany({
         where: { patientId: userId },
-        select: { id: true, status: true, title: true, createdAt: true, completedAt: true },
+        select: { id: true, status: true, name: true, createdAt: true, completedAt: true },
       }),
       this.prisma.patientTimelineEvent.findMany({
         where: { patientId: userId },
@@ -60,7 +60,7 @@ export class StoryEngineService {
       pathways: pathways.map((p) => ({
         id: p.id,
         status: p.status,
-        title: p.title,
+        title: p.name,
         createdAt: p.createdAt,
         completedAt: p.completedAt,
       })),

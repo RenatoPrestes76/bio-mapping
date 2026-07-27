@@ -150,7 +150,13 @@ export class PopulationService {
 
     const riskMap = new Map(riskRecords.map((r) => [r.patientId, r]));
     const patients: PatientRecord[] = profiles.map((p) => ({
-      ...p,
+      patientId: p.patientId,
+      age: p.age ?? undefined,
+      sex: p.sex ?? undefined,
+      bmi: p.bmi ?? undefined,
+      smoking: p.smoking,
+      alcohol: p.alcohol ?? undefined,
+      lifestyle: p.lifestyle ?? undefined,
       conditions: (p.conditions as string[] | null) ?? [],
       familyHistory: (p.familyHistory as string[] | null) ?? [],
       medications: (p.medications as string[] | null) ?? [],
