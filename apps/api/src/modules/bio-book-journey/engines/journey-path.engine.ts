@@ -1,3 +1,4 @@
+import { computeTrend } from '@bio/bioscore-engine';
 import { JourneyPath } from '../entities/journey-path.entity.js';
 import { JourneyPhase } from '../entities/journey-phase.entity.js';
 import type { PhaseType, PhaseStatus } from '../entities/journey-phase.entity.js';
@@ -120,11 +121,11 @@ export class JourneyPathEngine {
     if (hasHospitalization) return 'NEEDS_ATTENTION';
 
     if (scoreEvolution.length >= 3) {
-      const last3 = scoreEvolution.slice(-3);
-      const allUp = last3.every((p, i) => i === 0 || p.score >= last3[i - 1].score);
-      if (allUp && last3[2].score > last3[0].score) return 'ADVANCING';
-      const allDown = last3.every((p, i) => i === 0 || p.score < last3[i - 1].score);
-      if (allDown) return 'NEEDS_ATTENTION';
+      const sorted = [...scoreEvolution].sort((a, b) => a.date.getTime() - b.date.getTime());
+      const last3 = sorted.slice(-3);
+      const { trend } = computeTrend(last3.map((p) => p.score));
+      if (trend === 'IMPROVING') return 'ADVANCING';
+      if (trend === 'DECLINING') return 'NEEDS_ATTENTION';
     }
 
     const landmarkMs = milestones.filter((m) => m.isLandmark()).length;

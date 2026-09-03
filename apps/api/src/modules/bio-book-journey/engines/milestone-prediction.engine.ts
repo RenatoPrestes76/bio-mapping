@@ -1,3 +1,4 @@
+import { computeTrend } from '@bio/bioscore-engine';
 import { MilestonePrediction } from '../entities/milestone-prediction.entity.js';
 import type { PredictionConfidence } from '../entities/milestone-prediction.entity.js';
 import type { PersonalGoal } from '../../bio-book-insight/entities/personal-goal.entity.js';
@@ -69,9 +70,10 @@ export class MilestonePredictionEngine {
   private fromScoreTrend(patientId: string, scoreEvolution: HealthScorePoint[]): MilestonePrediction[] {
     if (scoreEvolution.length < 2) return [];
 
-    const last3 = scoreEvolution.slice(-3);
-    const allUp = last3.length >= 2 && last3.every((p, i) => i === 0 || p.score > last3[i - 1].score);
-    if (!allUp) return [];
+    const sorted = [...scoreEvolution].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const last3 = sorted.slice(-3);
+    const isImproving = computeTrend(last3.map((p) => p.score)).trend === 'IMPROVING';
+    if (!isImproving) return [];
 
     const current = last3[last3.length - 1].score;
     const thresholds = [70, 75, 80, 85, 90];

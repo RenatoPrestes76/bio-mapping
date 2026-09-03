@@ -1,3 +1,4 @@
+import { computeTrend } from '@bio/bioscore-engine';
 import { HabitPattern } from '../entities/habit-pattern.entity.js';
 import type { HabitType, HabitTrend } from '../entities/habit-pattern.entity.js';
 import type { NarrativeEvent } from '../../bio-book/entities/narrative-event.entity.js';
@@ -75,7 +76,7 @@ export class HabitEvolutionEngine {
   ): HabitPattern {
     const sorted = [...relevantEvents].sort((a, b) => a.date.getTime() - b.date.getTime());
     const monthly = this.groupByMonth(sorted);
-    const trend = this.computeTrend(monthly);
+    const trend = this.classifyTrend(monthly);
     const consistencyScore = this.computeConsistency(monthly, allEvents);
     const frequencyPerMonth = this.computeFrequency(monthly);
     const lastObservedAt = sorted[sorted.length - 1].date;
@@ -103,20 +104,9 @@ export class HabitEvolutionEngine {
     return [...byMonth.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => a.key.localeCompare(b.key));
   }
 
-  private computeTrend(monthly: MonthlyCount[]): HabitTrend {
-    if (!monthly.length) return 'EMERGING';
-    if (monthly.length === 1) return 'EMERGING';
-
-    const half = Math.floor(monthly.length / 2);
-    const firstHalf = monthly.slice(0, half);
-    const secondHalf = monthly.slice(half);
-
-    const avgFirst = firstHalf.reduce((s, m) => s + m.count, 0) / (firstHalf.length || 1);
-    const avgSecond = secondHalf.reduce((s, m) => s + m.count, 0) / (secondHalf.length || 1);
-
-    if (avgSecond > avgFirst * 1.2) return 'IMPROVING';
-    if (avgSecond < avgFirst * 0.8) return 'DECLINING';
-    return 'STABLE';
+  private classifyTrend(monthly: MonthlyCount[]): HabitTrend {
+    if (monthly.length < 2) return 'EMERGING';
+    return computeTrend(monthly.map((m) => m.count)).trend;
   }
 
   private computeConsistency(monthly: MonthlyCount[], allEvents: NarrativeEvent[]): number {

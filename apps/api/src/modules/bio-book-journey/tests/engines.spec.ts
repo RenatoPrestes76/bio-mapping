@@ -95,6 +95,13 @@ describe('JourneyPathEngine', () => {
     expect(path.overallDirection).toBe('ADVANCING');
   });
 
+  it('returns NEEDS_ATTENTION direction with 3 consecutive declining scores', () => {
+    const scores = [makeScore(75, 90), makeScore(65, 60), makeScore(55, 30)];
+    const events = [makeEvent('CONSULTATION', new Date())];
+    const path = engine.compute('p1', events, [], [], scores);
+    expect(path.overallDirection).toBe('NEEDS_ATTENTION');
+  });
+
   it('progressPercentage is in [0, 100]', () => {
     const path = engine.compute('p1', [], [], [], []);
     expect(path.progressPercentage).toBeGreaterThanOrEqual(0);
@@ -295,6 +302,12 @@ describe('MilestonePredictionEngine', () => {
     const scores = [makeScore(70, 90), makeScore(65, 60), makeScore(60, 30)];
     const preds = engine.predict('p1', [], scores, [], makePath());
     expect(preds.some((p) => p.category === 'SCORE_LEVEL')).toBe(false);
+  });
+
+  it('predicts SCORE_LEVEL from regression trend even with a mid-series dip', () => {
+    const scores = [makeScore(60, 90), makeScore(58, 60), makeScore(65, 30)];
+    const preds = engine.predict('p1', [], scores, [], makePath());
+    expect(preds.some((p) => p.category === 'SCORE_LEVEL')).toBe(true);
   });
 
   it('predicts HABIT_MILESTONE when improving habits with score >= 50', () => {
