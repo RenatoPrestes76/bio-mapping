@@ -17,7 +17,8 @@
   "pnpm": {
     "onlyBuiltDependencies": ["@prisma/engines", "prisma", "bcrypt", "sharp", "unrs-resolver"],
     "overrides": {
-      "fast-uri": "^3.1.4"
+      "fast-uri": "^3.1.6",
+      "deepmerge-ts": "^8.0.0"
     }
   },
   "devDependencies": {
