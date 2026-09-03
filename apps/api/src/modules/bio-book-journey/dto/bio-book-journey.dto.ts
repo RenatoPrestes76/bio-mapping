@@ -1,8 +1,8 @@
 import type { JourneyReport } from '../entities/journey-report.entity.js';
-import type { JourneyPath } from '../entities/journey-path.entity.js';
+import type { JourneyPath, JourneyDirection } from '../entities/journey-path.entity.js';
 import type { JourneyPhase } from '../entities/journey-phase.entity.js';
 import type { AdaptiveRecommendation } from '../entities/adaptive-recommendation.entity.js';
-import type { HabitPattern } from '../entities/habit-pattern.entity.js';
+import type { HabitPattern, HabitTrend } from '../entities/habit-pattern.entity.js';
 import type { MilestonePrediction } from '../entities/milestone-prediction.entity.js';
 
 export class AnalyzeBioBookJourneyDto {
@@ -27,7 +27,8 @@ export class AnalyzeBioBookJourneyDto {
 
 export class JourneyPathResponseDto {
   patientId!: string;
-  overallDirection!: string;
+  /** Derivado de computeTrend() + regras de negócio (hospitalização, fallback por marco) — não é passthrough direto. */
+  overallDirection!: JourneyDirection;
   progressPercentage!: number;
   narrative!: string;
   currentPhase?: {
@@ -103,7 +104,8 @@ export class NextStepsResponseDto {
   habitPatterns!: Array<{
     habitType: string;
     label: string;
-    trend: string;
+    /** 'EMERGING' é valor de regra de negócio (histórico curto) — não faz parte do TrendDirection do computeTrend(). */
+    trend: HabitTrend;
     consistencyScore: number;
     frequencyPerMonth: number;
     recommendation: string;
