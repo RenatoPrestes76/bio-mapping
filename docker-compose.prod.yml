@@ -1,0 +1,11 @@
+# Override de produção: usa a imagem já publicada, escaneada e assinada no GHCR
+# (por digest imutável, não por tag) em vez de rebuildar localmente a partir do
+# Dockerfile. Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Digest correspondente à release validada (Sprint BIOBOOCK — Release Closure,
+# commit 97c1516, GitHub Actions run 33753316690, Trivy/Cosign PASS):
+#   sha256:ff5fcc112dba86bf39b77cdd11bbb20be56af652e146b21a73141b551813d562
+services:
+  api:
+    build: !reset null
+    image: ghcr.io/renatoprestes76/bio-mapping/api@sha256:ff5fcc112dba86bf39b77cdd11bbb20be56af652e146b21a73141b551813d562
