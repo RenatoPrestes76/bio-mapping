@@ -58,6 +58,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Nomes de imagem OCI/Docker só aceitam minúsculas. github.repository preserva
+      # o casing literal do owner/repo (ex.: RenatoPrestes76/bio-mapping) — o push em
+      # si funciona porque docker/metadata-action normaliza internamente, mas os
+      # comandos `cosign sign`/`cosign attest` abaixo remontam a referência à mão a
+      # partir de env.IMAGE_NAME, e um `R`/`P` maiúsculo faz o parser do cosign
+      # rejeitar a referência ("could not parse reference"). Sobrescreve IMAGE_NAME
+      # já em minúsculas via $GITHUB_ENV para todos os passos seguintes deste job.
+      - name: Normalizar IMAGE_NAME para minúsculas
+        run: echo "IMAGE_NAME=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
