@@ -1,4 +1,5 @@
 import type { JourneyPhase, PhaseType } from './journey-phase.entity.js';
+import type { TrendInsight } from '../insights/trend-insight.js';
 
 export type JourneyDirection = 'ADVANCING' | 'STABLE' | 'NEEDS_ATTENTION';
 
@@ -10,6 +11,7 @@ export class JourneyPath {
   readonly progressPercentage: number;
   readonly overallDirection: JourneyDirection;
   readonly narrative: string;
+  readonly directionInsight?: TrendInsight;
 
   constructor(params: {
     id?: string;
@@ -19,14 +21,22 @@ export class JourneyPath {
     progressPercentage?: number;
     overallDirection?: JourneyDirection;
     narrative?: string;
+    directionInsight?: TrendInsight;
   }) {
     this.id = params.id ?? `path-${params.patientId}-${Date.now()}`;
     this.patientId = params.patientId;
     this.phases = params.phases;
-    this.currentPhaseIndex = Math.max(0, Math.min(params.currentPhaseIndex, params.phases.length - 1));
-    this.progressPercentage = Math.max(0, Math.min(100, params.progressPercentage ?? 0));
+    this.currentPhaseIndex = Math.max(
+      0,
+      Math.min(params.currentPhaseIndex, params.phases.length - 1),
+    );
+    this.progressPercentage = Math.max(
+      0,
+      Math.min(100, params.progressPercentage ?? 0),
+    );
     this.overallDirection = params.overallDirection ?? 'STABLE';
     this.narrative = params.narrative ?? '';
+    this.directionInsight = params.directionInsight;
   }
 
   getCurrentPhase(): JourneyPhase | undefined {

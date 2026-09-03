@@ -14,8 +14,20 @@ const makePath = (patientId = 'p1') =>
   new JourneyPath({
     patientId,
     phases: [
-      new JourneyPhase({ type: 'INITIAL_ASSESSMENT', status: 'CURRENT', order: 1, keyActions: ['A1'], successCriteria: ['C1'] }),
-      new JourneyPhase({ type: 'BASELINE_ESTABLISHMENT', status: 'UPCOMING', order: 2, keyActions: ['A2'], successCriteria: ['C2'] }),
+      new JourneyPhase({
+        type: 'INITIAL_ASSESSMENT',
+        status: 'CURRENT',
+        order: 1,
+        keyActions: ['A1'],
+        successCriteria: ['C1'],
+      }),
+      new JourneyPhase({
+        type: 'BASELINE_ESTABLISHMENT',
+        status: 'UPCOMING',
+        order: 2,
+        keyActions: ['A2'],
+        successCriteria: ['C2'],
+      }),
     ],
     currentPhaseIndex: 0,
     progressPercentage: 0,
@@ -109,6 +121,13 @@ describe('BioBookJourneyController', () => {
       const ctrl = new BioBookJourneyController(service as never);
       const result = ctrl.getPath('p1');
       expect(result.overallDirection).toBe('STABLE');
+    });
+
+    it('directionInsight is undefined (not a serialization error) when the entity does not define it', () => {
+      const service = makeService();
+      const ctrl = new BioBookJourneyController(service as never);
+      const result = ctrl.getPath('p1');
+      expect(result.directionInsight).toBeUndefined();
     });
 
     it('currentPhase is defined for active journey', () => {

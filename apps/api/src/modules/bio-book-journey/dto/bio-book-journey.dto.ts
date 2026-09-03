@@ -1,9 +1,16 @@
 import type { JourneyReport } from '../entities/journey-report.entity.js';
-import type { JourneyPath, JourneyDirection } from '../entities/journey-path.entity.js';
+import type {
+  JourneyPath,
+  JourneyDirection,
+} from '../entities/journey-path.entity.js';
 import type { JourneyPhase } from '../entities/journey-phase.entity.js';
 import type { AdaptiveRecommendation } from '../entities/adaptive-recommendation.entity.js';
-import type { HabitPattern, HabitTrend } from '../entities/habit-pattern.entity.js';
+import type {
+  HabitPattern,
+  HabitTrend,
+} from '../entities/habit-pattern.entity.js';
 import type { MilestonePrediction } from '../entities/milestone-prediction.entity.js';
+import type { TrendInsight } from '../insights/trend-insight.js';
 
 export class AnalyzeBioBookJourneyDto {
   patientId!: string;
@@ -31,6 +38,8 @@ export class JourneyPathResponseDto {
   overallDirection!: JourneyDirection;
   progressPercentage!: number;
   narrative!: string;
+  /** Interpretação de computeTrend() sobre a série de score, sem as regras de negócio que overallDirection aplica. Ausente quando a entidade não a define. */
+  directionInsight?: TrendInsight;
   currentPhase?: {
     type: string;
     label: string;
@@ -59,6 +68,7 @@ export class JourneyPathResponseDto {
     dto.overallDirection = path.overallDirection;
     dto.progressPercentage = path.progressPercentage;
     dto.narrative = path.narrative;
+    dto.directionInsight = path.directionInsight;
     dto.completedPhaseCount = path.getCompletedPhases().length;
     dto.phases = path.phases.map((p: JourneyPhase) => ({
       type: p.type,
@@ -79,7 +89,11 @@ export class JourneyPathResponseDto {
     }
     const next = path.getNextPhase();
     if (next) {
-      dto.nextPhase = { type: next.type, label: next.label, description: next.description };
+      dto.nextPhase = {
+        type: next.type,
+        label: next.label,
+        description: next.description,
+      };
     }
     return dto;
   }
@@ -110,6 +124,7 @@ export class NextStepsResponseDto {
     frequencyPerMonth: number;
     recommendation: string;
     needsAttention: boolean;
+    insight?: TrendInsight;
   }>;
 
   static fromReport(report: JourneyReport): NextStepsResponseDto {
@@ -117,16 +132,18 @@ export class NextStepsResponseDto {
     dto.patientId = report.patientId;
     dto.nextStep = report.getNextStep();
     dto.immediateCount = report.getImmediateRecommendations().length;
-    dto.recommendations = report.recommendations.map((r: AdaptiveRecommendation) => ({
-      id: r.id,
-      area: r.area,
-      priority: r.priority,
-      title: r.title,
-      rationale: r.rationale,
-      actions: r.actions,
-      evidenceBasis: r.evidenceBasis,
-      isClinicianReviewRequired: r.isClinicianReviewRequired,
-    }));
+    dto.recommendations = report.recommendations.map(
+      (r: AdaptiveRecommendation) => ({
+        id: r.id,
+        area: r.area,
+        priority: r.priority,
+        title: r.title,
+        rationale: r.rationale,
+        actions: r.actions,
+        evidenceBasis: r.evidenceBasis,
+        isClinicianReviewRequired: r.isClinicianReviewRequired,
+      }),
+    );
     dto.habitPatterns = report.habitPatterns.map((h: HabitPattern) => ({
       habitType: h.habitType,
       label: h.label,
@@ -135,6 +152,7 @@ export class NextStepsResponseDto {
       frequencyPerMonth: h.frequencyPerMonth,
       recommendation: h.recommendation,
       needsAttention: h.needsAttention(),
+      insight: h.insight,
     }));
     return dto;
   }
@@ -155,6 +173,7 @@ export class MilestonePredictionsResponseDto {
     confidence: string;
     requiredActions: string[];
     basisDescription: string;
+    insight?: TrendInsight;
   }>;
 
   static fromReport(report: JourneyReport): MilestonePredictionsResponseDto {
@@ -162,16 +181,19 @@ export class MilestonePredictionsResponseDto {
     dto.patientId = report.patientId;
     dto.totalPredictions = report.milestonePredictions.length;
     dto.highConfidenceCount = report.getHighConfidencePredictions().length;
-    dto.predictions = report.milestonePredictions.map((p: MilestonePrediction) => ({
-      id: p.id,
-      title: p.title,
-      description: p.description,
-      category: p.category,
-      estimatedTimeframe: p.estimatedTimeframe,
-      confidence: p.confidence,
-      requiredActions: p.requiredActions,
-      basisDescription: p.basisDescription,
-    }));
+    dto.predictions = report.milestonePredictions.map(
+      (p: MilestonePrediction) => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        category: p.category,
+        estimatedTimeframe: p.estimatedTimeframe,
+        confidence: p.confidence,
+        requiredActions: p.requiredActions,
+        basisDescription: p.basisDescription,
+        insight: p.insight,
+      }),
+    );
     return dto;
   }
 }
@@ -192,7 +214,8 @@ export class BioBookJourneyResponseDto {
     dto.reportId = report.id;
     dto.journeyPath = JourneyPathResponseDto.fromReport(report);
     dto.nextSteps = NextStepsResponseDto.fromReport(report);
-    dto.milestonePredictions = MilestonePredictionsResponseDto.fromReport(report);
+    dto.milestonePredictions =
+      MilestonePredictionsResponseDto.fromReport(report);
     dto.generatedAt = report.generatedAt.toISOString();
     return dto;
   }

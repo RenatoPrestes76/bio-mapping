@@ -1,3 +1,5 @@
+import type { TrendInsight } from '../insights/trend-insight.js';
+
 export type HabitType =
   | 'MEDICAL_FOLLOW_UP'
   | 'LAB_MONITORING'
@@ -24,6 +26,7 @@ export class HabitPattern {
   readonly lastObservedAt: Date;
   readonly evidences: string[];
   readonly recommendation: string;
+  readonly insight?: TrendInsight;
 
   constructor(params: {
     habitType: HabitType;
@@ -33,19 +36,27 @@ export class HabitPattern {
     lastObservedAt: Date;
     evidences?: string[];
     recommendation?: string;
+    insight?: TrendInsight;
   }) {
     this.habitType = params.habitType;
     this.label = HABIT_LABELS[params.habitType];
     this.trend = params.trend;
-    this.consistencyScore = Math.max(0, Math.min(100, Math.round(params.consistencyScore)));
+    this.consistencyScore = Math.max(
+      0,
+      Math.min(100, Math.round(params.consistencyScore)),
+    );
     this.frequencyPerMonth = Math.max(0, params.frequencyPerMonth);
     this.lastObservedAt = params.lastObservedAt;
     this.evidences = params.evidences ?? [];
     this.recommendation = params.recommendation ?? '';
+    this.insight = params.insight;
   }
 
   isHealthy(): boolean {
-    return this.consistencyScore >= 60 && (this.trend === 'IMPROVING' || this.trend === 'STABLE');
+    return (
+      this.consistencyScore >= 60 &&
+      (this.trend === 'IMPROVING' || this.trend === 'STABLE')
+    );
   }
 
   needsAttention(): boolean {
@@ -56,7 +67,17 @@ export class HabitPattern {
     return this.trend === 'EMERGING';
   }
 
-  toSummary(): { habitType: HabitType; label: string; trend: HabitTrend; consistencyScore: number } {
-    return { habitType: this.habitType, label: this.label, trend: this.trend, consistencyScore: this.consistencyScore };
+  toSummary(): {
+    habitType: HabitType;
+    label: string;
+    trend: HabitTrend;
+    consistencyScore: number;
+  } {
+    return {
+      habitType: this.habitType,
+      label: this.label,
+      trend: this.trend,
+      consistencyScore: this.consistencyScore,
+    };
   }
 }

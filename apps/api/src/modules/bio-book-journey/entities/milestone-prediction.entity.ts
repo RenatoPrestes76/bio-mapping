@@ -1,3 +1,5 @@
+import type { TrendInsight } from '../insights/trend-insight.js';
+
 export type PredictionConfidence = 'LOW' | 'MODERATE' | 'HIGH';
 export type PredictionCategory =
   | 'GOAL_ACHIEVEMENT'
@@ -16,6 +18,7 @@ export class MilestonePrediction {
   readonly confidence: PredictionConfidence;
   readonly requiredActions: string[];
   readonly basisDescription: string;
+  readonly insight?: TrendInsight;
 
   constructor(params: {
     id?: string;
@@ -27,8 +30,11 @@ export class MilestonePrediction {
     confidence?: PredictionConfidence;
     requiredActions?: string[];
     basisDescription?: string;
+    insight?: TrendInsight;
   }) {
-    this.id = params.id ?? `pred-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    this.id =
+      params.id ??
+      `pred-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     this.patientId = params.patientId;
     this.title = params.title;
     this.description = params.description;
@@ -37,6 +43,7 @@ export class MilestonePrediction {
     this.confidence = params.confidence ?? 'MODERATE';
     this.requiredActions = params.requiredActions ?? [];
     this.basisDescription = params.basisDescription ?? '';
+    this.insight = params.insight;
   }
 
   isHighConfidence(): boolean {

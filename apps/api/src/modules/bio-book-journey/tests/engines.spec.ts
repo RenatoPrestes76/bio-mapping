@@ -14,30 +14,95 @@ import { HabitPattern } from '../entities/habit-pattern.entity.js';
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 const makeEvent = (type: string, date: Date): NarrativeEvent =>
-  new NarrativeEvent({ eventType: type as 'CONSULTATION', date, narrativeText: 'Event.', significance: 'MEDIUM', patientId: 'p' });
+  new NarrativeEvent({
+    eventType: type as 'CONSULTATION',
+    date,
+    narrativeText: 'Event.',
+    significance: 'MEDIUM',
+    patientId: 'p',
+  });
 
-const makeMilestone = (type: string, rank: 'MINOR' | 'MAJOR' | 'LANDMARK' = 'MINOR'): HealthMilestone =>
-  new HealthMilestone({ milestoneType: type as 'BIOMARKER_IMPROVEMENT', rank, title: 'M', description: 'desc', achievedAt: new Date(), patientId: 'p' });
+const makeMilestone = (
+  type: string,
+  rank: 'MINOR' | 'MAJOR' | 'LANDMARK' = 'MINOR',
+): HealthMilestone =>
+  new HealthMilestone({
+    milestoneType: type as 'BIOMARKER_IMPROVEMENT',
+    rank,
+    title: 'M',
+    description: 'desc',
+    achievedAt: new Date(),
+    patientId: 'p',
+  });
 
-const makeGoal = (status: 'ON_TRACK' | 'AT_RISK' | 'ACHIEVED' | 'NOT_STARTED', progress: number): PersonalGoal =>
-  new PersonalGoal({ title: 'Meta', category: 'METABOLIC', description: 'Meta desc', targetDescription: 'target', status, progressPercent: progress, evidences: [], patientId: 'p', startedAt: new Date() });
+const makeGoal = (
+  status: 'ON_TRACK' | 'AT_RISK' | 'ACHIEVED' | 'NOT_STARTED',
+  progress: number,
+): PersonalGoal =>
+  new PersonalGoal({
+    title: 'Meta',
+    category: 'METABOLIC',
+    description: 'Meta desc',
+    targetDescription: 'target',
+    status,
+    progressPercent: progress,
+    evidences: [],
+    patientId: 'p',
+    startedAt: new Date(),
+  });
 
 const makeScore = (score: number, daysAgo: number): HealthScorePoint => {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() - daysAgo);
-  return new HealthScorePoint({ score, date, label: 'Jan/25', trend: 'STABLE', breakdown: { adherence: 50, biomarker: 50, lifestyle: 50 } });
+  return new HealthScorePoint({
+    score,
+    date,
+    label: 'Jan/25',
+    trend: 'STABLE',
+    breakdown: { adherence: 50, biomarker: 50, lifestyle: 50 },
+  });
 };
 
-const makeInsight = (category: 'RISK' | 'OPPORTUNITY' | 'ACHIEVEMENT', strength: 'STRONG' | 'MODERATE'): PersonalInsight =>
-  new PersonalInsight({ title: 'Insight', text: 'text', category, strength, evidences: [], patientId: 'p' });
+const makeInsight = (
+  category: 'RISK' | 'OPPORTUNITY' | 'ACHIEVEMENT',
+  strength: 'STRONG' | 'MODERATE',
+): PersonalInsight =>
+  new PersonalInsight({
+    title: 'Insight',
+    text: 'text',
+    category,
+    strength,
+    evidences: [],
+    patientId: 'p',
+  });
 
-const makePath = (direction: 'ADVANCING' | 'STABLE' | 'NEEDS_ATTENTION' = 'STABLE'): JourneyPath =>
+const makePath = (
+  direction: 'ADVANCING' | 'STABLE' | 'NEEDS_ATTENTION' = 'STABLE',
+): JourneyPath =>
   new JourneyPath({
     patientId: 'p1',
     phases: [
-      new JourneyPhase({ type: 'INITIAL_ASSESSMENT', status: 'COMPLETED', order: 1, keyActions: ['A1'], successCriteria: ['C1'] }),
-      new JourneyPhase({ type: 'BASELINE_ESTABLISHMENT', status: 'CURRENT', order: 2, keyActions: ['A2'], successCriteria: ['C2'] }),
-      new JourneyPhase({ type: 'HABIT_FORMATION', status: 'UPCOMING', order: 3, keyActions: ['A3'], successCriteria: ['C3'] }),
+      new JourneyPhase({
+        type: 'INITIAL_ASSESSMENT',
+        status: 'COMPLETED',
+        order: 1,
+        keyActions: ['A1'],
+        successCriteria: ['C1'],
+      }),
+      new JourneyPhase({
+        type: 'BASELINE_ESTABLISHMENT',
+        status: 'CURRENT',
+        order: 2,
+        keyActions: ['A2'],
+        successCriteria: ['C2'],
+      }),
+      new JourneyPhase({
+        type: 'HABIT_FORMATION',
+        status: 'UPCOMING',
+        order: 3,
+        keyActions: ['A3'],
+        successCriteria: ['C3'],
+      }),
     ],
     currentPhaseIndex: 1,
     progressPercentage: 25,
@@ -45,8 +110,19 @@ const makePath = (direction: 'ADVANCING' | 'STABLE' | 'NEEDS_ATTENTION' = 'STABL
     narrative: 'x',
   });
 
-const makeHabit = (trend: 'IMPROVING' | 'STABLE' | 'DECLINING', score: number): HabitPattern =>
-  new HabitPattern({ habitType: 'MEDICAL_FOLLOW_UP', trend, consistencyScore: score, frequencyPerMonth: 2, lastObservedAt: new Date(), evidences: [], recommendation: '' });
+const makeHabit = (
+  trend: 'IMPROVING' | 'STABLE' | 'DECLINING',
+  score: number,
+): HabitPattern =>
+  new HabitPattern({
+    habitType: 'MEDICAL_FOLLOW_UP',
+    trend,
+    consistencyScore: score,
+    frequencyPerMonth: 2,
+    lastObservedAt: new Date(),
+    evidences: [],
+    recommendation: '',
+  });
 
 // ── JourneyPathEngine ─────────────────────────────────────────────────────────
 
@@ -102,6 +178,18 @@ describe('JourneyPathEngine', () => {
     expect(path.overallDirection).toBe('NEEDS_ATTENTION');
   });
 
+  it('directionInsight reflects the raw score trend, independent of overallDirection business rules', () => {
+    const scores = [makeScore(60, 90), makeScore(65, 60), makeScore(70, 30)];
+    const path = engine.compute('p1', [], [], [], scores);
+    expect(path.directionInsight?.direction).toBe('IMPROVING');
+    expect(path.directionInsight?.dataPoints).toBe(3);
+  });
+
+  it('directionInsight is INSUFFICIENT_DATA when fewer than 2 score points exist', () => {
+    const path = engine.compute('p1', [], [], [], []);
+    expect(path.directionInsight?.direction).toBe('INSUFFICIENT_DATA');
+  });
+
   it('progressPercentage is in [0, 100]', () => {
     const path = engine.compute('p1', [], [], [], []);
     expect(path.progressPercentage).toBeGreaterThanOrEqual(0);
@@ -114,7 +202,10 @@ describe('JourneyPathEngine', () => {
   });
 
   it('builds narrative containing event and milestone counts', () => {
-    const events = [makeEvent('CONSULTATION', new Date()), makeEvent('LAB_RESULT', new Date())];
+    const events = [
+      makeEvent('CONSULTATION', new Date()),
+      makeEvent('LAB_RESULT', new Date()),
+    ];
     const path = engine.compute('p1', events, [], [], []);
     expect(path.narrative).toContain('2');
   });
@@ -154,7 +245,10 @@ describe('AdaptiveRecommendationEngine', () => {
   });
 
   it('deduplicates recommendations with same prefix', () => {
-    const insights = [makeInsight('RISK', 'STRONG'), makeInsight('RISK', 'STRONG')];
+    const insights = [
+      makeInsight('RISK', 'STRONG'),
+      makeInsight('RISK', 'STRONG'),
+    ];
     const recs = engine.generate('p1', insights, [], [], makePath(), []);
     const titles = recs.map((r) => r.title.toLowerCase().slice(0, 40));
     const unique = new Set(titles);
@@ -171,7 +265,15 @@ describe('AdaptiveRecommendationEngine', () => {
   it('returns empty when no inputs', () => {
     const pathNoNext = new JourneyPath({
       patientId: 'p1',
-      phases: [new JourneyPhase({ type: 'PERFORMANCE', status: 'CURRENT', order: 8, keyActions: [], successCriteria: [] })],
+      phases: [
+        new JourneyPhase({
+          type: 'PERFORMANCE',
+          status: 'CURRENT',
+          order: 8,
+          keyActions: [],
+          successCriteria: [],
+        }),
+      ],
       currentPhaseIndex: 0,
       progressPercentage: 100,
       overallDirection: 'STABLE',
@@ -212,7 +314,9 @@ describe('HabitEvolutionEngine', () => {
   it('detects MEDICATION_ADHERENCE from MEDICATION_START', () => {
     const events = [makeEvent('MEDICATION_START', new Date('2025-01-01'))];
     const habits = engine.analyze(events);
-    expect(habits.some((h) => h.habitType === 'MEDICATION_ADHERENCE')).toBe(true);
+    expect(habits.some((h) => h.habitType === 'MEDICATION_ADHERENCE')).toBe(
+      true,
+    );
   });
 
   it('computes IMPROVING trend when second half has more events', () => {
@@ -238,6 +342,15 @@ describe('HabitEvolutionEngine', () => {
     const habits = engine.analyze(events);
     const lab = habits.find((h) => h.habitType === 'LAB_MONITORING');
     expect(lab?.trend).toBe('DECLINING');
+    expect(lab?.insight?.direction).toBe('DECLINING');
+  });
+
+  it('insight is INSUFFICIENT_DATA (not an optimistic claim) when trend is EMERGING', () => {
+    const events = [makeEvent('CONSULTATION', new Date('2025-06-15'))];
+    const habits = engine.analyze(events);
+    const med = habits.find((h) => h.habitType === 'MEDICAL_FOLLOW_UP');
+    expect(med?.trend).toBe('EMERGING');
+    expect(med?.insight?.direction).toBe('INSUFFICIENT_DATA');
   });
 
   it('returns EMERGING trend for a single month of events', () => {
@@ -256,7 +369,9 @@ describe('HabitEvolutionEngine', () => {
     ];
     const habits = engine.analyze(events);
     for (let i = 1; i < habits.length; i++) {
-      expect(habits[i - 1].consistencyScore).toBeGreaterThanOrEqual(habits[i].consistencyScore);
+      expect(habits[i - 1].consistencyScore).toBeGreaterThanOrEqual(
+        habits[i].consistencyScore,
+      );
     }
   });
 
@@ -283,13 +398,21 @@ describe('MilestonePredictionEngine', () => {
   it('predicts GOAL_ACHIEVEMENT for ON_TRACK goal at 70%+ progress', () => {
     const goals = [makeGoal('ON_TRACK', 75)];
     const preds = engine.predict('p1', goals, [], [], makePath());
-    expect(preds.some((p) => p.category === 'GOAL_ACHIEVEMENT' && p.confidence === 'HIGH')).toBe(true);
+    expect(
+      preds.some(
+        (p) => p.category === 'GOAL_ACHIEVEMENT' && p.confidence === 'HIGH',
+      ),
+    ).toBe(true);
   });
 
   it('predicts GOAL_ACHIEVEMENT with MODERATE for ON_TRACK at 50-69%', () => {
     const goals = [makeGoal('ON_TRACK', 55)];
     const preds = engine.predict('p1', goals, [], [], makePath());
-    expect(preds.some((p) => p.category === 'GOAL_ACHIEVEMENT' && p.confidence === 'MODERATE')).toBe(true);
+    expect(
+      preds.some(
+        (p) => p.category === 'GOAL_ACHIEVEMENT' && p.confidence === 'MODERATE',
+      ),
+    ).toBe(true);
   });
 
   it('predicts SCORE_LEVEL when score is ascending for 3+ points', () => {
@@ -308,6 +431,14 @@ describe('MilestonePredictionEngine', () => {
     const scores = [makeScore(60, 90), makeScore(58, 60), makeScore(65, 30)];
     const preds = engine.predict('p1', [], scores, [], makePath());
     expect(preds.some((p) => p.category === 'SCORE_LEVEL')).toBe(true);
+  });
+
+  it('SCORE_LEVEL prediction carries the insight that justified it, confidence field untouched', () => {
+    const scores = [makeScore(63, 90), makeScore(66, 60), makeScore(69, 30)];
+    const preds = engine.predict('p1', [], scores, [], makePath());
+    const scoreLevel = preds.find((p) => p.category === 'SCORE_LEVEL');
+    expect(scoreLevel?.insight?.direction).toBe('IMPROVING');
+    expect(scoreLevel?.confidence).toBe('HIGH');
   });
 
   it('predicts HABIT_MILESTONE when improving habits with score >= 50', () => {
