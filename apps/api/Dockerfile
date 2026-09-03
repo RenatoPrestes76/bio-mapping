@@ -114,6 +114,12 @@ LABEL org.opencontainers.image.base.name="docker.io/library/node:22-alpine"
 # apk upgrade: aplica patches de segurança disponíveis no Alpine (elimina CVEs fixáveis).
 RUN apk upgrade --no-cache && apk add --no-cache tini curl
 
+# Remove o npm bundlado na imagem base node:22-alpine. Este projeto usa pnpm/corepack
+# exclusivamente (nunca invoca `npm`/`npx` em build ou runtime) — o npm bundlado é peso
+# morto que só traz CVEs (tar, pacote, sigstore, brace-expansion, picomatch, ip-address,
+# todos sob usr/local/lib/node_modules/npm/node_modules/**) sem nenhuma função na imagem.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 # Usuário não-root dedicado (princípio do menor privilégio).
 # Nunca executar a API como root em produção.
 RUN addgroup -S biomapping && adduser -S -G biomapping biomapping

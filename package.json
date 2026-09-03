@@ -18,7 +18,13 @@
     "onlyBuiltDependencies": ["@prisma/engines", "prisma", "bcrypt", "sharp", "unrs-resolver"],
     "overrides": {
       "fast-uri": "^3.1.6",
-      "deepmerge-ts": "^8.0.0"
+      "deepmerge-ts": "^8.0.0",
+      "@nestjs/swagger>js-yaml": "^4.3.1",
+      "multer": "^2.3.0",
+      "hono": "^4.12.34",
+      "@hono/node-server": "^1.19.15",
+      "valibot": "^1.4.2",
+      "mysql2": "^3.23.1"
     }
   },
   "devDependencies": {
