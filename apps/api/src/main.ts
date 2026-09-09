@@ -11,7 +11,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
@@ -21,10 +23,25 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
+  // credentials: true nunca foi usado aqui — auth é 100% Bearer token via header
+  // (ExtractJwt.fromAuthHeaderAsBearerToken(), zero cookie em toda a API/web).
+  // Com CORS_ORIGIN default '*', `credentials: true` produzia a combinação
+  // Access-Control-Allow-Origin: * + Access-Control-Allow-Credentials: true,
+  // inválida pela spec CORS — navegadores rejeitam requisições credentialed
+  // nesse caso. Removido por não ter função real.
+  //
+  // CORS_ORIGIN aceita uma lista separada por vírgula (múltiplos frontends,
+  // ex.: staging + produção). Passar array (não string fixa) para `cors` faz
+  // validar a Origin da requisição contra a lista e refletir só quando bate —
+  // com string fixa, o pacote `cors` ecoa esse valor sempre, mesmo pra origem
+  // não autorizada (inofensivo pro browser, que compara contra a própria
+  // origem, mas não é o comportamento determinístico esperado).
+  const corsOriginEnv = process.env.CORS_ORIGIN ?? '*';
+  const corsOrigin =
+    corsOriginEnv === '*' ? '*' : corsOriginEnv.split(',').map((o) => o.trim());
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    credentials: true,
   });
 
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
@@ -42,7 +59,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('BioMapping API')
-    .setDescription('PERSONA — Usuários, Perfis, Profissionais, Pacientes, Organizações, Convites')
+    .setDescription(
+      'PERSONA — Usuários, Perfis, Profissionais, Pacientes, Organizações, Convites',
+    )
     .setVersion(process.env.npm_package_version ?? '0.1.0')
     .addBearerAuth()
     .build();
