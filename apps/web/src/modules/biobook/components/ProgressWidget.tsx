@@ -7,18 +7,18 @@ interface ProgressWidgetProps {
 export function ProgressWidget({ goals }: ProgressWidgetProps) {
   if (goals.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <div className="rounded-xl border border-line bg-surface p-5 shadow-soft">
+        <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-ink-faint">
           Próximos Objetivos
         </h2>
-        <p className="text-sm text-zinc-400 dark:text-zinc-500">Nenhuma meta ativa.</p>
+        <p className="text-sm text-ink-faint">Nenhuma meta ativa.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <div className="rounded-xl border border-line bg-surface p-5 shadow-soft">
+      <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-ink-faint">
         Próximos Objetivos
       </h2>
 
@@ -26,8 +26,8 @@ export function ProgressWidget({ goals }: ProgressWidgetProps) {
         {goals.map((goal) => (
           <div key={goal.id} data-testid="goal-item">
             <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="font-medium text-zinc-800 dark:text-zinc-200">{goal.label}</span>
-              <span className="tabular-nums text-zinc-500 dark:text-zinc-400">{goal.progress}%</span>
+              <span className="font-medium text-ink">{goal.label}</span>
+              <span className="tabular-nums text-ink-faint">{goal.progress}%</span>
             </div>
 
             {/* Progress bar */}
@@ -37,16 +37,16 @@ export function ProgressWidget({ goals }: ProgressWidgetProps) {
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={goal.label}
-              className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+              className="h-1.5 overflow-hidden rounded-full bg-surface-muted"
             >
               <div
-                className="h-full rounded-full bg-zinc-900 transition-all duration-500 dark:bg-zinc-50"
+                className="h-full rounded-full bg-primary-600 transition-all duration-500"
                 style={{ width: `${Math.min(100, Math.max(0, goal.progress))}%` }}
               />
             </div>
 
             {goal.nextMilestone && (
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="mt-1 text-xs text-ink-faint">
                 → {goal.nextMilestone}
               </p>
             )}

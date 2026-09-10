@@ -34,7 +34,7 @@ export default function BioBookPage() {
       {isDemo && (
         <div
           role="status"
-          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+          className="mb-4 rounded-lg border border-info/20 bg-info-bg px-4 py-2 text-sm text-info"
         >
           Modo demonstração — conecte-se para ver seus dados reais.
         </div>

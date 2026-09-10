@@ -1,7 +1,7 @@
 function SkeletonBlock({ className }: { className: string }) {
   return (
     <div
-      className={`animate-pulse rounded bg-zinc-100 dark:bg-zinc-800 ${className}`}
+      className={`animate-pulse rounded bg-surface-muted ${className}`}
       aria-hidden="true"
     />
   );
@@ -10,7 +10,7 @@ function SkeletonBlock({ className }: { className: string }) {
 function CardSkeleton({ rows = 3, className = '' }: { rows?: number; className?: string }) {
   return (
     <div
-      className={`rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 ${className}`}
+      className={`rounded-xl border border-line bg-surface p-5 shadow-soft ${className}`}
     >
       <SkeletonBlock className="mb-4 h-3 w-24" />
       <div className="space-y-3">
@@ -26,8 +26,8 @@ export function LoadingSkeleton() {
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4" aria-label="Carregando BioBook" aria-busy="true">
       {/* Header */}
-      <div className="flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="h-16 w-16 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-800" aria-hidden="true" />
+      <div className="flex items-start gap-4 rounded-xl border border-line bg-surface p-5 shadow-soft">
+        <div className="h-16 w-16 animate-pulse rounded-full bg-surface-muted" aria-hidden="true" />
         <div className="flex-1 space-y-2">
           <SkeletonBlock className="h-5 w-40" />
           <SkeletonBlock className="h-3 w-24" />

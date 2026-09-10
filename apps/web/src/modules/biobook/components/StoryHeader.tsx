@@ -14,25 +14,25 @@ export function StoryHeader({ user, chapters }: StoryHeaderProps) {
   const firstChapter = sorted[0];
 
   return (
-    <header className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <header className="rounded-xl border border-line bg-surface p-5 shadow-soft">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
             A Jornada de
           </p>
-          <h1 className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-50">{user.name}</h1>
+          <h1 className="mt-1 text-xl font-bold text-ink">{user.name}</h1>
           {firstChapter && (
-            <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-sm text-ink-faint">
               Desde {formatDate(firstChapter.startDate)}
             </p>
           )}
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-3xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
+          <p className="text-3xl font-bold tabular-nums text-ink">
             {chapters.length}
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-ink-faint">
             {chapters.length === 1 ? 'capítulo' : 'capítulos'}
           </p>
         </div>

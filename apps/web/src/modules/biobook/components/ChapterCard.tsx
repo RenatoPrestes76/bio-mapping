@@ -42,38 +42,38 @@ export function ChapterCard({ chapter, eventCount = 0, onShare }: ChapterCardPro
 
   return (
     <article
-      className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-xl border border-line bg-surface p-5 shadow-soft"
       aria-label={chapter.title}
     >
       {/* Type badge */}
       <div className="mb-3 flex items-center gap-2">
         <span aria-hidden="true" className="text-lg">{icon}</span>
-        <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-faint">
           {label}
         </span>
       </div>
 
       {/* Title + subtitle */}
-      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{chapter.title}</h3>
+      <h3 className="text-base font-semibold text-ink">{chapter.title}</h3>
       {chapter.subtitle && (
-        <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{chapter.subtitle}</p>
+        <p className="mt-0.5 text-sm text-ink-faint">{chapter.subtitle}</p>
       )}
 
       {/* Date range */}
-      <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="mt-2 text-xs text-ink-faint">
         {formatDate(chapter.startDate)}
         {chapter.endDate && ` — ${formatDate(chapter.endDate)}`}
       </p>
 
       {/* Summary */}
       {chapter.summary && (
-        <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{chapter.summary}</p>
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">{chapter.summary}</p>
       )}
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between">
         {eventCount > 0 && (
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-ink-faint">
             {eventCount} evento{eventCount !== 1 ? 's' : ''}
           </span>
         )}
@@ -81,7 +81,7 @@ export function ChapterCard({ chapter, eventCount = 0, onShare }: ChapterCardPro
           <button
             type="button"
             onClick={() => onShare(chapter.id)}
-            className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50 dark:text-zinc-300 dark:ring-zinc-700 dark:hover:bg-zinc-800"
+            className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-ink-soft ring-1 ring-line hover:bg-surface-muted"
           >
             Compartilhar
           </button>

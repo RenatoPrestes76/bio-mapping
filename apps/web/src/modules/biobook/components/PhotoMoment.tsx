@@ -16,10 +16,10 @@ export function PhotoMoment({ label, photos }: PhotoMomentProps) {
   const remaining = photos.length - displayed.length;
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-line bg-surface p-5 shadow-soft">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</h3>
-        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+        <h3 className="text-sm font-medium text-ink-soft">{label}</h3>
+        <span className="text-xs text-ink-faint">
           {photos.length} foto{photos.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -27,7 +27,7 @@ export function PhotoMoment({ label, photos }: PhotoMomentProps) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {displayed.map((photo) => (
           <figure key={photo.id} className="relative">
-            <div className="overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+            <div className="overflow-hidden rounded-lg bg-surface-muted">
               <img
                 src={photo.url}
                 alt={photo.label ?? `Foto de ${formatDate(photo.date)}`}
@@ -35,7 +35,7 @@ export function PhotoMoment({ label, photos }: PhotoMomentProps) {
                 loading="lazy"
               />
             </div>
-            <figcaption className="mt-1 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            <figcaption className="mt-1 text-center text-xs text-ink-faint">
               {formatDate(photo.date)}
             </figcaption>
           </figure>
@@ -43,7 +43,7 @@ export function PhotoMoment({ label, photos }: PhotoMomentProps) {
       </div>
 
       {remaining > 0 && (
-        <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="mt-2 text-center text-xs text-ink-faint">
           +{remaining} foto{remaining !== 1 ? 's' : ''} no agrupamento
         </p>
       )}

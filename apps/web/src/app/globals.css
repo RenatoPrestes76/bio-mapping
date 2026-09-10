@@ -1,26 +1,176 @@
 @import "tailwindcss";
 
+/*
+ * BioBoock Design Foundation (Sprint 07)
+ * Conceito: vida saudável, movimento, natureza — não IA, não corporativo.
+ * Ver docs/ux/BIOBOOCK-UX-UI-DESIGN-SYSTEM.md para a documentação completa.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Canvas (base clara e natural, não zinc/cinza-frio) */
+  --color-canvas: #fefdfb;
+  --color-canvas-50: #faf8f3;
+  --color-canvas-100: #f3efe6;
+  --color-canvas-200: #e7e1d1;
+
+  /* Superfícies e texto */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f4ee;
+  --color-line: #e4e0d4;
+  --color-line-strong: #d2cbb8;
+
+  --color-ink: #1c2a22;
+  --color-ink-soft: #4b5a51;
+  --color-ink-faint: #7c8a80;
+
+  /* Primária — verde saúde/natureza */
+  --color-primary-50: #eff8f1;
+  --color-primary-100: #dcefe0;
+  --color-primary-200: #b9dfc2;
+  --color-primary-300: #8fc99d;
+  --color-primary-400: #62ac79;
+  --color-primary-500: #3e8f5c;
+  --color-primary-600: #2f7249;
+  --color-primary-700: #275c3c;
+  --color-primary-800: #204a31;
+  --color-primary-900: #1a3c28;
+
+  /* Secundária — azul confiança/equilíbrio */
+  --color-secondary-50: #eef5fc;
+  --color-secondary-100: #d9e9f8;
+  --color-secondary-200: #b3d2f1;
+  --color-secondary-300: #85b6e6;
+  --color-secondary-400: #5b9bda;
+  --color-secondary-500: #3c7fc4;
+  --color-secondary-600: #2f65a0;
+  --color-secondary-700: #285381;
+  --color-secondary-800: #234368;
+  --color-secondary-900: #1e3655;
+
+  /* Acento — energia, usado com moderação */
+  --color-accent-50: #fff3ec;
+  --color-accent-100: #ffe3d1;
+  --color-accent-200: #ffc7a3;
+  --color-accent-300: #ffa36d;
+  --color-accent-400: #fb8143;
+  --color-accent-500: #ef6a24;
+  --color-accent-600: #d6551a;
+  --color-accent-700: #b14416;
+
+  /* Semânticas (sempre acompanhadas de ícone/texto, nunca só cor) */
+  --color-success: #2f7249;
+  --color-success-bg: #eff8f1;
+  --color-warning: #a56616;
+  --color-warning-bg: #fdf3e1;
+  --color-error: #b3261e;
+  --color-error-bg: #fbeceb;
+  --color-info: #2f65a0;
+  --color-info-bg: #eef5fc;
+
+  /* Forma */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --shadow-soft: 0 1px 2px rgba(28, 42, 34, 0.04), 0 2px 8px rgba(28, 42, 34, 0.05);
+  --shadow-lifted: 0 4px 16px rgba(28, 42, 34, 0.08), 0 1px 3px rgba(28, 42, 34, 0.06);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--color-canvas);
+  --color-canvas-50: var(--color-canvas-50);
+  --color-canvas-100: var(--color-canvas-100);
+  --color-canvas-200: var(--color-canvas-200);
+
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-ink-faint: var(--color-ink-faint);
+
+  --color-primary-50: var(--color-primary-50);
+  --color-primary-100: var(--color-primary-100);
+  --color-primary-200: var(--color-primary-200);
+  --color-primary-300: var(--color-primary-300);
+  --color-primary-400: var(--color-primary-400);
+  --color-primary-500: var(--color-primary-500);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-700: var(--color-primary-700);
+  --color-primary-800: var(--color-primary-800);
+  --color-primary-900: var(--color-primary-900);
+
+  --color-secondary-50: var(--color-secondary-50);
+  --color-secondary-100: var(--color-secondary-100);
+  --color-secondary-200: var(--color-secondary-200);
+  --color-secondary-300: var(--color-secondary-300);
+  --color-secondary-400: var(--color-secondary-400);
+  --color-secondary-500: var(--color-secondary-500);
+  --color-secondary-600: var(--color-secondary-600);
+  --color-secondary-700: var(--color-secondary-700);
+  --color-secondary-800: var(--color-secondary-800);
+  --color-secondary-900: var(--color-secondary-900);
+
+  --color-accent-50: var(--color-accent-50);
+  --color-accent-100: var(--color-accent-100);
+  --color-accent-200: var(--color-accent-200);
+  --color-accent-300: var(--color-accent-300);
+  --color-accent-400: var(--color-accent-400);
+  --color-accent-500: var(--color-accent-500);
+  --color-accent-600: var(--color-accent-600);
+  --color-accent-700: var(--color-accent-700);
+
+  --color-success: var(--color-success);
+  --color-success-bg: var(--color-success-bg);
+  --color-warning: var(--color-warning);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-error: var(--color-error);
+  --color-error-bg: var(--color-error-bg);
+  --color-info: var(--color-info);
+  --color-info-bg: var(--color-info-bg);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lifted: var(--shadow-lifted);
+
+  --font-sans: var(--font-jakarta);
 }
 
+/* Dark mode preservado (não é a prioridade desta sprint — "light first"),
+   traduzindo os mesmos papéis semânticos para superfícies escuras naturais
+   (verde-carvão, não preto puro / não cinza frio). */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-canvas: #101a15;
+    --color-canvas-50: #142019;
+    --color-canvas-100: #1a281f;
+    --color-canvas-200: #26392c;
+
+    --color-surface: #16211a;
+    --color-surface-muted: #1c2b22;
+    --color-line: #2a3d31;
+    --color-line-strong: #3a5142;
+
+    --color-ink: #eaf3ec;
+    --color-ink-soft: #b7c9bd;
+    --color-ink-faint: #83968a;
+
+    --color-success-bg: #16281f;
+    --color-warning-bg: #2b2013;
+    --color-error-bg: #2b1917;
+    --color-info-bg: #16212d;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
 }

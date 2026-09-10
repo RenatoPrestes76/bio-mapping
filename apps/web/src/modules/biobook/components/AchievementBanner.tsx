@@ -13,21 +13,21 @@ export function AchievementBanner({ chapter }: AchievementBannerProps) {
     <div
       role="banner"
       aria-label={`Conquista: ${chapter.title}`}
-      className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800/50 dark:bg-amber-950/30"
+      className="flex items-center gap-4 rounded-xl border border-accent-200 bg-accent-50 p-5"
     >
       <span className="shrink-0 text-3xl" aria-hidden="true">⭐</span>
 
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-accent-700">
           Conquista
         </p>
-        <h3 className="mt-0.5 truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="mt-0.5 truncate text-base font-semibold text-ink">
           {chapter.title}
         </h3>
         {chapter.summary && (
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{chapter.summary}</p>
+          <p className="mt-1 text-sm text-ink-soft">{chapter.summary}</p>
         )}
-        <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+        <p className="mt-1 text-xs text-accent-600">
           {formatDate(chapter.startDate)}
           {chapter.endDate && ` — ${formatDate(chapter.endDate)}`}
         </p>

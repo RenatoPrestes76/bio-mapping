@@ -13,7 +13,7 @@ function PhotoCard({ photo }: { photo: EvolutionPhoto }) {
 
   return (
     <figure className="flex-1">
-      <div className="overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+      <div className="overflow-hidden rounded-lg bg-surface-muted">
         <img
           src={photo.url}
           alt={photo.label ?? `Foto de ${dateStr}`}
@@ -21,10 +21,10 @@ function PhotoCard({ photo }: { photo: EvolutionPhoto }) {
           loading="lazy"
         />
       </div>
-      <figcaption className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+      <figcaption className="mt-2 text-center text-xs text-ink-faint">
         {photo.label ? (
           <>
-            <span className="block font-medium text-zinc-700 dark:text-zinc-300">{photo.label}</span>
+            <span className="block font-medium text-ink-soft">{photo.label}</span>
             <span>{dateStr}</span>
           </>
         ) : (
@@ -38,11 +38,11 @@ function PhotoCard({ photo }: { photo: EvolutionPhoto }) {
 export function PhotoComparison({ photos }: PhotoComparisonProps) {
   if (photos.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <div className="rounded-xl border border-line bg-surface p-5 shadow-soft">
+        <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-ink-faint">
           Evolução Física
         </h2>
-        <p className="text-sm text-zinc-400 dark:text-zinc-500">
+        <p className="text-sm text-ink-faint">
           Adicione fotos para acompanhar sua transformação.
         </p>
       </div>
@@ -53,8 +53,8 @@ export function PhotoComparison({ photos }: PhotoComparisonProps) {
   const displayed = photos.slice(-2);
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <div className="rounded-xl border border-line bg-surface p-5 shadow-soft">
+      <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-ink-faint">
         Evolução Física
       </h2>
 
@@ -65,7 +65,7 @@ export function PhotoComparison({ photos }: PhotoComparisonProps) {
       </div>
 
       {photos.length > 2 && (
-        <p className="mt-3 text-center text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="mt-3 text-center text-xs text-ink-faint">
           +{photos.length - 2} foto{photos.length - 2 !== 1 ? 's' : ''} no histórico
         </p>
       )}

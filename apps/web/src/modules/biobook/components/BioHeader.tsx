@@ -14,7 +14,7 @@ export function BioHeader({ name, username, avatarUrl, mainGoal, mainSport, memb
   const duration = memberDuration(memberSince);
 
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex items-start gap-4 rounded-xl border border-line bg-surface p-5 shadow-soft">
       {/* Avatar */}
       <div className="shrink-0">
         {avatarUrl ? (
@@ -25,7 +25,7 @@ export function BioHeader({ name, username, avatarUrl, mainGoal, mainSport, memb
           />
         ) : (
           <div
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-200 text-xl font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-700"
             aria-label={`Avatar de ${name}`}
           >
             {name.charAt(0).toUpperCase()}
@@ -35,24 +35,24 @@ export function BioHeader({ name, username, avatarUrl, mainGoal, mainSport, memb
 
       {/* Info */}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-50">{name}</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">@{username}</p>
+        <h1 className="truncate text-lg font-bold tracking-tight text-ink">{name}</h1>
+        <p className="text-sm text-ink-faint">@{username}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           {mainGoal && (
-            <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <span className="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-medium text-primary-700">
               {mainGoal}
             </span>
           )}
           {mainSport && (
-            <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <span className="inline-flex items-center rounded-full bg-secondary-50 px-2.5 py-0.5 text-xs font-medium text-secondary-700">
               {mainSport}
             </span>
           )}
         </div>
 
         {duration && (
-          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="mt-2 text-xs text-ink-faint">
             No Bio Mapping há {duration}
           </p>
         )}

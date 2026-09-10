@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { TextField } from '@/components/ui/TextField';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 interface Profile {
   id: string;
@@ -19,10 +23,6 @@ interface Profile {
 }
 
 type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
-
-const inputClass =
-  'block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50';
-const labelClass = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300';
 
 export default function ProfilePage() {
   const [state, setState] = useState<LoadState>('loading');
@@ -104,17 +104,17 @@ export default function ProfilePage() {
 
   if (state === 'loading') {
     return (
-      <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-zinc-950" aria-busy="true" aria-label="Carregando perfil">
-        <div className="h-8 w-8 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" aria-hidden="true" />
+      <div className="flex flex-1 items-center justify-center bg-canvas-50" aria-busy="true" aria-label="Carregando perfil">
+        <div className="h-8 w-8 animate-pulse rounded-full bg-primary-200" aria-hidden="true" />
       </div>
     );
   }
 
   if (state === 'not-found') {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-zinc-50 px-4 text-center dark:bg-zinc-950">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">Você ainda não completou seu perfil.</p>
-        <a href="/onboarding" className="text-sm font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-50">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-canvas-50 px-4 text-center">
+        <p className="text-sm text-ink-soft">Você ainda não completou seu perfil.</p>
+        <a href="/onboarding" className="text-sm font-semibold text-primary-700 underline-offset-2 hover:underline">
           Completar agora
         </a>
       </div>
@@ -123,113 +123,82 @@ export default function ProfilePage() {
 
   if (state === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <p role="alert" className="text-sm text-red-700 dark:text-red-300">Não foi possível carregar seu perfil.</p>
+      <div className="flex flex-1 items-center justify-center bg-canvas-50 px-4">
+        <Alert tone="error">Não foi possível carregar seu perfil.</Alert>
       </div>
     );
   }
 
+  const initial = form.fullName.trim().charAt(0).toUpperCase() || '?';
+
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-10">
-      <h1 className="mb-6 text-xl font-semibold text-zinc-900 dark:text-zinc-50">Meu perfil</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        <div className="space-y-1.5">
-          <label htmlFor="fullName" className={labelClass}>Nome completo</label>
-          <input
-            id="fullName" required value={form.fullName}
-            onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-            className={inputClass}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="phone" className={labelClass}>Telefone</label>
-          <input
-            id="phone" value={form.phone}
-            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            className={inputClass}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="birthDate" className={labelClass}>Data de nascimento</label>
-          <input
-            id="birthDate" type="date" value={form.birthDate}
-            onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
-            className={inputClass}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="address" className={labelClass}>Endereço</label>
-          <input
-            id="address" value={form.address}
-            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-            className={inputClass}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="city" className={labelClass}>Cidade</label>
-            <input
-              id="city" value={form.city}
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="state" className={labelClass}>Estado</label>
-            <input
-              id="state" value={form.state_}
-              onChange={(e) => setForm((f) => ({ ...f, state_: e.target.value }))}
-              className={inputClass}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="zipcode" className={labelClass}>CEP</label>
-            <input
-              id="zipcode" value={form.zipcode}
-              onChange={(e) => setForm((f) => ({ ...f, zipcode: e.target.value }))}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="country" className={labelClass}>País</label>
-            <input
-              id="country" value={form.country}
-              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
-              className={inputClass}
-            />
-          </div>
-        </div>
-
-        {message && (
-          <p
-            role={message.type === 'error' ? 'alert' : 'status'}
-            className={
-              message.type === 'error'
-                ? 'rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300'
-                : 'rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300'
-            }
-          >
-            {message.text}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={saving}
-          aria-busy={saving}
-          className="flex h-11 w-full items-center justify-center rounded-lg bg-zinc-900 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:w-auto sm:px-8"
+      <div className="mb-8 flex items-center gap-4">
+        <div
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary-100 text-2xl font-bold text-primary-700"
+          aria-hidden="true"
         >
-          {saving ? 'Salvando…' : 'Salvar alterações'}
-        </button>
-      </form>
+          {initial}
+        </div>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink">Minha história</h1>
+          <p className="text-sm text-ink-faint">{form.fullName || 'Sua jornada no BioBoock'}</p>
+        </div>
+      </div>
+
+      <Card>
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <TextField
+            id="fullName" label="Nome completo" required value={form.fullName}
+            onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+          />
+
+          <TextField
+            id="phone" label="Telefone" value={form.phone}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+          />
+
+          <TextField
+            id="birthDate" label="Data de nascimento" type="date" value={form.birthDate}
+            onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
+          />
+
+          <TextField
+            id="address" label="Endereço" value={form.address}
+            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              id="city" label="Cidade" value={form.city}
+              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+            />
+            <TextField
+              id="state" label="Estado" value={form.state_}
+              onChange={(e) => setForm((f) => ({ ...f, state_: e.target.value }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              id="zipcode" label="CEP" value={form.zipcode}
+              onChange={(e) => setForm((f) => ({ ...f, zipcode: e.target.value }))}
+            />
+            <TextField
+              id="country" label="País" value={form.country}
+              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+            />
+          </div>
+
+          {message && (
+            <Alert tone={message.type === 'error' ? 'error' : 'success'}>{message.text}</Alert>
+          )}
+
+          <Button type="submit" pending={saving} className="sm:w-auto sm:px-8">
+            {saving ? 'Salvando…' : 'Salvar alterações'}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

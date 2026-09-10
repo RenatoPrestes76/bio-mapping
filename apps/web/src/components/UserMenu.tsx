@@ -46,22 +46,25 @@ export function UserMenu() {
   if (PUBLIC_PATHS.has(pathname) || !loaded || !user) return null;
 
   return (
-    <div className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <span className="text-zinc-600 dark:text-zinc-400">
-        {user.name} <span className="text-zinc-400 dark:text-zinc-600">({user.email})</span>
+    <div className="flex items-center gap-4 border-b border-line bg-surface px-4 py-2.5 text-sm">
+      <Link href="/biobook" className="font-bold tracking-tight text-primary-700">
+        BioBoock
+      </Link>
+      <span className="text-ink-faint">
+        {user.name} <span className="text-ink-faint/70">({user.email})</span>
       </span>
-      <Link href="/profile" className="text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-50">
+      <Link href="/profile" className="text-ink-soft underline-offset-2 hover:text-primary-700 hover:underline">
         Perfil
       </Link>
       {user.role === 'ADMIN' && (
-        <Link href="/admin" className="text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-50">
+        <Link href="/admin" className="text-ink-soft underline-offset-2 hover:text-primary-700 hover:underline">
           Administração
         </Link>
       )}
       <form action={logoutAction} className="ml-auto">
         <button
           type="submit"
-          className="rounded-md px-2 py-1 text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-50"
+          className="rounded-full px-3 py-1.5 text-ink-soft transition-colors hover:bg-surface-muted hover:text-ink"
         >
           Sair
         </button>
