@@ -11,7 +11,7 @@ import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from './lib/auth/config';
 // fala com a API — Proxy aqui é só UX (evita mostrar a página vazia antes de
 // redirecionar), nunca a única linha de defesa.
 
-const PUBLIC_ROUTES = new Set(['/login']);
+const PUBLIC_ROUTES = new Set(['/login', '/signup']);
 
 function hasSessionCookie(request: NextRequest): boolean {
   return Boolean(request.cookies.get(ACCESS_TOKEN_COOKIE) ?? request.cookies.get(REFRESH_TOKEN_COOKIE));

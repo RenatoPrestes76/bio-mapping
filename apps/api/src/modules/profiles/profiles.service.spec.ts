@@ -8,7 +8,7 @@ import { STORAGE_PROVIDER } from '../../common/storage/storage.provider';
 describe('ProfilesService', () => {
   let service: ProfilesService;
   let prisma: { profile: { findFirst: jest.Mock; create: jest.Mock; update: jest.Mock } };
-  let storage: { upload: jest.Mock; delete: jest.Mock };
+  let storage: { upload: jest.Mock; delete: jest.Mock; getAbsolutePath: jest.Mock };
 
   const baseProfile = {
     id: 'profile-1', userId: 'user-1', fullName: 'Jane Doe', cpf: null,
@@ -20,7 +20,7 @@ describe('ProfilesService', () => {
 
   beforeEach(async () => {
     prisma = { profile: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() } };
-    storage = { upload: jest.fn(), delete: jest.fn() };
+    storage = { upload: jest.fn(), delete: jest.fn(), getAbsolutePath: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -106,14 +106,16 @@ describe('ProfilesService', () => {
   describe('uploadAvatar', () => {
     const mockFile = { originalname: 'avatar.jpg', buffer: Buffer.from('img'), mimetype: 'image/jpeg' } as any;
 
-    it('uploads the file and updates the photo field', async () => {
+    it('uploads the file and updates the photo field with the authenticated download URL', async () => {
       prisma.profile.findFirst.mockResolvedValue(baseProfile);
       storage.upload.mockResolvedValue('/uploads/avatars/uuid.jpg');
       prisma.profile.update.mockResolvedValue({ ...baseProfile, photo: '/uploads/avatars/uuid.jpg' });
 
       const result = await service.uploadAvatar('user-1', mockFile);
       expect(storage.upload).toHaveBeenCalledWith(mockFile, 'avatars');
-      expect(result.photo).toBe('/uploads/avatars/uuid.jpg');
+      // Achado da Sprint 06: o path estático interno nunca deve vazar na resposta —
+      // só a rota autenticada GET /profiles/:userId/avatar.
+      expect(result.photo).toBe('/api/v1/profiles/user-1/avatar');
     });
 
     it('deletes the old avatar before uploading a new one', async () => {
@@ -129,6 +131,36 @@ describe('ProfilesService', () => {
     it('throws NotFoundException when profile does not exist', async () => {
       prisma.profile.findFirst.mockResolvedValue(null);
       await expect(service.uploadAvatar('user-1', mockFile)).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('getAvatar', () => {
+    it('resolves the absolute path and mime type for an existing avatar', async () => {
+      prisma.profile.findFirst.mockResolvedValue({ ...baseProfile, photo: '/uploads/avatars/uuid.jpg' });
+      storage.getAbsolutePath.mockReturnValue('/app/uploads/avatars/uuid.jpg');
+
+      const result = await service.getAvatar('user-1');
+
+      expect(storage.getAbsolutePath).toHaveBeenCalledWith('/uploads/avatars/uuid.jpg');
+      expect(result).toEqual({ path: '/app/uploads/avatars/uuid.jpg', mimeType: 'image/jpeg' });
+    });
+
+    it('infers PNG mime type from extension', async () => {
+      prisma.profile.findFirst.mockResolvedValue({ ...baseProfile, photo: '/uploads/avatars/uuid.png' });
+      storage.getAbsolutePath.mockReturnValue('/app/uploads/avatars/uuid.png');
+
+      const result = await service.getAvatar('user-1');
+      expect(result.mimeType).toBe('image/png');
+    });
+
+    it('throws NotFoundException when the profile has no avatar', async () => {
+      prisma.profile.findFirst.mockResolvedValue({ ...baseProfile, photo: null });
+      await expect(service.getAvatar('user-1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('throws NotFoundException when the profile does not exist', async () => {
+      prisma.profile.findFirst.mockResolvedValue(null);
+      await expect(service.getAvatar('user-1')).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

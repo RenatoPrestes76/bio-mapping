@@ -24,7 +24,11 @@ export class ProfileResponseDto {
 export function toProfileResponse(p: any): ProfileResponseDto {
   return {
     id: p.id, userId: p.userId, fullName: p.fullName, cpf: p.cpf,
-    birthDate: p.birthDate, gender: p.gender, phone: p.phone, photo: p.photo,
+    birthDate: p.birthDate, gender: p.gender, phone: p.phone,
+    // Achado da Sprint 06: `p.photo` é o path estático interno
+    // (`/uploads/avatars/...`), que ninguém serve mais desde a Sprint 03.
+    // Substituído pela rota autenticada `GET /profiles/:userId/avatar`.
+    photo: p.photo ? `/api/v1/profiles/${p.userId}/avatar` : null,
     address: p.address, city: p.city, state: p.state, country: p.country,
     zipcode: p.zipcode, timezone: p.timezone, language: p.language,
     createdAt: p.createdAt, updatedAt: p.updatedAt,

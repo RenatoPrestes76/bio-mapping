@@ -60,6 +60,25 @@ export async function apiLogin(
   }
 }
 
+export async function apiRegister(
+  email: string,
+  password: string,
+  name: string,
+): Promise<{ ok: true; data: AuthTokens } | { ok: false; error: ApiError }> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false, error: await parseErrorResponse(res) };
+    return { ok: true, data: (await res.json()) as AuthTokens };
+  } catch {
+    return { ok: false, error: { status: 0, message: 'Não foi possível conectar à API. Tente novamente.' } };
+  }
+}
+
 export async function apiRefresh(
   refreshToken: string,
 ): Promise<{ ok: true; data: AuthTokens } | { ok: false; error: ApiError }> {

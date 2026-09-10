@@ -1,4 +1,5 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { extname } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../../common/audit/audit-log.service';
 import { STORAGE_PROVIDER } from '../../common/storage/storage.provider';
@@ -7,6 +8,14 @@ import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileResponseDto, toProfileResponse } from './dto/profile-response.dto';
 import { Gender } from '@bio/database';
+
+const AVATAR_MIME_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+};
 
 @Injectable()
 export class ProfilesService {
@@ -93,5 +102,26 @@ export class ProfilesService {
     const updated = await this.prisma.profile.update({ where: { id: profile.id }, data: { photo: url } });
     await this.auditLog.log('PROFILE_AVATAR_UPDATED', { userId, metadata: { profileId: profile.id, url } });
     return toProfileResponse(updated);
+  }
+
+  /** Achado da Sprint 06: o `photo` gravado era o path estático
+   * `/uploads/avatars/...`, que desde a Sprint 03 não é mais servido por
+   * ninguém (o `useStaticAssets` foi removido por ser uma exposição pública
+   * sem autenticação) — o avatar era salvo com sucesso mas o link retornado
+   * ao cliente nunca funcionava. Esta rota (`GET /profiles/:userId/avatar`)
+   * é o substituto autenticado: qualquer usuário autenticado pode ver o
+   * avatar de qualquer outro (é a foto de perfil da rede, não dado clínico —
+   * mesmo nível de exposição de `searchUsers`/convites do BioCircle, que já
+   * mostram uma prévia mínima do usuário antes da conexão ser aceita), mas
+   * nunca sem token nenhum. */
+  async getAvatar(userId: string): Promise<{ path: string; mimeType: string }> {
+    const profile = await this.prisma.profile.findFirst({ where: { userId, deletedAt: null } });
+    if (!profile?.photo) throw new NotFoundException('Avatar não encontrado');
+
+    const ext = extname(profile.photo).toLowerCase();
+    return {
+      path: this.storage.getAbsolutePath(profile.photo),
+      mimeType: AVATAR_MIME_TYPES[ext] ?? 'application/octet-stream',
+    };
   }
 }

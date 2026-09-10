@@ -7,7 +7,7 @@ describe('ProfilesController', () => {
   let controller: ProfilesController;
   let service: {
     create: jest.Mock; getMyProfile: jest.Mock; update: jest.Mock;
-    delete: jest.Mock; uploadAvatar: jest.Mock;
+    delete: jest.Mock; uploadAvatar: jest.Mock; getAvatar: jest.Mock;
   };
 
   const user = { sub: 'user-1', email: 'jane@example.com', role: 'PATIENT' as const };
@@ -19,7 +19,8 @@ describe('ProfilesController', () => {
       getMyProfile: jest.fn().mockResolvedValue(profile),
       update: jest.fn().mockResolvedValue(profile),
       delete: jest.fn().mockResolvedValue(undefined),
-      uploadAvatar: jest.fn().mockResolvedValue({ ...profile, photo: '/uploads/avatars/img.jpg' }),
+      uploadAvatar: jest.fn().mockResolvedValue({ ...profile, photo: '/api/v1/profiles/user-1/avatar' }),
+      getAvatar: jest.fn().mockResolvedValue({ path: '/app/uploads/avatars/img.jpg', mimeType: 'image/jpeg' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -54,10 +55,19 @@ describe('ProfilesController', () => {
     const file = { originalname: 'img.jpg', buffer: Buffer.from('') } as any;
     const result = await controller.uploadAvatar(user, file);
     expect(service.uploadAvatar).toHaveBeenCalledWith('user-1', file);
-    expect(result.photo).toBe('/uploads/avatars/img.jpg');
+    expect(result.photo).toBe('/api/v1/profiles/user-1/avatar');
   });
 
   it('uploadAvatar() throws BadRequestException when no file', () => {
     expect(() => controller.uploadAvatar(user, undefined as any)).toThrow(BadRequestException);
+  });
+
+  it('getAvatar() streams the file with the correct Content-Type', async () => {
+    const res = { setHeader: jest.fn(), sendFile: jest.fn() } as any;
+    await controller.getAvatar('user-2', res);
+
+    expect(service.getAvatar).toHaveBeenCalledWith('user-2');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'image/jpeg');
+    expect(res.sendFile).toHaveBeenCalledWith('/app/uploads/avatars/img.jpg');
   });
 });

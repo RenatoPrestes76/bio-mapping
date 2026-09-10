@@ -1,7 +1,8 @@
 import {
   BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus,
-  Patch, Post, UploadedFile, UseGuards, UseInterceptors,
+  Param, Patch, Post, Res, UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProfilesService } from './profiles.service';
@@ -74,5 +75,13 @@ export class ProfilesController {
   ): Promise<ProfileResponseDto> {
     if (!file) throw new BadRequestException('Arquivo de imagem obrigatório');
     return this.profilesService.uploadAvatar(user.sub, file);
+  }
+
+  @Get(':userId/avatar')
+  @ApiOperation({ summary: 'Baixa o avatar de um usuário (autenticado, sem exigir ownership — mesma exposição de uma prévia de busca do BioCircle)' })
+  async getAvatar(@Param('userId') userId: string, @Res() res: Response) {
+    const file = await this.profilesService.getAvatar(userId);
+    res.setHeader('Content-Type', file.mimeType);
+    res.sendFile(file.path);
   }
 }

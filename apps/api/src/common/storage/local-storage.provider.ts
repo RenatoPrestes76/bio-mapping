@@ -19,4 +19,8 @@ export class LocalStorageProvider implements StorageProvider {
     const fullPath = join(process.cwd(), filePath);
     await unlink(fullPath).catch(() => {});
   }
+
+  getAbsolutePath(filePath: string): string {
+    return join(process.cwd(), filePath);
+  }
 }
