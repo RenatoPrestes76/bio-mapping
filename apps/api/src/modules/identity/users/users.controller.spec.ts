@@ -4,13 +4,13 @@ import { UsersService } from './users.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let usersService: { getMe: jest.Mock; updateMe: jest.Mock; changePassword: jest.Mock };
+  let usersService: { getMe: jest.Mock; updateMe: jest.Mock; changePassword: jest.Mock; findAll: jest.Mock };
 
   const req = { ip: '10.0.0.1' } as any;
   const currentUser = { sub: 'user-1', email: 'jane@example.com', role: 'PATIENT' as const };
 
   beforeEach(async () => {
-    usersService = { getMe: jest.fn(), updateMe: jest.fn(), changePassword: jest.fn() };
+    usersService = { getMe: jest.fn(), updateMe: jest.fn(), changePassword: jest.fn(), findAll: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
@@ -50,5 +50,16 @@ describe('UsersController', () => {
       { currentPassword: 'OldPass123!', newPassword: 'NewPass456!' },
       '10.0.0.1',
     );
+  });
+
+  // Achado da Sprint 06.1: findAll() é a rota que a Área Administrador do Web
+  // agora consome (@Roles(Role.ADMIN) já existente, nunca testado antes).
+  it('findAll() forwards the query dto to the service', async () => {
+    usersService.findAll.mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 });
+
+    const result = await controller.findAll({ page: 1, limit: 20 } as any);
+
+    expect(usersService.findAll).toHaveBeenCalledWith({ page: 1, limit: 20 });
+    expect(result).toEqual({ data: [], total: 0, page: 1, limit: 20 });
   });
 });

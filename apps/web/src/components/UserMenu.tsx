@@ -53,6 +53,11 @@ export function UserMenu() {
       <Link href="/profile" className="text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-50">
         Perfil
       </Link>
+      {user.role === 'ADMIN' && (
+        <Link href="/admin" className="text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-50">
+          Administração
+        </Link>
+      )}
       <form action={logoutAction} className="ml-auto">
         <button
           type="submit"

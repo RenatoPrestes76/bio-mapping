@@ -60,4 +60,32 @@ describe('UserMenu', () => {
 
     expect(await screen.findByRole('button', { name: 'Sair' })).toBeTruthy();
   });
+
+  // Achado da Sprint 06.1: o link de Administração só deve aparecer para
+  // quem a API já diz ser ADMIN via /users/me — nunca decidido localmente.
+  it('SECURITY: não exibe o link de Administração para um usuário PATIENT', async () => {
+    mockUsePathname.mockReturnValue('/biobook');
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'u1', email: 'jane@example.com', name: 'Jane Doe', role: 'PATIENT' }),
+    });
+
+    render(<UserMenu />);
+    await screen.findByText('Jane Doe');
+
+    expect(screen.queryByRole('link', { name: 'Administração' })).toBeNull();
+  });
+
+  it('exibe o link de Administração quando a API confirma role ADMIN', async () => {
+    mockUsePathname.mockReturnValue('/biobook');
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'u1', email: 'root@example.com', name: 'Admin', role: 'ADMIN' }),
+    });
+
+    render(<UserMenu />);
+
+    const link = await screen.findByRole('link', { name: 'Administração' });
+    expect(link.getAttribute('href')).toBe('/admin');
+  });
 });
