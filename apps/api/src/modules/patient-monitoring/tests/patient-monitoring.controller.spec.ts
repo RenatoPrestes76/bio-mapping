@@ -1,7 +1,7 @@
 import { TimelineEventSeverity, TimelineEventType } from '@bio/database';
 import { PatientMonitoringController } from '../controllers/patient-monitoring.controller.js';
 
-const user = { sub: 'user-1' };
+const user = { sub: 'user-1', role: 'PATIENT' };
 
 const event = {
   id: 'evt-1', patientId: 'p-1', eventType: TimelineEventType.DECISION_CREATED,
@@ -27,7 +27,7 @@ describe('PatientMonitoringController', () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       const result = await controller.getTimeline('p-1', user);
-      expect(service.getTimeline).toHaveBeenCalledWith('p-1', 100, 'user-1');
+      expect(service.getTimeline).toHaveBeenCalledWith('p-1', 100, user);
       expect(result).toEqual([event]);
     });
 
@@ -35,14 +35,14 @@ describe('PatientMonitoringController', () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       await controller.getTimeline('p-1', user, '50');
-      expect(service.getTimeline).toHaveBeenCalledWith('p-1', 50, 'user-1');
+      expect(service.getTimeline).toHaveBeenCalledWith('p-1', 50, user);
     });
 
     it('uses default limit 100 when no limit query param given', async () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       await controller.getTimeline('p-1', user, undefined);
-      expect(service.getTimeline).toHaveBeenCalledWith('p-1', 100, 'user-1');
+      expect(service.getTimeline).toHaveBeenCalledWith('p-1', 100, user);
     });
   });
 
@@ -51,7 +51,7 @@ describe('PatientMonitoringController', () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       const result = await controller.getSummary('p-1', user);
-      expect(service.getSummary).toHaveBeenCalledWith('p-1', 'user-1');
+      expect(service.getSummary).toHaveBeenCalledWith('p-1', user);
       expect(result).toBe(summary);
     });
   });
@@ -61,7 +61,7 @@ describe('PatientMonitoringController', () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       const result = await controller.getEvents('p-1', user);
-      expect(service.getEvents).toHaveBeenCalledWith('p-1', { limit: 50, offset: 0 }, 'user-1');
+      expect(service.getEvents).toHaveBeenCalledWith('p-1', { limit: 50, offset: 0 }, user);
       expect(result).toEqual([event]);
     });
 
@@ -69,14 +69,14 @@ describe('PatientMonitoringController', () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       await controller.getEvents('p-1', user, '20', '40');
-      expect(service.getEvents).toHaveBeenCalledWith('p-1', { limit: 20, offset: 40 }, 'user-1');
+      expect(service.getEvents).toHaveBeenCalledWith('p-1', { limit: 20, offset: 40 }, user);
     });
 
     it('uses default limit 50 and offset 0 when not provided', async () => {
       const service = makeService();
       const controller = new PatientMonitoringController(service as never);
       await controller.getEvents('p-1', user, undefined, undefined);
-      expect(service.getEvents).toHaveBeenCalledWith('p-1', { limit: 50, offset: 0 }, 'user-1');
+      expect(service.getEvents).toHaveBeenCalledWith('p-1', { limit: 50, offset: 0 }, user);
     });
   });
 });

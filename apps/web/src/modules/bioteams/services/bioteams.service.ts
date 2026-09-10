@@ -12,9 +12,15 @@ import type {
 
 const BASE = '/api/bioteams';
 
+// Achado da Sprint 04 (Web→API): faltava o prefixo global `api/v1` da API
+// (ver `apps/api/src/main.ts`) — reproduzido contra uma API real (404 sem o
+// prefixo, 401 com ele, já que a rota exige auth). Corrigido no helper para
+// não precisar tocar cada call site.
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1`;
+
 async function request<T>(url: string, options?: RequestInit): Promise<T | null> {
   try {
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+    const res = await fetch(`${API_BASE}${url}`, { headers: { 'Content-Type': 'application/json' }, ...options });
     if (!res.ok) return null;
     if (res.status === 204) return null;
     return res.json() as Promise<T>;

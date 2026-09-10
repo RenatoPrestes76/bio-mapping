@@ -11,28 +11,28 @@ export class PatientMonitoringController {
   @Get(':patientId/timeline')
   getTimeline(
     @Param('patientId') patientId: string,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
     @Query('limit') limit?: string,
   ) {
-    return this.service.getTimeline(patientId, limit ? Number(limit) : 100, user?.sub);
+    return this.service.getTimeline(patientId, limit ? Number(limit) : 100, user);
   }
 
   @Get(':patientId/summary')
-  getSummary(@Param('patientId') patientId: string, @CurrentUser() user: { sub: string }) {
-    return this.service.getSummary(patientId, user?.sub);
+  getSummary(@Param('patientId') patientId: string, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.getSummary(patientId, user);
   }
 
   @Get(':patientId/events')
   getEvents(
     @Param('patientId') patientId: string,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     return this.service.getEvents(
       patientId,
       { limit: limit ? Number(limit) : 50, offset: offset ? Number(offset) : 0 },
-      user?.sub,
+      user,
     );
   }
 }

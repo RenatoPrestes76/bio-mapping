@@ -1,6 +1,10 @@
 import type { BioBookData, HealthSummary, TimelineEvent, BioBookChapter, ChapterShare, StoryTimelineEntry } from '../types/biobook.types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+// Achado da Sprint 04 (Web→API): faltava o prefixo global `api/v1` que a API
+// usa em toda rota exceto `/health` (`app.setGlobalPrefix('api/v1', ...)` em
+// `apps/api/src/main.ts`) — toda chamada deste serviço sempre respondia 404,
+// reproduzido contra uma API real rodando (não é fabricação/leitura estática).
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1`;
 
 async function apiFetch<T>(path: string): Promise<T | null> {
   try {

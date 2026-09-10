@@ -1,5 +1,8 @@
+// Achado da Sprint 04 (Web→API): faltava o prefixo global `api/v1` da API.
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1`;
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const res = await fetch(`${API_BASE}${url}`, { headers: { 'Content-Type': 'application/json' }, ...options });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json() as Promise<T>;
 }
