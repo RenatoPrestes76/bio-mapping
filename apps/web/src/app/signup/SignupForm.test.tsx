@@ -44,4 +44,22 @@ describe('SignupForm', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('E-mail já cadastrado');
   });
+
+  it('SPRINT EXTRA: Senha e Confirmar senha têm botões de mostrar/ocultar independentes', async () => {
+    const user = userEvent.setup();
+    render(<SignupForm />);
+
+    const password = screen.getByLabelText('Senha') as HTMLInputElement;
+    const confirmPassword = screen.getByLabelText('Confirmar senha') as HTMLInputElement;
+    expect(password.type).toBe('password');
+    expect(confirmPassword.type).toBe('password');
+
+    const toggles = screen.getAllByRole('button', { name: 'Mostrar senha' });
+    expect(toggles).toHaveLength(2);
+
+    // Revela só o campo Senha — Confirmar senha permanece oculto.
+    await user.click(toggles[0]);
+    expect(password.type).toBe('text');
+    expect(confirmPassword.type).toBe('password');
+  });
 });

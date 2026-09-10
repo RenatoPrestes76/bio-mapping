@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { signupAction, type SignupState } from './actions';
 import { TextField } from '@/components/ui/TextField';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 
@@ -16,21 +17,19 @@ export function SignupForm() {
     <form action={action} className="w-full max-w-sm space-y-5" noValidate>
       <TextField id="name" name="name" label="Nome" type="text" autoComplete="name" required />
       <TextField id="email" name="email" label="E-mail" type="email" autoComplete="email" required />
-      <TextField
+      <PasswordField
         id="password"
         name="password"
         label="Senha"
-        type="password"
         autoComplete="new-password"
         required
         minLength={8}
         hint="Pelo menos 8 caracteres."
       />
-      <TextField
+      <PasswordField
         id="confirmPassword"
         name="confirmPassword"
         label="Confirmar senha"
-        type="password"
         autoComplete="new-password"
         required
         minLength={8}

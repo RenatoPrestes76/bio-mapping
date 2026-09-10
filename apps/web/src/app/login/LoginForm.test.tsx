@@ -48,4 +48,18 @@ describe('LoginForm', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Conta bloqueada ou inativa');
   });
+
+  it('SPRINT EXTRA: botão mostrar/ocultar alterna o type do campo Senha (padrão oculto)', async () => {
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    const passwordInput = screen.getByLabelText('Senha') as HTMLInputElement;
+    expect(passwordInput.type).toBe('password');
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar senha' }));
+    expect(passwordInput.type).toBe('text');
+
+    await user.click(screen.getByRole('button', { name: 'Ocultar senha' }));
+    expect(passwordInput.type).toBe('password');
+  });
 });

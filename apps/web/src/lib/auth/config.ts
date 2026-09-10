@@ -1,7 +1,16 @@
 // URL real da API (NestJS). Usado só em código server-side (Server Actions,
 // Route Handlers, proxy.ts) — nenhum service client-side toca isso
 // diretamente mais; eles chamam /api/proxy/* (mesmo domínio do Web).
-export const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1`;
+//
+// Achado (SPRINT EXTRA): `?? 'http://localhost:3000'` não cobre o caso de
+// NEXT_PUBLIC_API_URL estar definida como string vazia (`""`) — só cobre
+// null/undefined. Uma env var vazia (não ausente) é exatamente o que estava
+// configurado em Produção na Vercel, produzindo `API_BASE = "/api/v1"`
+// (URL relativa) e um fetch() server-side que falha ao tentar resolver essa
+// URL sem host — a causa raiz do login/cadastro quebrados em produção.
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiHost = configuredApiUrl && configuredApiUrl.trim() !== '' ? configuredApiUrl : 'http://localhost:3000';
+export const API_BASE = `${apiHost}/api/v1`;
 
 // Nomes dos cookies httpOnly que guardam a sessão real emitida pela API.
 // Nunca lidos por JS client-side — só Server Actions/Route Handlers/proxy.

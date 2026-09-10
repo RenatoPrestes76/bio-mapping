@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { loginAction, type LoginState } from './actions';
 import { TextField } from '@/components/ui/TextField';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 
@@ -15,7 +16,7 @@ export function LoginForm() {
   return (
     <form action={action} className="w-full max-w-sm space-y-5" noValidate>
       <TextField id="email" name="email" label="E-mail" type="email" autoComplete="email" required />
-      <TextField id="password" name="password" label="Senha" type="password" autoComplete="current-password" required />
+      <PasswordField id="password" name="password" label="Senha" autoComplete="current-password" required />
 
       <div className="flex items-center gap-2">
         <input
