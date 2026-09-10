@@ -16,7 +16,10 @@ const BASE = '/api/bioteams';
 // (ver `apps/api/src/main.ts`) — reproduzido contra uma API real (404 sem o
 // prefixo, 401 com ele, já que a rota exige auth). Corrigido no helper para
 // não precisar tocar cada call site.
-const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1`;
+// Achado da Sprint 05: este serviço roda em Client Components — chama
+// `/api/proxy/*` (mesma origem do Web), que anexa a sessão autenticada
+// (cookie httpOnly, nunca visível a este código) antes de repassar à API.
+const API_BASE = '/api/proxy';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T | null> {
   try {

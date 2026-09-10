@@ -1,5 +1,8 @@
 // Achado da Sprint 04 (Web→API): faltava o prefixo global `api/v1` da API.
-const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1`;
+// Achado da Sprint 05: este serviço roda em Client Components — chama
+// `/api/proxy/*` (mesma origem do Web), que anexa a sessão autenticada
+// (cookie httpOnly, nunca visível a este código) antes de repassar à API.
+const API_BASE = '/api/proxy';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, { headers: { 'Content-Type': 'application/json' }, ...options });
