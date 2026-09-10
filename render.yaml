@@ -1,22 +1,27 @@
 # Render Blueprint — BioBoock API
 #
 # Deploy: no dashboard da Render, "New" -> "Blueprint" -> conectar este
-# repositório. A Render lê este arquivo e provisiona o serviço web (Docker,
-# a partir de apps/api/Dockerfile) e o banco Postgres automaticamente.
+# repositório. A Render lê este arquivo e provisiona só o serviço web
+# (Docker, a partir de apps/api/Dockerfile).
 #
-# IMPORTANTE (custo): confirme o `plan` de cada recurso abaixo no dashboard
-# da Render antes de confirmar o deploy — os nomes de plano/preço mudam com
-# frequência e a Render pode exigir um plano pago para o Postgres dependendo
-# da oferta vigente. Nada aqui é cobrado automaticamente sem sua confirmação
-# explícita no fluxo de criação do Blueprint.
+# BANCO DE DADOS: este Blueprint NÃO cria um PostgreSQL. A conta Render já
+# possui um Postgres Free ativo ("seltriva-postgres", apesar do nome, é o
+# banco em uso pelo BioBoock) — a conta é limitada a 1 Postgres Free, então
+# criar um segundo aqui derruba o deploy ("cannot have more than one active
+# free tier database"). DATABASE_URL abaixo é `sync: false` de propósito:
+# a Render pede o valor durante a criação do Blueprint (ou ele é preenchido
+# depois, manualmente, em Environment no dashboard do serviço) — nunca vem
+# deste arquivo. Ver docs/operations/RENDER-DEPLOYMENT.md para o passo a
+# passo de como obter e colar essa connection string com segurança.
+#
+# IMPORTANTE (custo): confirme o `plan` do serviço web no dashboard da
+# Render antes de confirmar o deploy — nomes de plano/preço mudam com
+# frequência. Nada aqui é cobrado automaticamente sem confirmação explícita
+# no fluxo de criação do Blueprint.
 #
 # CORS_ORIGIN abaixo deve ser atualizado para o domínio real do Web na
 # Vercel (ver apps/web, projeto "web") — nunca deixar "*" em produção com
 # um domínio de frontend conhecido.
-
-databases:
-  - name: bioboock-db
-    plan: free # confirmar no dashboard; ajustar se a Render não oferecer Postgres free no momento do deploy
 
 services:
   - type: web
@@ -30,9 +35,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: bioboock-db
-          property: connectionString
+        sync: false # preenchido manualmente no dashboard com a connection string de seltriva-postgres — nunca neste arquivo
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
