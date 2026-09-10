@@ -20,6 +20,8 @@ jest.mock('../../identity/auth/guards/jwt-auth.guard.js', () => ({
   JwtAuthGuard: jest.fn().mockImplementation(() => ({ canActivate: () => true })),
 }));
 
+const user = { sub: 'p1', email: 'p1@example.com', role: 'PATIENT' as const };
+
 const D = (iso: string) => new Date(iso);
 const BASE = D('2024-03-01T00:00:00Z');
 const LATER = D('2024-09-01T00:00:00Z');
@@ -74,20 +76,20 @@ describe('BioBookInsightController', () => {
   describe('POST /bio-book-insight/analyze', () => {
     it('returns BioBookInsightResponseDto', () => {
       service.analyze.mockReturnValue(makeReport('p1'));
-      const result = controller.analyze({ patientId: 'p1' });
+      const result = controller.analyze({ patientId: 'p1' }, user);
       expect(result).toBeInstanceOf(BioBookInsightResponseDto);
       expect(result.patientId).toBe('p1');
     });
 
     it('reportId is truthy', () => {
       service.analyze.mockReturnValue(makeReport('p1'));
-      const result = controller.analyze({ patientId: 'p1' });
+      const result = controller.analyze({ patientId: 'p1' }, user);
       expect(result.reportId).toBeTruthy();
     });
 
     it('response contains all sub-sections', () => {
       service.analyze.mockReturnValue(makeReport('p1'));
-      const result = controller.analyze({ patientId: 'p1' });
+      const result = controller.analyze({ patientId: 'p1' }, user);
       expect(result.insights).toBeInstanceOf(InsightsResponseDto);
       expect(result.reflection).toBeInstanceOf(ReflectionResponseDto);
       expect(result.goals).toBeInstanceOf(GoalsResponseDto);
@@ -97,7 +99,7 @@ describe('BioBookInsightController', () => {
 
     it('generatedAt is valid ISO string', () => {
       service.analyze.mockReturnValue(makeReport('p1'));
-      const result = controller.analyze({ patientId: 'p1' });
+      const result = controller.analyze({ patientId: 'p1' }, user);
       expect(() => new Date(result.generatedAt)).not.toThrow();
     });
   });
@@ -105,14 +107,14 @@ describe('BioBookInsightController', () => {
   describe('GET /bio-book-insight/insights/:patientId', () => {
     it('returns InsightsResponseDto', () => {
       service.getInsights.mockReturnValue(makeReport('p1'));
-      const result = controller.getInsights('p1');
+      const result = controller.getInsights('p1', user);
       expect(result).toBeInstanceOf(InsightsResponseDto);
       expect(result.totalInsights).toBe(1);
     });
 
     it('insight has all expected fields', () => {
       service.getInsights.mockReturnValue(makeReport('p1'));
-      const result = controller.getInsights('p1');
+      const result = controller.getInsights('p1', user);
       const i = result.insights[0];
       expect(i).toHaveProperty('id');
       expect(i).toHaveProperty('category', 'ACHIEVEMENT');
@@ -126,28 +128,28 @@ describe('BioBookInsightController', () => {
 
     it('propagates NotFoundException', () => {
       service.getInsights.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getInsights('x')).toThrow(NotFoundException);
+      expect(() => controller.getInsights('x', user)).toThrow(NotFoundException);
     });
   });
 
   describe('GET /bio-book-insight/reflection/:patientId', () => {
     it('returns ReflectionResponseDto', () => {
       service.getReflection.mockReturnValue(makeReport('p1'));
-      const result = controller.getReflection('p1');
+      const result = controller.getReflection('p1', user);
       expect(result).toBeInstanceOf(ReflectionResponseDto);
       expect(result.totalReflections).toBe(1);
     });
 
     it('fullJourney is populated', () => {
       service.getReflection.mockReturnValue(makeReport('p1'));
-      const result = controller.getReflection('p1');
+      const result = controller.getReflection('p1', user);
       expect(result.fullJourney).toBeDefined();
       expect(result.fullJourney?.evolution).toBeTruthy();
     });
 
     it('reflection items have expected shape', () => {
       service.getReflection.mockReturnValue(makeReport('p1'));
-      const result = controller.getReflection('p1');
+      const result = controller.getReflection('p1', user);
       const r = result.reflections[0];
       expect(r).toHaveProperty('id');
       expect(r).toHaveProperty('period', 'FULL_JOURNEY');
@@ -159,21 +161,21 @@ describe('BioBookInsightController', () => {
 
     it('propagates NotFoundException', () => {
       service.getReflection.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getReflection('x')).toThrow(NotFoundException);
+      expect(() => controller.getReflection('x', user)).toThrow(NotFoundException);
     });
   });
 
   describe('GET /bio-book-insight/goals/:patientId', () => {
     it('returns GoalsResponseDto', () => {
       service.getGoals.mockReturnValue(makeReport('p1'));
-      const result = controller.getGoals('p1');
+      const result = controller.getGoals('p1', user);
       expect(result).toBeInstanceOf(GoalsResponseDto);
       expect(result.totalGoals).toBe(1);
     });
 
     it('goal has expected shape', () => {
       service.getGoals.mockReturnValue(makeReport('p1'));
-      const result = controller.getGoals('p1');
+      const result = controller.getGoals('p1', user);
       const g = result.goals[0];
       expect(g).toHaveProperty('id');
       expect(g).toHaveProperty('category', 'METABOLIC');
@@ -185,28 +187,28 @@ describe('BioBookInsightController', () => {
 
     it('propagates NotFoundException', () => {
       service.getGoals.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getGoals('x')).toThrow(NotFoundException);
+      expect(() => controller.getGoals('x', user)).toThrow(NotFoundException);
     });
   });
 
   describe('GET /bio-book-insight/score-evolution/:patientId', () => {
     it('returns ScoreEvolutionResponseDto', () => {
       service.getScoreEvolution.mockReturnValue(makeReport('p1'));
-      const result = controller.getScoreEvolution('p1');
+      const result = controller.getScoreEvolution('p1', user);
       expect(result).toBeInstanceOf(ScoreEvolutionResponseDto);
       expect(result.totalPoints).toBe(1);
     });
 
     it('has currentScore and currentLevel', () => {
       service.getScoreEvolution.mockReturnValue(makeReport('p1'));
-      const result = controller.getScoreEvolution('p1');
+      const result = controller.getScoreEvolution('p1', user);
       expect(result.currentScore).toBe(72);
       expect(result.currentLevel).toBeTruthy();
     });
 
     it('score point has all expected fields', () => {
       service.getScoreEvolution.mockReturnValue(makeReport('p1'));
-      const result = controller.getScoreEvolution('p1');
+      const result = controller.getScoreEvolution('p1', user);
       const p = result.points[0];
       expect(p).toHaveProperty('date');
       expect(p).toHaveProperty('label', 'Março 2024');
@@ -221,21 +223,21 @@ describe('BioBookInsightController', () => {
 
     it('propagates NotFoundException', () => {
       service.getScoreEvolution.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getScoreEvolution('x')).toThrow(NotFoundException);
+      expect(() => controller.getScoreEvolution('x', user)).toThrow(NotFoundException);
     });
   });
 
   describe('GET /bio-book-insight/current-chapter/:patientId', () => {
     it('returns CurrentChapterResponseDto', () => {
       service.getCurrentChapter.mockReturnValue(makeReport('p1'));
-      const result = controller.getCurrentChapter('p1');
+      const result = controller.getCurrentChapter('p1', user);
       expect(result).toBeInstanceOf(CurrentChapterResponseDto);
       expect(result.hasCurrentChapter).toBe(true);
     });
 
     it('currentChapter has expected shape', () => {
       service.getCurrentChapter.mockReturnValue(makeReport('p1'));
-      const result = controller.getCurrentChapter('p1');
+      const result = controller.getCurrentChapter('p1', user);
       const c = result.currentChapter!;
       expect(c).toHaveProperty('chapterNumber', 2);
       expect(c).toHaveProperty('chapterTitle');
@@ -250,14 +252,14 @@ describe('BioBookInsightController', () => {
     it('hasCurrentChapter false when no chapter', () => {
       const report = new BioBookInsightReport({ patientId: 'p1', insights: [], reflections: [], goals: [], scoreEvolution: [], currentChapter: null });
       service.getCurrentChapter.mockReturnValue(report);
-      const result = controller.getCurrentChapter('p1');
+      const result = controller.getCurrentChapter('p1', user);
       expect(result.hasCurrentChapter).toBe(false);
       expect(result.currentChapter).toBeUndefined();
     });
 
     it('propagates NotFoundException', () => {
       service.getCurrentChapter.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getCurrentChapter('x')).toThrow(NotFoundException);
+      expect(() => controller.getCurrentChapter('x', user)).toThrow(NotFoundException);
     });
   });
 });

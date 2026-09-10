@@ -1,11 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { OrgSettingsRepository } from '../repositories/org-settings.repository.js';
+import { PrismaService } from '../../../database/prisma.service.js';
 
 @Injectable()
 export class OrgSettingsService {
-  constructor(private readonly repo: OrgSettingsRepository) {}
+  constructor(
+    private readonly repo: OrgSettingsRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async getSettings(organizationId: string) {
+  private async assertAdmin(organizationId: string, userId: string): Promise<void> {
+    const membership = await this.prisma.membership.findFirst({
+      where: { organizationId, userId, role: { in: ['OWNER', 'ADMIN'] }, deletedAt: null },
+    });
+    if (!membership) throw new ForbiddenException('Permissão insuficiente na organização');
+  }
+
+  private async assertMember(organizationId: string, userId: string): Promise<void> {
+    const membership = await this.prisma.membership.findFirst({
+      where: { organizationId, userId, role: { in: ['OWNER', 'ADMIN', 'MANAGER'] }, deletedAt: null },
+    });
+    if (!membership) throw new ForbiddenException('Permissão insuficiente na organização');
+  }
+
+  async getSettings(organizationId: string, actorId: string) {
+    await this.assertMember(organizationId, actorId);
     const settings = await this.repo.findByOrganization(organizationId);
     if (!settings) {
       return {
@@ -24,7 +43,7 @@ export class OrgSettingsService {
     return settings;
   }
 
-  async updateSettings(organizationId: string, data: {
+  async updateSettings(organizationId: string, actorId: string, data: {
     maxUsers?: number;
     maxBranches?: number;
     apiCallsMonthly?: number;
@@ -35,6 +54,7 @@ export class OrgSettingsService {
     webhookUrl?: string;
     notifyOnLogin?: boolean;
   }) {
+    await this.assertAdmin(organizationId, actorId);
     return this.repo.upsert(organizationId, data);
   }
 }

@@ -39,13 +39,21 @@ describe('MembershipService', () => {
   });
 
   describe('listMembers', () => {
-    it('returns paginated members', async () => {
+    it('returns paginated members when the actor is a member of the org', async () => {
+      prisma.membership.findFirst.mockResolvedValue(baseMembership); // actor's own membership row
       prisma.membership.findMany.mockResolvedValue([baseMembership]);
       prisma.membership.count.mockResolvedValue(1);
 
-      const result = await service.listMembers('org-1', { page: 1, limit: 20 });
+      const result = await service.listMembers('org-1', 'user-2', { page: 1, limit: 20 });
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when the actor is not a member of the org', async () => {
+      prisma.membership.findFirst.mockResolvedValue(null);
+
+      await expect(service.listMembers('org-1', 'outsider', { page: 1, limit: 20 })).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.membership.findMany).not.toHaveBeenCalled();
     });
   });
 

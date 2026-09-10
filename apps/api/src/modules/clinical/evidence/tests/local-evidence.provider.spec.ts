@@ -85,4 +85,12 @@ describe('LocalEvidenceProvider', () => {
       await expect(provider.delete('arquivo.jpg', 'asm-1')).resolves.toBeUndefined();
     });
   });
+
+  describe('getAbsolutePath', () => {
+    it('resolve o caminho absoluto do arquivo dentro do subdir', () => {
+      const result = provider.getAbsolutePath('test-uuid.jpg', 'asm-1');
+      expect(result).toContain(path.join('uploads', 'evidence', 'asm-1', 'test-uuid.jpg'));
+      expect(path.isAbsolute(result)).toBe(true);
+    });
+  });
 });

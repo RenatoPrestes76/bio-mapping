@@ -1,10 +1,20 @@
 import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
+import { Role } from '@bio/database';
 import { JwtAuthGuard } from '../../../identity/auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../../identity/auth/guards/roles.guard.js';
+import { Roles } from '../../../identity/auth/decorators/roles.decorator.js';
 import { CurrentUser } from '../../../identity/auth/decorators/current-user.decorator.js';
 import { PopulationService } from '../services/population.service.js';
 
+/** Achado da Sprint 03: este controller tinha apenas `JwtAuthGuard` (autenticação),
+ * sem `RolesGuard`/`@Roles` (autorização) — qualquer usuário autenticado, incluindo
+ * PATIENT, podia ler dashboards, tendências, risco e alertas de saúde populacional
+ * de QUALQUER tenant, e confirmar alertas. Estes dados são agregados por tenant, não
+ * por paciente individual — ferramenta de gestão clínica/administrativa, não deve
+ * ser acessível a PATIENT. */
 @Controller('population')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN, Role.DOCTOR, Role.PROFESSIONAL)
 export class PopulationController {
   constructor(private readonly service: PopulationService) {}
 

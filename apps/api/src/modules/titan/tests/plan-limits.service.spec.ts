@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PlanLimitsService } from '../services/plan-limits.service.js';
 import { OrganizationPlan } from '@bio/database';
 
@@ -6,9 +6,12 @@ const makeBranchRepo = (count = 0) => ({
   countByOrganization: jest.fn().mockResolvedValue(count),
 });
 
-const makePrisma = (org: unknown, memberCount = 0) => ({
+const makePrisma = (org: unknown, memberCount = 0, actorMembership: unknown = { role: 'ADMIN' }) => ({
   organization: { findFirst: jest.fn().mockResolvedValue(org) },
-  membership: { count: jest.fn().mockResolvedValue(memberCount) },
+  membership: {
+    count: jest.fn().mockResolvedValue(memberCount),
+    findFirst: jest.fn().mockResolvedValue(actorMembership),
+  },
 });
 
 const freeOrg = { id: 'org-1', name: 'Clínica A', plan: OrganizationPlan.FREE };
@@ -75,9 +78,9 @@ describe('PlanLimitsService', () => {
   });
 
   describe('getUsage', () => {
-    it('returns usage metrics', async () => {
+    it('returns usage metrics for an org member', async () => {
       const service = new PlanLimitsService(makeBranchRepo(1) as never, makePrisma(freeOrg, 3) as never);
-      const usage = await service.getUsage('org-1');
+      const usage = await service.getUsage('org-1', 'actor-1');
       expect(usage?.plan).toBe(OrganizationPlan.FREE);
       expect(usage?.users.current).toBe(3);
       expect(usage?.users.limit).toBe(5);
@@ -87,8 +90,14 @@ describe('PlanLimitsService', () => {
 
     it('returns null when org not found', async () => {
       const service = new PlanLimitsService(makeBranchRepo() as never, makePrisma(null) as never);
-      const usage = await service.getUsage('org-missing');
+      const usage = await service.getUsage('org-missing', 'actor-1');
       expect(usage).toBeNull();
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when actor has no membership in the org', async () => {
+      const prisma = makePrisma(freeOrg, 3, null);
+      const service = new PlanLimitsService(makeBranchRepo(1) as never, prisma as never);
+      await expect(service.getUsage('org-1', 'outsider')).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 });

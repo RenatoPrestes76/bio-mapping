@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { BioBookChapter, ChapterShare } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { AuditLogService } from '../../../common/audit/audit-log.service.js';
@@ -6,6 +6,8 @@ import { StoryEngineRepository, type CreateChapterData } from '../repositories/s
 import { generateChapters, computeGenerationKey, type ChapterCandidate } from '../generators/chapter-generator.js';
 import type { UpdateChapterDto } from '../dto/update-chapter.dto.js';
 import type { ShareChapterDto } from '../dto/share-chapter.dto.js';
+
+interface Actor { sub: string; role: string }
 
 export interface StoryTimelineEntry {
   chapter: BioBookChapter;
@@ -149,32 +151,43 @@ export class StoryEngineService {
     return this.repository.findByUser(userId);
   }
 
-  async findById(id: string): Promise<BioBookChapter> {
+  async findById(id: string, actor: Actor): Promise<BioBookChapter> {
     const chapter = await this.repository.findById(id);
     if (!chapter) throw new NotFoundException(`Chapter ${id} not found`);
+    this.assertOwner(chapter, actor);
     return chapter;
   }
 
-  async update(id: string, dto: UpdateChapterDto, userId?: string): Promise<BioBookChapter> {
-    await this.findById(id);
+  async update(id: string, dto: UpdateChapterDto, actor: Actor): Promise<BioBookChapter> {
+    await this.findById(id, actor);
     const updated = await this.repository.updateChapter(id, dto);
-    await this.audit.log('CHAPTER_UPDATED', { userId, metadata: { chapterId: id } });
+    await this.audit.log('CHAPTER_UPDATED', { userId: actor.sub, metadata: { chapterId: id } });
     return updated;
   }
 
-  async share(id: string, dto: ShareChapterDto, sharedBy: string): Promise<ChapterShare> {
-    await this.findById(id);
+  async share(id: string, dto: ShareChapterDto, actor: Actor): Promise<ChapterShare> {
+    await this.findById(id, actor);
     const share = await this.repository.createShare({
       chapterId: id,
-      sharedBy,
+      sharedBy: actor.sub,
       sharedWith: dto.sharedWith,
       message: dto.message,
     });
     await this.audit.log('CHAPTER_SHARED', {
-      userId: sharedBy,
+      userId: actor.sub,
       metadata: { chapterId: id, sharedWith: dto.sharedWith },
     });
     return share;
+  }
+
+  /** Achado da Sprint 03: `findById`/`update`/`share` não validavam se o capítulo
+   * pertencia ao ator autenticado — qualquer usuário podia ler, editar e
+   * compartilhar capítulos de biografia clínica de QUALQUER outro usuário
+   * pelo id (IDOR). Capítulos são estritamente pessoais (auto-gerados por
+   * `generate(user.sub)`), então só o dono ou ADMIN podem acessá-los. */
+  private assertOwner(chapter: { userId: string }, actor: Actor): void {
+    if (actor.role === 'ADMIN') return;
+    if (chapter.userId !== actor.sub) throw new ForbiddenException('Acesso negado');
   }
 
   async findSharedWith(userId: string): Promise<ChapterShare[]> {

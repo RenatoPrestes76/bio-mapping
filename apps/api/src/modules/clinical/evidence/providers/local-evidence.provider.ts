@@ -31,4 +31,8 @@ export class LocalEvidenceProvider implements EvidenceStorageProvider {
     const filePath = path.join(this.baseDir, subdir, filename);
     await fs.unlink(filePath).catch(() => undefined); // silent if already gone
   }
+
+  getAbsolutePath(filename: string, subdir: string): string {
+    return path.join(this.baseDir, subdir, filename);
+  }
 }

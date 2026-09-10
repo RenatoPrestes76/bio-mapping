@@ -24,13 +24,21 @@ export class BranchService {
     return this.branchRepo.create(data);
   }
 
-  async listBranches(organizationId: string) {
+  async listBranches(organizationId: string, actorId: string) {
+    await this.assertAdmin(organizationId, actorId);
     return this.branchRepo.findByOrganization(organizationId);
   }
 
-  async getBranch(id: string) {
+  /** Lookup interno sem checagem — só para os métodos desta classe que já fazem a própria checagem em seguida. */
+  private async findBranchOrFail(id: string) {
     const branch = await this.branchRepo.findById(id);
     if (!branch) throw new NotFoundException(`Branch ${id} not found`);
+    return branch;
+  }
+
+  async getBranch(id: string, actorId: string) {
+    const branch = await this.findBranchOrFail(id);
+    await this.assertAdmin(branch.organizationId, actorId);
     return branch;
   }
 
@@ -42,13 +50,13 @@ export class BranchService {
     state?: string;
     isActive?: boolean;
   }) {
-    const branch = await this.getBranch(id);
+    const branch = await this.findBranchOrFail(id);
     await this.assertAdmin(branch.organizationId, actorId);
     return this.branchRepo.update(id, data);
   }
 
   async deleteBranch(id: string, actorId: string) {
-    const branch = await this.getBranch(id);
+    const branch = await this.findBranchOrFail(id);
     await this.assertAdmin(branch.organizationId, actorId);
     return this.branchRepo.softDelete(id);
   }

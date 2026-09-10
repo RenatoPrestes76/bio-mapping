@@ -16,6 +16,8 @@ jest.mock('../../identity/auth/guards/jwt-auth.guard.js', () => ({
   JwtAuthGuard: jest.fn().mockImplementation(() => ({ canActivate: () => true })),
 }));
 
+const user = { sub: 'p1', email: 'p1@example.com', role: 'PATIENT' as const };
+
 const BASE_DATE = new Date('2024-03-01T00:00:00Z');
 const LATER_DATE = new Date('2024-06-01T00:00:00Z');
 
@@ -62,8 +64,8 @@ describe('BioBookController', () => {
       const narrative = makeNarrative('p1');
       service.generate.mockReturnValue(narrative);
       const dto = { patientId: 'p1', events: [] };
-      const result = controller.generate(dto);
-      expect(service.generate).toHaveBeenCalledWith(dto);
+      const result = controller.generate(dto, user);
+      expect(service.generate).toHaveBeenCalledWith(dto, user);
       expect(result).toBeInstanceOf(BioBookResponseDto);
       expect(result.patientId).toBe('p1');
       expect(result.bioBookId).toBeTruthy();
@@ -72,7 +74,7 @@ describe('BioBookController', () => {
     it('response includes timeline, chapters, and summary', () => {
       const narrative = makeNarrative('p1');
       service.generate.mockReturnValue(narrative);
-      const result = controller.generate({ patientId: 'p1' });
+      const result = controller.generate({ patientId: 'p1' }, user);
       expect(result.timeline).toBeInstanceOf(BioBookTimelineResponseDto);
       expect(result.chapters).toBeInstanceOf(BioBookChaptersResponseDto);
       expect(result.summary).toBeInstanceOf(BioBookSummaryResponseDto);
@@ -80,7 +82,7 @@ describe('BioBookController', () => {
 
     it('generatedAt is an ISO string', () => {
       service.generate.mockReturnValue(makeNarrative('p1'));
-      const result = controller.generate({ patientId: 'p1' });
+      const result = controller.generate({ patientId: 'p1' }, user);
       expect(() => new Date(result.generatedAt)).not.toThrow();
       expect(new Date(result.generatedAt).getFullYear()).toBeGreaterThan(2020);
     });
@@ -90,7 +92,7 @@ describe('BioBookController', () => {
     it('returns BioBookTimelineResponseDto', () => {
       const narrative = makeNarrative('p1');
       service.getTimeline.mockReturnValue(narrative);
-      const result = controller.getTimeline('p1');
+      const result = controller.getTimeline('p1', user);
       expect(result).toBeInstanceOf(BioBookTimelineResponseDto);
       expect(result.patientId).toBe('p1');
       expect(result.totalEvents).toBe(1);
@@ -98,7 +100,7 @@ describe('BioBookController', () => {
 
     it('events have expected shape', () => {
       service.getTimeline.mockReturnValue(makeNarrative('p1'));
-      const result = controller.getTimeline('p1');
+      const result = controller.getTimeline('p1', user);
       expect(result.events[0]).toHaveProperty('id');
       expect(result.events[0]).toHaveProperty('eventType');
       expect(result.events[0]).toHaveProperty('narrativeText');
@@ -109,7 +111,7 @@ describe('BioBookController', () => {
 
     it('propagates NotFoundException', () => {
       service.getTimeline.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getTimeline('missing')).toThrow(NotFoundException);
+      expect(() => controller.getTimeline('missing', user)).toThrow(NotFoundException);
     });
   });
 
@@ -117,7 +119,7 @@ describe('BioBookController', () => {
     it('returns BioBookChaptersResponseDto', () => {
       const narrative = makeNarrative('p1');
       service.getChapters.mockReturnValue(narrative);
-      const result = controller.getChapters('p1');
+      const result = controller.getChapters('p1', user);
       expect(result).toBeInstanceOf(BioBookChaptersResponseDto);
       expect(result.patientId).toBe('p1');
       expect(result.totalChapters).toBe(1);
@@ -125,7 +127,7 @@ describe('BioBookController', () => {
 
     it('chapters have expected shape', () => {
       service.getChapters.mockReturnValue(makeNarrative('p1'));
-      const result = controller.getChapters('p1');
+      const result = controller.getChapters('p1', user);
       const c = result.chapters[0];
       expect(c).toHaveProperty('number', 1);
       expect(c).toHaveProperty('title');
@@ -143,7 +145,7 @@ describe('BioBookController', () => {
 
     it('propagates NotFoundException', () => {
       service.getChapters.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getChapters('missing')).toThrow(NotFoundException);
+      expect(() => controller.getChapters('missing', user)).toThrow(NotFoundException);
     });
   });
 
@@ -151,14 +153,14 @@ describe('BioBookController', () => {
     it('returns BioBookSummaryResponseDto', () => {
       const narrative = makeNarrative('p1');
       service.getSummary.mockReturnValue(narrative);
-      const result = controller.getSummary('p1');
+      const result = controller.getSummary('p1', user);
       expect(result).toBeInstanceOf(BioBookSummaryResponseDto);
       expect(result.patientId).toBe('p1');
     });
 
     it('summary contains all required fields', () => {
       service.getSummary.mockReturnValue(makeNarrative('p1'));
-      const result = controller.getSummary('p1');
+      const result = controller.getSummary('p1', user);
       expect(result.summary).toHaveProperty('headline');
       expect(result.summary).toHaveProperty('overview');
       expect(result.summary).toHaveProperty('keyAchievements');
@@ -170,7 +172,7 @@ describe('BioBookController', () => {
 
     it('milestones array is present with expected shape', () => {
       service.getSummary.mockReturnValue(makeNarrative('p1'));
-      const result = controller.getSummary('p1');
+      const result = controller.getSummary('p1', user);
       expect(Array.isArray(result.milestones)).toBe(true);
       expect(result.milestones[0]).toHaveProperty('id');
       expect(result.milestones[0]).toHaveProperty('type');
@@ -181,13 +183,13 @@ describe('BioBookController', () => {
 
     it('generatedAt is an ISO string', () => {
       service.getSummary.mockReturnValue(makeNarrative('p1'));
-      const result = controller.getSummary('p1');
+      const result = controller.getSummary('p1', user);
       expect(() => new Date(result.generatedAt)).not.toThrow();
     });
 
     it('propagates NotFoundException', () => {
       service.getSummary.mockImplementation(() => { throw new NotFoundException(); });
-      expect(() => controller.getSummary('missing')).toThrow(NotFoundException);
+      expect(() => controller.getSummary('missing', user)).toThrow(NotFoundException);
     });
   });
 });

@@ -294,17 +294,13 @@ export class VitalsService {
     });
     if (!professional) throw new ForbiddenException('Profissional não cadastrado');
 
+    // Achado da Sprint 03: o fallback anterior liberava acesso a QUALQUER
+    // paciente da plataforma desde que o profissional tivesse QUALQUER
+    // membership em QUALQUER organização — `Patient` não tem `organizationId`,
+    // então essa membership nunca tinha relação real com o paciente em
+    // questão. Removido: só `primaryProfessionalId` concede acesso.
     if (patient.primaryProfessionalId !== professional.id) {
-      // Verifica se há vínculo por membership na mesma organização
-      const sharedOrg = await this.prisma.membership.findFirst({
-        where: {
-          userId: actorUserId,
-          deletedAt: null,
-        },
-      });
-      if (!sharedOrg) {
-        throw new ForbiddenException('Profissional sem vínculo com este paciente');
-      }
+      throw new ForbiddenException('Profissional sem vínculo com este paciente');
     }
   }
 }

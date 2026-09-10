@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { randomInt } from 'node:crypto';
 import type { BioTeam, BioTeamEvent, BioTeamMember, TeamEventType, TeamMemberRole } from '@bio/database';
 import { BioTeamsRepository } from '../repositories/bioteams.repository.js';
 import { AuditLogService } from '../../../common/audit/audit-log.service.js';
@@ -23,8 +24,18 @@ const EVENT_TO_CHAPTER_TYPE: Record<string, string> = {
   MEETING: 'MILESTONE',
 };
 
+// Achado da Sprint 03: `Math.random()` não é criptograficamente seguro —
+// códigos de convite gerados com ele são previsíveis/força-bruteável.
+// Trocado por `crypto.randomInt` (CSPRNG), mesmo formato/tamanho (6
+// caracteres alfanuméricos maiúsculos) para não quebrar nada a jusante.
+const INVITE_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
 function generateInviteCode(): string {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += INVITE_CODE_ALPHABET[randomInt(0, INVITE_CODE_ALPHABET.length)];
+  }
+  return code;
 }
 
 @Injectable()

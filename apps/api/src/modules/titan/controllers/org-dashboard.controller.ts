@@ -15,17 +15,17 @@ export class OrgDashboardController {
   ) {}
 
   @Get('dashboard')
-  getDashboard(@Query('organizationId') organizationId: string) {
-    return this.dashboardService.getDashboard(organizationId);
+  getDashboard(@Query('organizationId') organizationId: string, @CurrentUser() user: { sub: string }) {
+    return this.dashboardService.getDashboard(organizationId, user.sub);
   }
 
   @Get('settings')
-  getSettings(@Query('organizationId') organizationId: string) {
-    return this.settingsService.getSettings(organizationId);
+  getSettings(@Query('organizationId') organizationId: string, @CurrentUser() user: { sub: string }) {
+    return this.settingsService.getSettings(organizationId, user.sub);
   }
 
   @Get('usage')
-  getUsage(@Query('organizationId') organizationId: string) {
-    return this.planLimits.getUsage(organizationId);
+  getUsage(@Query('organizationId') organizationId: string, @CurrentUser() user: { sub: string }) {
+    return this.planLimits.getUsage(organizationId, user.sub);
   }
 }

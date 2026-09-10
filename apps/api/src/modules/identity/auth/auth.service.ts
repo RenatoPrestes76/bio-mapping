@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
@@ -67,6 +67,8 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
+    await this.assertAccountActive(user, device);
+
     await this.auditLog.log('AUTH_LOGIN', { userId: user.id, ip: device.ip, userAgent: device.userAgent });
 
     return this.issueSession(user, dto.rememberMe ?? false, device);
@@ -81,6 +83,17 @@ export class AuthService {
 
     if (!session || session.revokedAt || session.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token inválido ou expirado');
+    }
+
+    if (session.user.status !== 'ACTIVE' || session.user.deletedAt) {
+      await this.prisma.session.update({ where: { id: session.id }, data: { revokedAt: new Date() } });
+      await this.auditLog.log('AUTH_REFRESH_DENIED_INACTIVE_ACCOUNT', {
+        userId: session.userId,
+        ip: device.ip,
+        userAgent: device.userAgent,
+        metadata: { status: session.user.status },
+      });
+      throw new ForbiddenException('Conta bloqueada ou inativa');
     }
 
     await this.prisma.session.update({
@@ -193,5 +206,22 @@ export class AuthService {
 
   hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  /** Achado da Sprint 03: `login`/`refresh` emitiam tokens sem checar
+   * `user.status`/`deletedAt` — uma conta BLOCKED/INACTIVE ou soft-deletada
+   * conseguia autenticar normalmente e continuar renovando sessão
+   * indefinidamente. `JwtStrategy` não consulta o banco (design stateless,
+   * TTL de 15 min do access token), então este é o ponto de aplicação real. */
+  private async assertAccountActive(user: { id: string; status: string; deletedAt: Date | null }, device: DeviceContext): Promise<void> {
+    if (user.status !== 'ACTIVE' || user.deletedAt) {
+      await this.auditLog.log('AUTH_LOGIN_DENIED_INACTIVE_ACCOUNT', {
+        userId: user.id,
+        ip: device.ip,
+        userAgent: device.userAgent,
+        metadata: { status: user.status },
+      });
+      throw new ForbiddenException('Conta bloqueada ou inativa');
+    }
   }
 }

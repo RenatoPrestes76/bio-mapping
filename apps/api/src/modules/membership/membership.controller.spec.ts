@@ -25,9 +25,9 @@ describe('MembershipController', () => {
     controller = module.get(MembershipController);
   });
 
-  it('listMembers() delegates to service', async () => {
-    const result = await controller.listMembers('org-1', { page: 1, limit: 20 });
-    expect(service.listMembers).toHaveBeenCalledWith('org-1', { page: 1, limit: 20 });
+  it('listMembers() delegates to service with the current actor', async () => {
+    const result = await controller.listMembers('org-1', { page: 1, limit: 20 }, actor);
+    expect(service.listMembers).toHaveBeenCalledWith('org-1', 'admin-1', { page: 1, limit: 20 });
     expect(result.data).toHaveLength(1);
   });
 

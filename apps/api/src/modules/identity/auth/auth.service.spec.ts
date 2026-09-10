@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../../database/prisma.service';
@@ -27,6 +27,8 @@ describe('AuthService', () => {
     birthDate: null,
     gender: null,
     role: 'PATIENT',
+    status: 'ACTIVE',
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -115,6 +117,34 @@ describe('AuthService', () => {
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
+    it('SECURITY: throws ForbiddenException for a BLOCKED account, even with correct credentials', async () => {
+      const passwordHash = await argon2.hash('S3nhaForte!23');
+      prisma.user.findUnique.mockResolvedValue({ ...baseUser, passwordHash, status: 'BLOCKED' });
+
+      await expect(
+        service.login({ email: baseUser.email, password: 'S3nhaForte!23' }, {}),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.session.create).not.toHaveBeenCalled();
+    });
+
+    it('SECURITY: throws ForbiddenException for an INACTIVE account', async () => {
+      const passwordHash = await argon2.hash('S3nhaForte!23');
+      prisma.user.findUnique.mockResolvedValue({ ...baseUser, passwordHash, status: 'INACTIVE' });
+
+      await expect(
+        service.login({ email: baseUser.email, password: 'S3nhaForte!23' }, {}),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('SECURITY: throws ForbiddenException for a soft-deleted account', async () => {
+      const passwordHash = await argon2.hash('S3nhaForte!23');
+      prisma.user.findUnique.mockResolvedValue({ ...baseUser, passwordHash, deletedAt: new Date() });
+
+      await expect(
+        service.login({ email: baseUser.email, password: 'S3nhaForte!23' }, {}),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
     it('creates a 90-day session when rememberMe is true', async () => {
       const passwordHash = await argon2.hash('S3nhaForte!23');
       prisma.user.findUnique.mockResolvedValue({ ...baseUser, passwordHash });
@@ -178,6 +208,41 @@ describe('AuthService', () => {
       });
 
       await expect(service.refresh('expired-token', {})).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('SECURITY: throws ForbiddenException and revokes the session when the account is BLOCKED', async () => {
+      const session = {
+        id: 'session-1',
+        userId: baseUser.id,
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        rememberMe: false,
+        user: { ...baseUser, status: 'BLOCKED' },
+      };
+      prisma.session.findUnique.mockResolvedValue(session);
+      prisma.session.update.mockResolvedValue({});
+
+      await expect(service.refresh('blocked-user-token', {})).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.session.update).toHaveBeenCalledWith({
+        where: { id: session.id },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(prisma.session.create).not.toHaveBeenCalled();
+    });
+
+    it('SECURITY: throws ForbiddenException when the account was soft-deleted', async () => {
+      const session = {
+        id: 'session-1',
+        userId: baseUser.id,
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        rememberMe: false,
+        user: { ...baseUser, deletedAt: new Date() },
+      };
+      prisma.session.findUnique.mockResolvedValue(session);
+      prisma.session.update.mockResolvedValue({});
+
+      await expect(service.refresh('deleted-user-token', {})).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 

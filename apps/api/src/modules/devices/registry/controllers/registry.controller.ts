@@ -34,8 +34,8 @@ export class RegistryController {
   }
 
   @Get('sessions')
-  getSessions(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.sessions.findSessions(page, limit);
+  getSessions(@Query('page') page: number, @Query('limit') limit: number, @CurrentUser() user: any) {
+    return this.sessions.findSessions(user, page, limit);
   }
 
   @Get(':id')

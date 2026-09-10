@@ -115,9 +115,9 @@ describe('BioCircleController', () => {
     expect(mockService.getNotifications).toHaveBeenCalledWith('u1');
   });
 
-  it('markRead — delegates notification id', async () => {
+  it('markRead — delegates notification id and actor', async () => {
     mockService.markNotificationRead.mockResolvedValue(undefined);
-    await controller.markRead('n1');
-    expect(mockService.markNotificationRead).toHaveBeenCalledWith('n1');
+    await controller.markRead('n1', USER);
+    expect(mockService.markNotificationRead).toHaveBeenCalledWith('n1', 'u1');
   });
 });

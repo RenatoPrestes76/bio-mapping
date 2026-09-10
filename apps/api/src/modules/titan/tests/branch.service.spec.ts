@@ -68,23 +68,35 @@ describe('BranchService', () => {
   });
 
   describe('listBranches', () => {
-    it('returns branches for organization', async () => {
+    it('returns branches for organization when actor is a member', async () => {
       branchRepo.findByOrganization.mockResolvedValue([branch]);
-      const result = await service.listBranches('org-1');
+      const result = await service.listBranches('org-1', 'user-1');
       expect(result).toEqual([branch]);
+    });
+
+    it('SECURITY: throws ForbiddenException when actor has no membership in the org', async () => {
+      prisma.membership.findFirst.mockResolvedValue(null);
+      await expect(service.listBranches('org-1', 'outsider')).rejects.toBeInstanceOf(ForbiddenException);
+      expect(branchRepo.findByOrganization).not.toHaveBeenCalled();
     });
   });
 
   describe('getBranch', () => {
-    it('returns branch when found', async () => {
+    it('returns branch when found and actor is a member of its org', async () => {
       branchRepo.findById.mockResolvedValue(branch);
-      const result = await service.getBranch('branch-1');
+      const result = await service.getBranch('branch-1', 'user-1');
       expect(result).toBe(branch);
     });
 
     it('throws NotFoundException when not found', async () => {
       branchRepo.findById.mockResolvedValue(null);
-      await expect(service.getBranch('missing')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.getBranch('missing', 'user-1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when actor is not a member of the branch\'s org', async () => {
+      branchRepo.findById.mockResolvedValue(branch);
+      prisma.membership.findFirst.mockResolvedValue(null);
+      await expect(service.getBranch('branch-1', 'outsider')).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 

@@ -25,15 +25,15 @@ export class PatientsController {
 
   @Get()
   @ApiOperation({ summary: 'Lista pacientes com filtros e paginação' })
-  findAll(@Query() query: SearchPatientsDto) {
-    return this.patientsService.findAll(query);
+  findAll(@Query() query: SearchPatientsDto, @CurrentUser() user: JwtPayload) {
+    return this.patientsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Retorna paciente por ID' })
   @ApiResponse({ status: 200, type: PatientResponseDto })
-  findById(@Param('id') id: string): Promise<PatientResponseDto> {
-    return this.patientsService.findById(id);
+  findById(@Param('id') id: string, @CurrentUser() user: JwtPayload): Promise<PatientResponseDto> {
+    return this.patientsService.findById(id, user);
   }
 
   @Patch(':id')
@@ -44,13 +44,13 @@ export class PatientsController {
     @Body() dto: UpdatePatientDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<PatientResponseDto> {
-    return this.patientsService.update(id, dto, user.sub);
+    return this.patientsService.update(id, dto, user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete do registro de paciente' })
   async delete(@Param('id') id: string, @CurrentUser() user: JwtPayload): Promise<void> {
-    await this.patientsService.delete(id, user.sub);
+    await this.patientsService.delete(id, user);
   }
 }

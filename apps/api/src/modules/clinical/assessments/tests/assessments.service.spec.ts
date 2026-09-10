@@ -472,13 +472,16 @@ describe('AssessmentsService', () => {
       await expect(service.create('patient-1', { templateId: 'tpl-1' } as any, UNKNOWN, CTX)).rejects.toThrow(ForbiddenException);
     });
 
-    it('profissional com membership compartilhada tem acesso', async () => {
+    it('SECURITY (IDOR): membership em qualquer organização NÃO concede acesso a paciente sem vínculo direto', async () => {
+      // Achado da Sprint 03: `Patient` não tem `organizationId` — uma membership
+      // em qualquer org não prova vínculo real com este paciente específico.
+      // Só `primaryProfessionalId` concede acesso.
       prisma.patient.findFirst.mockResolvedValue(makePatient({ primaryProfessionalId: 'outro-prof' }));
       repo.findAll.mockResolvedValue([[], 0]);
       prisma.professional.findFirst.mockResolvedValue({ id: 'prof-1', userId: 'prof-user-1', deletedAt: null });
       prisma.membership.findFirst.mockResolvedValue({ id: 'mem-1' });
 
-      await expect(service.findAll('patient-1', {}, PROF)).resolves.toBeDefined();
+      await expect(service.findAll('patient-1', {}, PROF)).rejects.toThrow(ForbiddenException);
     });
   });
 

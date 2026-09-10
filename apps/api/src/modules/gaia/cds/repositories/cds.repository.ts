@@ -107,6 +107,10 @@ export class CdsRepository {
     return this.prisma.cdsAlert.create({ data });
   }
 
+  async findAlertById(id: string): Promise<CdsAlert | null> {
+    return this.prisma.cdsAlert.findUnique({ where: { id } });
+  }
+
   async findAlertsByPatient(patientId: string, unreadOnly = false): Promise<CdsAlert[]> {
     return this.prisma.cdsAlert.findMany({
       where: { patientId, ...(unreadOnly ? { read: false } : {}) },

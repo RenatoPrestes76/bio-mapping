@@ -52,6 +52,10 @@ export class HealthInsightRepository {
     return count > 0;
   }
 
+  async findById(id: string) {
+    return this.prisma.healthInsight.findUnique({ where: { id } });
+  }
+
   async markRead(id: string) {
     return this.prisma.healthInsight.update({ where: { id }, data: { isRead: true } });
   }

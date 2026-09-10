@@ -24,13 +24,13 @@ export class BranchesController {
   }
 
   @Get()
-  listBranches(@Query('organizationId') organizationId: string) {
-    return this.branchService.listBranches(organizationId);
+  listBranches(@Query('organizationId') organizationId: string, @CurrentUser() user: { sub: string }) {
+    return this.branchService.listBranches(organizationId, user.sub);
   }
 
   @Get(':id')
-  getBranch(@Param('id') id: string) {
-    return this.branchService.getBranch(id);
+  getBranch(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
+    return this.branchService.getBranch(id, user.sub);
   }
 
   @Patch(':id')

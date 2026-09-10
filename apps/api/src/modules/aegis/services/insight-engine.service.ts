@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { WellnessInsightCategory, InsightPriority } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { HealthInsightRepository } from '../repositories/health-insight.repository.js';
 import { avg, linearSlope, daysAgo } from '../utils/math.utils.js';
+
+interface Actor { sub: string; role: string }
 
 export interface InsightCandidate {
   category: WellnessInsightCategory;
@@ -448,5 +450,19 @@ export class InsightEngineService {
     }
 
     return [];
+  }
+
+  /** Achado da Sprint 03: `AegisController.markInsightRead` chamava
+   * `insightRepo.markRead(id)` direto, sem checar dono — qualquer usuário
+   * autenticado podia marcar como lido (e assim silenciar) o insight de
+   * saúde de QUALQUER outro paciente. Neste módulo `patientId` é o próprio
+   * `sub` do usuário (dashboard self-service), não uma entidade separada. */
+  async markRead(id: string, actor: Actor) {
+    const insight = await this.insightRepo.findById(id);
+    if (!insight) throw new NotFoundException('Insight não encontrado');
+    if (actor.role !== 'ADMIN' && insight.patientId !== actor.sub) {
+      throw new ForbiddenException('Acesso negado');
+    }
+    return this.insightRepo.markRead(id);
   }
 }

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { AuditLogService } from '../../../common/audit/audit-log.service.js';
 
 export interface AuditQueryDto {
-  organizationId?: string;
+  organizationId: string;
   userId?: string;
   action?: string;
   from?: string;
@@ -19,11 +19,17 @@ export class AuditService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async query(dto: AuditQueryDto) {
+  async query(dto: AuditQueryDto, actorId: string) {
+    // organizationId é obrigatório — sem ele, a query anterior devolvia o audit log
+    // de TODAS as organizações da plataforma para qualquer usuário autenticado.
+    const membership = await this.prisma.membership.findFirst({
+      where: { organizationId: dto.organizationId, userId: actorId, role: { in: ['OWNER', 'ADMIN'] }, deletedAt: null },
+    });
+    if (!membership) throw new ForbiddenException('Permissão insuficiente na organização');
+
     const { organizationId, userId, action, from, to, page = 1, limit = 50 } = dto;
 
-    const where: Record<string, unknown> = {};
-    if (organizationId) where['organizationId'] = organizationId;
+    const where: Record<string, unknown> = { organizationId };
     if (userId) where['userId'] = userId;
     if (action) where['action'] = { contains: action, mode: 'insensitive' };
     if (from || to) {

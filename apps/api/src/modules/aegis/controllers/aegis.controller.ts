@@ -51,8 +51,8 @@ export class AegisController {
   }
 
   @Patch('insights/:id/read')
-  markInsightRead(@Param('id') id: string) {
-    return this.insightRepo.markRead(id);
+  markInsightRead(@Param('id') id: string, @CurrentUser() user: JwtUser) {
+    return this.insightEngine.markRead(id, user);
   }
 
   @Get('recommendations')
@@ -63,8 +63,12 @@ export class AegisController {
   }
 
   @Patch('recommendations/:id')
-  updateRecommendation(@Param('id') id: string, @Body() body: { status: RecommendationStatus }) {
-    return this.recommendations.updateStatus(id, body.status);
+  updateRecommendation(
+    @Param('id') id: string,
+    @Body() body: { status: RecommendationStatus },
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.recommendations.updateStatus(id, body.status, user);
   }
 
   @Get('goals')

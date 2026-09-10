@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CdsEvaluation, CdsFeedback } from '@bio/database';
 import { CdsRepository } from '../repositories/cds.repository.js';
 import { AlertManagerService } from './alert-manager.service.js';
 import { AuditLogService } from '../../../../common/audit/audit-log.service.js';
+import { PrismaService } from '../../../../database/prisma.service.js';
 import { applyRules, DEFAULT_RULES, type CdsRuleDefinition, type ClinicalVariables } from '../engine/rule-engine.js';
 import { calculatePriorityScore, determinePriority, requiresMedicalReview } from '../engine/priority-calculator.js';
 import { calculateConfidence, calculateDataQuality, evidenceQualityScore } from '../engine/confidence-calculator.js';
@@ -18,6 +19,8 @@ import type { DecisionFeedbackDto } from '../dto/decision-feedback.dto.js';
 
 const CDS_VERSION = '1.0';
 const MODELS_USED = ['rule-engine', 'priority-calculator', 'confidence-calculator', 'recommendation-aggregator'];
+
+interface Actor { sub: string; role: string }
 
 export interface CdsExplanation {
   evaluation: CdsEvaluation;
@@ -37,9 +40,12 @@ export class CdsService {
     private readonly repository: CdsRepository,
     private readonly alertManager: AlertManagerService,
     private readonly audit: AuditLogService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  async evaluate(dto: EvaluateCdsDto, evaluatedBy: string): Promise<CdsEvaluation> {
+  async evaluate(dto: EvaluateCdsDto, actor: Actor): Promise<CdsEvaluation> {
+    await this.assertPatientAccess(dto.patientId, actor);
+    const evaluatedBy = actor.sub;
     const start = Date.now();
 
     // 1. Load custom DB rules and merge with built-in defaults
@@ -136,27 +142,29 @@ export class CdsService {
     return evaluation;
   }
 
-  async findById(id: string): Promise<CdsEvaluation> {
+  async findById(id: string, actor: Actor): Promise<CdsEvaluation> {
     const evaluation = await this.repository.findEvaluationById(id);
     if (!evaluation) throw new NotFoundException('CDS evaluation not found');
+    await this.assertPatientAccess(evaluation.patientId, actor);
     return evaluation;
   }
 
-  async findHistory(patientId: string, limit?: number): Promise<CdsEvaluation[]> {
+  async findHistory(patientId: string, actor: Actor, limit?: number): Promise<CdsEvaluation[]> {
+    await this.assertPatientAccess(patientId, actor);
     return this.repository.findHistory(patientId, limit);
   }
 
-  async recalculate(id: string, userId: string): Promise<CdsEvaluation> {
-    const existing = await this.findById(id);
+  async recalculate(id: string, actor: Actor): Promise<CdsEvaluation> {
+    const existing = await this.findById(id, actor);
     const inputData = existing.inputData as EvaluateCdsDto | null;
     if (!inputData) throw new NotFoundException('Original input data not available for recalculation');
 
-    await this.audit.log('CDS_RECALCULATED', { userId, metadata: { originalId: id, patientId: existing.patientId } });
-    return this.evaluate(inputData, userId);
+    await this.audit.log('CDS_RECALCULATED', { userId: actor.sub, metadata: { originalId: id, patientId: existing.patientId } });
+    return this.evaluate(inputData, actor);
   }
 
-  async getExplanation(id: string): Promise<CdsExplanation> {
-    const evaluation = await this.findById(id);
+  async getExplanation(id: string, actor: Actor): Promise<CdsExplanation> {
+    const evaluation = await this.findById(id, actor);
 
     const { getPriorityBand } = await import('../engine/priority-calculator.js');
     const { interpretConfidence } = await import('../engine/confidence-calculator.js');
@@ -176,19 +184,57 @@ export class CdsService {
     };
   }
 
-  async addFeedback(evaluationId: string, dto: DecisionFeedbackDto, userId: string): Promise<CdsFeedback> {
-    await this.findById(evaluationId);
-    const feedback = await this.repository.createFeedback({ evaluationId, userId, ...dto });
-    await this.audit.log('CDS_FEEDBACK_ADDED', { userId, metadata: { evaluationId, rating: dto.rating } });
+  async addFeedback(evaluationId: string, dto: DecisionFeedbackDto, actor: Actor): Promise<CdsFeedback> {
+    await this.findById(evaluationId, actor);
+    const feedback = await this.repository.createFeedback({ evaluationId, userId: actor.sub, ...dto });
+    await this.audit.log('CDS_FEEDBACK_ADDED', { userId: actor.sub, metadata: { evaluationId, rating: dto.rating } });
     return feedback;
   }
 
-  async getAlerts(patientId: string, unreadOnly?: boolean) {
+  async getAlerts(patientId: string, actor: Actor, unreadOnly?: boolean) {
+    await this.assertPatientAccess(patientId, actor);
     return this.alertManager.getAlerts(patientId, unreadOnly);
   }
 
-  async markAlertRead(alertId: string) {
+  async markAlertRead(alertId: string, actor: Actor) {
+    const alert = await this.repository.findAlertById(alertId);
+    if (!alert) throw new NotFoundException('CDS alert not found');
+    await this.assertPatientAccess(alert.patientId, actor);
     return this.alertManager.markRead(alertId);
+  }
+
+  // ── Access control ────────────────────────────────────────────────────────
+
+  /** Achado da Sprint 03: nenhum método deste serviço validava se o `patientId`
+   * (informado no DTO ou resolvido a partir de uma evaluation/alert existente)
+   * pertencia ao ator autenticado — qualquer usuário podia criar/ler avaliações
+   * e alertas de CDS de qualquer paciente da plataforma. Mesmo padrão de
+   * `AssessmentsService.assertReadAccess`/`assertProfessionalAccess`. */
+  private async assertPatientAccess(patientId: string, actor: Actor): Promise<void> {
+    if (actor.role === 'ADMIN') return;
+    const patient = await this.prisma.patient.findFirst({ where: { id: patientId, deletedAt: null } });
+    if (!patient) throw new NotFoundException('Paciente não encontrado');
+    if (actor.role === 'PATIENT') {
+      if (patient.userId !== actor.sub) throw new ForbiddenException('Acesso negado');
+      return;
+    }
+    if (actor.role === 'PROFESSIONAL' || actor.role === 'DOCTOR') {
+      await this.assertProfessionalAccess(patient, actor.sub);
+      return;
+    }
+    throw new ForbiddenException();
+  }
+
+  private async assertProfessionalAccess(patient: { primaryProfessionalId: string | null }, actorUserId: string): Promise<void> {
+    const professional = await this.prisma.professional.findFirst({ where: { userId: actorUserId, deletedAt: null } });
+    if (!professional) throw new ForbiddenException('Profissional não cadastrado');
+
+    // Achado da Sprint 03: fallback "sharedOrg" removido — `Patient` não tem
+    // `organizationId`, então "ter qualquer membership" não provava vínculo
+    // real com este paciente. Só `primaryProfessionalId` concede acesso.
+    if (patient.primaryProfessionalId !== professional.id) {
+      throw new ForbiddenException('Profissional sem vínculo com este paciente');
+    }
   }
 
   async createRule(data: Parameters<CdsRepository['createRule']>[0], userId: string) {

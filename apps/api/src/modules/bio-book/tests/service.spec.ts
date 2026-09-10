@@ -1,11 +1,16 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { BioBookService } from '../bio-book.service.js';
 import { BioBookProvider } from '../providers/bio-book.provider.js';
 import { HealthNarrative } from '../entities/health-narrative.entity.js';
 import { NarrativeChapter } from '../entities/narrative-chapter.entity.js';
 import { NarrativeEvent } from '../entities/narrative-event.entity.js';
+import type { JwtPayload } from '../../identity/auth/types/jwt-payload.interface.js';
 
 const BASE_DATE = new Date('2024-03-01T00:00:00Z');
+
+const owner: JwtPayload = { sub: 'p1', email: 'p1@example.com', role: 'PATIENT' };
+const otherPatient: JwtPayload = { sub: 'p2', email: 'p2@example.com', role: 'PATIENT' };
+const admin: JwtPayload = { sub: 'admin-1', email: 'admin@example.com', role: 'ADMIN' };
 
 function makeNarrative(patientId: string): HealthNarrative {
   const event = new NarrativeEvent({
@@ -33,72 +38,63 @@ describe('BioBookService', () => {
   });
 
   describe('generate', () => {
-    it('delegates to provider and returns HealthNarrative', () => {
+    it('delegates to provider using the authenticated user as patientId, ignoring any client-supplied patientId', () => {
       const narrative = makeNarrative('p1');
       provider.generate.mockReturnValue(narrative);
-      const dto = { patientId: 'p1', events: [] };
-      const result = service.generate(dto);
-      expect(provider.generate).toHaveBeenCalledWith(dto);
+      const dto = { patientId: 'someone-else', events: [] };
+      const result = service.generate(dto, owner);
+      expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ patientId: 'p1' }));
       expect(result).toBe(narrative);
     });
   });
 
   describe('getNarrative', () => {
-    it('returns narrative when found', () => {
+    it('returns narrative when found and actor is the owner', () => {
       const narrative = makeNarrative('p1');
       provider.findByPatient.mockReturnValue(narrative);
-      expect(service.getNarrative('p1')).toBe(narrative);
+      expect(service.getNarrative('p1', owner)).toBe(narrative);
     });
 
-    it('throws NotFoundException when not found', () => {
+    it('returns narrative to an admin regardless of ownership', () => {
+      const narrative = makeNarrative('p1');
+      provider.findByPatient.mockReturnValue(narrative);
+      expect(service.getNarrative('p1', admin)).toBe(narrative);
+    });
+
+    it('throws NotFoundException when not found for its own (non-existent) record', () => {
       provider.findByPatient.mockReturnValue(undefined);
-      expect(() => service.getNarrative('unknown')).toThrow(NotFoundException);
+      const selfOwner: JwtPayload = { sub: 'unknown', email: 'x@example.com', role: 'PATIENT' };
+      expect(() => service.getNarrative('unknown', selfOwner)).toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when a different patient requests it', () => {
+      provider.findByPatient.mockReturnValue(makeNarrative('p1'));
+      expect(() => service.getNarrative('p1', otherPatient)).toThrow(ForbiddenException);
     });
   });
 
-  describe('getTimeline', () => {
-    it('delegates to getNarrative', () => {
+  describe('getTimeline / getChapters / getSummary', () => {
+    it('delegate to getNarrative for the owner', () => {
       const narrative = makeNarrative('p1');
       provider.findByPatient.mockReturnValue(narrative);
-      expect(service.getTimeline('p1')).toBe(narrative);
+      expect(service.getTimeline('p1', owner)).toBe(narrative);
+      expect(service.getChapters('p1', owner)).toBe(narrative);
+      expect(service.getSummary('p1', owner)).toBe(narrative);
     });
 
-    it('throws when narrative not found', () => {
-      provider.findByPatient.mockReturnValue(undefined);
-      expect(() => service.getTimeline('missing')).toThrow(NotFoundException);
-    });
-  });
-
-  describe('getChapters', () => {
-    it('delegates to getNarrative', () => {
-      const narrative = makeNarrative('p1');
-      provider.findByPatient.mockReturnValue(narrative);
-      expect(service.getChapters('p1')).toBe(narrative);
-    });
-
-    it('throws when narrative not found', () => {
-      provider.findByPatient.mockReturnValue(undefined);
-      expect(() => service.getChapters('missing')).toThrow(NotFoundException);
-    });
-  });
-
-  describe('getSummary', () => {
-    it('delegates to getNarrative', () => {
-      const narrative = makeNarrative('p1');
-      provider.findByPatient.mockReturnValue(narrative);
-      expect(service.getSummary('p1')).toBe(narrative);
-    });
-
-    it('throws when narrative not found', () => {
-      provider.findByPatient.mockReturnValue(undefined);
-      expect(() => service.getSummary('missing')).toThrow(NotFoundException);
+    it('SECURITY (IDOR): all three reject a non-owner, non-admin actor', () => {
+      provider.findByPatient.mockReturnValue(makeNarrative('p1'));
+      expect(() => service.getTimeline('p1', otherPatient)).toThrow(ForbiddenException);
+      expect(() => service.getChapters('p1', otherPatient)).toThrow(ForbiddenException);
+      expect(() => service.getSummary('p1', otherPatient)).toThrow(ForbiddenException);
     });
   });
 
   describe('BioBookProvider (integration)', () => {
-    it('stores and retrieves a generated narrative', () => {
+    it('stores and retrieves a generated narrative for its owner', () => {
       const realProvider = new BioBookProvider();
       const realService = new BioBookService(realProvider);
+      const integrationOwner: JwtPayload = { sub: 'p-integration', email: 'x@example.com', role: 'PATIENT' };
       const dto = {
         patientId: 'p-integration',
         events: [
@@ -106,19 +102,27 @@ describe('BioBookService', () => {
           { eventType: 'CONSULTATION', date: '2024-06-01T00:00:00Z', severity: 'INFORMATIONAL' },
         ],
       };
-      const narrative = realService.generate(dto);
+      const narrative = realService.generate(dto, integrationOwner);
       expect(narrative).toBeInstanceOf(HealthNarrative);
       expect(narrative.patientId).toBe('p-integration');
       expect(narrative.events.length).toBe(2);
 
-      const retrieved = realService.getNarrative('p-integration');
+      const retrieved = realService.getNarrative('p-integration', integrationOwner);
       expect(retrieved.id).toBe(narrative.id);
     });
 
     it('throws NotFoundException for unknown patient in real provider', () => {
       const realProvider = new BioBookProvider();
       const realService = new BioBookService(realProvider);
-      expect(() => realService.getNarrative('no-such-patient')).toThrow(NotFoundException);
+      const selfOwner: JwtPayload = { sub: 'no-such-patient', email: 'x@example.com', role: 'PATIENT' };
+      expect(() => realService.getNarrative('no-such-patient', selfOwner)).toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): real provider rejects a different authenticated patient', () => {
+      const realProvider = new BioBookProvider();
+      const realService = new BioBookService(realProvider);
+      realService.generate({ patientId: 'p1', events: [] }, owner);
+      expect(() => realService.getNarrative('p1', otherPatient)).toThrow(ForbiddenException);
     });
   });
 });

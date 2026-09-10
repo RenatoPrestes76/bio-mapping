@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { BioCircleNotification, BioCircleNotificationType } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 
@@ -31,7 +31,14 @@ export class BioCircleNotificationService {
     });
   }
 
-  async markRead(id: string): Promise<BioCircleNotification> {
+  /** Achado da Sprint 03: atualizava por `id` sem checar dono — qualquer
+   * usuário autenticado podia marcar como lida (e assim silenciar) a
+   * notificação de QUALQUER outro usuário. */
+  async markRead(id: string, actorUserId: string): Promise<BioCircleNotification> {
+    const notification = await this.prisma.bioCircleNotification.findUnique({ where: { id } });
+    if (!notification) throw new NotFoundException('Notificação não encontrada');
+    if (notification.userId !== actorUserId) throw new ForbiddenException('Acesso negado');
+
     return this.prisma.bioCircleNotification.update({
       where: { id },
       data: { read: true },

@@ -14,7 +14,7 @@ const makeService = () => ({
   createRule: jest.fn(),
 });
 
-const USER = { sub: 'u1' };
+const USER = { sub: 'u1', role: 'ADMIN' };
 
 describe('CdsController', () => {
   let controller: CdsController;
@@ -25,55 +25,55 @@ describe('CdsController', () => {
     controller = new CdsController(service as unknown as CdsService);
   });
 
-  it('evaluate delegates to service with user sub', () => {
+  it('evaluate delegates to service with the full actor', () => {
     const dto = { patientId: 'p1', variables: { hba1c: 7.0 } };
     controller.evaluate(dto, USER);
-    expect(service.evaluate).toHaveBeenCalledWith(dto, 'u1');
+    expect(service.evaluate).toHaveBeenCalledWith(dto, USER);
   });
 
-  it('getHistory passes patientId and limit', () => {
+  it('getHistory passes patientId, actor, and limit', () => {
     controller.getHistory('p1', '10', USER);
-    expect(service.findHistory).toHaveBeenCalledWith('p1', 10);
+    expect(service.findHistory).toHaveBeenCalledWith('p1', USER, 10);
   });
 
   it('getHistory passes undefined limit when not provided', () => {
     controller.getHistory('p1', '', USER);
-    expect(service.findHistory).toHaveBeenCalledWith('p1', undefined);
+    expect(service.findHistory).toHaveBeenCalledWith('p1', USER, undefined);
   });
 
-  it('findOne delegates to service', () => {
+  it('findOne delegates to service with actor', () => {
     controller.findOne('eval-1', USER);
-    expect(service.findById).toHaveBeenCalledWith('eval-1');
+    expect(service.findById).toHaveBeenCalledWith('eval-1', USER);
   });
 
-  it('recalculate delegates with id and user', () => {
+  it('recalculate delegates with id and actor', () => {
     controller.recalculate('eval-1', USER);
-    expect(service.recalculate).toHaveBeenCalledWith('eval-1', 'u1');
+    expect(service.recalculate).toHaveBeenCalledWith('eval-1', USER);
   });
 
-  it('getExplanation delegates to service', () => {
+  it('getExplanation delegates to service with actor', () => {
     controller.getExplanation('eval-1', USER);
-    expect(service.getExplanation).toHaveBeenCalledWith('eval-1');
+    expect(service.getExplanation).toHaveBeenCalledWith('eval-1', USER);
   });
 
-  it('addFeedback delegates with id, dto, and user', () => {
+  it('addFeedback delegates with id, dto, and actor', () => {
     const dto = { rating: 5, comment: 'Excellent' };
     controller.addFeedback('eval-1', dto, USER);
-    expect(service.addFeedback).toHaveBeenCalledWith('eval-1', dto, 'u1');
+    expect(service.addFeedback).toHaveBeenCalledWith('eval-1', dto, USER);
   });
 
-  it('getAlerts passes patientId and unreadOnly flag', () => {
+  it('getAlerts passes patientId, actor, and unreadOnly flag', () => {
     controller.getAlerts('p1', 'true', USER);
-    expect(service.getAlerts).toHaveBeenCalledWith('p1', true);
+    expect(service.getAlerts).toHaveBeenCalledWith('p1', USER, true);
   });
 
   it('getAlerts passes false for unreadOnly when not "true"', () => {
     controller.getAlerts('p1', 'false', USER);
-    expect(service.getAlerts).toHaveBeenCalledWith('p1', false);
+    expect(service.getAlerts).toHaveBeenCalledWith('p1', USER, false);
   });
 
-  it('markAlertRead delegates alertId', () => {
+  it('markAlertRead delegates alertId and actor', () => {
     controller.markAlertRead('alert-1', USER);
-    expect(service.markAlertRead).toHaveBeenCalledWith('alert-1');
+    expect(service.markAlertRead).toHaveBeenCalledWith('alert-1', USER);
   });
 });

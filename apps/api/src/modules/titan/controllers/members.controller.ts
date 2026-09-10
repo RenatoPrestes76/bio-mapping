@@ -18,10 +18,11 @@ export class MembersController {
   @Get()
   listMembers(
     @Query('organizationId') organizationId: string,
+    @CurrentUser() user: { sub: string },
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.membershipService.listMembers(organizationId, {
+    return this.membershipService.listMembers(organizationId, user.sub, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });

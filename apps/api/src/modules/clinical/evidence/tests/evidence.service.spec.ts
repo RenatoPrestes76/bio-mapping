@@ -10,10 +10,11 @@ import { EVIDENCE_STORAGE } from '../providers/storage.interface';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
-const ADMIN     = { sub: 'admin-1', role: 'ADMIN' };
-const PROF      = { sub: 'prof-1',  role: 'PROFESSIONAL' };
-const PATIENT_A = { sub: 'user-1',  role: 'PATIENT' };
-const CTX       = { ip: '127.0.0.1', userAgent: 'test' };
+const ADMIN        = { sub: 'admin-1', role: 'ADMIN' };
+const PROF         = { sub: 'prof-1',  role: 'PROFESSIONAL' };
+const OTHER_PROF   = { sub: 'prof-2',  role: 'PROFESSIONAL' };
+const PATIENT_A    = { sub: 'user-1',  role: 'PATIENT' };
+const CTX          = { ip: '127.0.0.1', userAgent: 'test' };
 
 const makeFile = (mimetype = 'image/jpeg'): Express.Multer.File => ({
   fieldname: 'file',
@@ -33,7 +34,7 @@ const makeAssessment = (o: any = {}) => ({
   patientId: 'patient-1',
   status: AssessmentStatus.DRAFT,
   deletedAt: null,
-  patient: { id: 'patient-1', userId: 'user-1' },
+  patient: { id: 'patient-1', userId: 'user-1', primaryProfessionalId: 'prof-1' },
   ...o,
 });
 
@@ -68,7 +69,14 @@ describe('EvidenceService', () => {
         findFirst: jest.fn(),
         delete: jest.fn(),
       },
+      professional: { findFirst: jest.fn() },
+      membership: { findFirst: jest.fn() },
     };
+
+    prisma.professional.findFirst.mockImplementation(({ where }: any) =>
+      Promise.resolve(where.userId === 'prof-1' ? { id: 'prof-1' } : where.userId === 'prof-2' ? { id: 'prof-2' } : null),
+    );
+    prisma.membership.findFirst.mockResolvedValue(null);
 
     storage = {
       save: jest.fn().mockResolvedValue({
@@ -78,6 +86,7 @@ describe('EvidenceService', () => {
         url: '/uploads/evidence/asm-1/uuid.jpg',
       }),
       delete: jest.fn().mockResolvedValue(undefined),
+      getAbsolutePath: jest.fn().mockReturnValue('/app/uploads/evidence/asm-1/uuid.jpg'),
     };
 
     audit = { log: jest.fn().mockResolvedValue(undefined) };
@@ -159,11 +168,17 @@ describe('EvidenceService', () => {
       await expect(service.upload('asm-1', makeFile(), PATIENT_A, CTX)).resolves.toBeDefined();
     });
 
-    it('PROFESSIONAL pode fazer upload', async () => {
+    it('PROFESSIONAL vinculado ao paciente pode fazer upload', async () => {
       prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
       prisma.assessmentEvidence.create.mockResolvedValue(makeEvidence());
 
       await expect(service.upload('asm-1', makeFile(), PROF, CTX)).resolves.toBeDefined();
+    });
+
+    it('SECURITY (IDOR): PROFESSIONAL sem vínculo e sem membership não pode fazer upload', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
+      await expect(service.upload('asm-1', makeFile(), OTHER_PROF, CTX)).rejects.toThrow(ForbiddenException);
+      expect(prisma.assessmentEvidence.create).not.toHaveBeenCalled();
     });
   });
 
@@ -194,6 +209,45 @@ describe('EvidenceService', () => {
     it('PATIENT não dono lança ForbiddenException', async () => {
       prisma.assessment.findFirst.mockResolvedValue(makeAssessment({ patient: { id: 'p-1', userId: 'outro' } }));
       await expect(service.findAll('asm-1', PATIENT_A)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('SECURITY (IDOR): PROFESSIONAL sem vínculo e sem membership não pode listar evidências', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
+      await expect(service.findAll('asm-1', OTHER_PROF)).rejects.toThrow(ForbiddenException);
+      expect(prisma.assessmentEvidence.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── download ────────────────────────────────────────────────────────────────
+  // Achado da Sprint 03 (reproduzido de verdade contra a imagem Docker publicada:
+  // GET /uploads/evidence/... retornava 200 com o conteúdo do arquivo SEM
+  // Authorization header nenhum). `download()` é o substituto autenticado.
+
+  describe('download', () => {
+    it('retorna caminho/mimetype/nome para o dono (PATIENT)', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
+      prisma.assessmentEvidence.findFirst.mockResolvedValue(makeEvidence());
+
+      const result = await service.download('asm-1', 'ev-1', PATIENT_A);
+      expect(result).toEqual({ path: '/app/uploads/evidence/asm-1/uuid.jpg', mimeType: 'image/jpeg', originalName: 'foto.jpg' });
+    });
+
+    it('lança NotFoundException quando a evidência não existe', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
+      prisma.assessmentEvidence.findFirst.mockResolvedValue(null);
+      await expect(service.download('asm-1', 'ev-nope', PATIENT_A)).rejects.toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): PATIENT não dono lança ForbiddenException e não resolve caminho do arquivo', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment({ patient: { id: 'p-1', userId: 'outro' } }));
+      await expect(service.download('asm-1', 'ev-1', PATIENT_A)).rejects.toThrow(ForbiddenException);
+      expect(prisma.assessmentEvidence.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('SECURITY (IDOR): PROFESSIONAL sem vínculo não pode baixar evidência', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
+      await expect(service.download('asm-1', 'ev-1', OTHER_PROF)).rejects.toThrow(ForbiddenException);
+      expect(prisma.assessmentEvidence.findFirst).not.toHaveBeenCalled();
     });
   });
 
@@ -239,6 +293,12 @@ describe('EvidenceService', () => {
     it('PATIENT não dono lança ForbiddenException', async () => {
       prisma.assessment.findFirst.mockResolvedValue(makeAssessment({ patient: { id: 'p-1', userId: 'outro' } }));
       await expect(service.remove('asm-1', 'ev-1', PATIENT_A, CTX)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('SECURITY (IDOR): PROFESSIONAL sem vínculo e sem membership não pode remover evidência', async () => {
+      prisma.assessment.findFirst.mockResolvedValue(makeAssessment());
+      await expect(service.remove('asm-1', 'ev-1', OTHER_PROF, CTX)).rejects.toThrow(ForbiddenException);
+      expect(prisma.assessmentEvidence.delete).not.toHaveBeenCalled();
     });
   });
 });

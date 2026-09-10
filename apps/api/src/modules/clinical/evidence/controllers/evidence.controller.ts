@@ -1,8 +1,9 @@
 import {
-  Controller, Delete, Get, Param, Post, Req, UploadedFile,
+  Controller, Delete, Get, Param, Post, Req, Res, UploadedFile,
   UseGuards, UseInterceptors, ParseUUIDPipe, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../../../identity/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../identity/auth/guards/roles.guard';
 import { CurrentUser } from '../../../identity/auth/decorators/current-user.decorator';
@@ -27,6 +28,19 @@ export class EvidenceController {
   @Get()
   findAll(@Param('assessmentId', ParseUUIDPipe) assessmentId: string, @CurrentUser() user: any) {
     return this.evidenceService.findAll(assessmentId, user);
+  }
+
+  @Get(':evidenceId/download')
+  async download(
+    @Param('assessmentId', ParseUUIDPipe) assessmentId: string,
+    @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
+    @CurrentUser() user: any,
+    @Res() res: Response,
+  ) {
+    const file = await this.evidenceService.download(assessmentId, evidenceId, user);
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.originalName)}"`);
+    res.sendFile(file.path);
   }
 
   @Delete(':evidenceId')

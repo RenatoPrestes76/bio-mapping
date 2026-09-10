@@ -1,12 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { SessionsService } from '../sessions/services/sessions.service';
 import { DeviceSessionStatus, DeviceStatus } from '@bio/database';
 
 const CTX = { ip: '127.0.0.1', userAgent: 'test' };
 const ADMIN = { sub: 'admin-1', role: 'ADMIN' };
+const PATIENT_OWNER = { sub: 'user-1', role: 'PATIENT' };
+const PATIENT_OTHER = { sub: 'user-2', role: 'PATIENT' };
 
 function makeDevice(overrides: any = {}) {
-  return { id: 'dev-1', status: DeviceStatus.PAIRED, deletedAt: null, ...overrides };
+  return { id: 'dev-1', patientId: 'pat-1', status: DeviceStatus.PAIRED, deletedAt: null, ...overrides };
 }
 
 function makeSession(overrides: any = {}) {
@@ -31,6 +33,9 @@ function makePrisma() {
     device: {
       findFirst: jest.fn(),
       update: jest.fn(),
+    },
+    patient: {
+      findFirst: jest.fn(),
     },
     deviceSession: {
       create: jest.fn(),
@@ -90,6 +95,21 @@ describe('SessionsService', () => {
       prisma.device.findFirst.mockResolvedValue(null);
       await expect(service.startSession('ghost', ADMIN, CTX)).rejects.toThrow(NotFoundException);
     });
+
+    it('SECURITY (IDOR): PATIENT não pode iniciar sessão em dispositivo de outro paciente', async () => {
+      prisma.device.findFirst.mockResolvedValue(makeDevice({ patientId: 'pat-1' }));
+      prisma.patient.findFirst.mockResolvedValue({ id: 'pat-2' }); // paciente do ator é outro
+      await expect(service.startSession('dev-1', PATIENT_OTHER, CTX)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('PATIENT dono do dispositivo pode iniciar a própria sessão', async () => {
+      prisma.device.findFirst.mockResolvedValue(makeDevice({ patientId: 'pat-1' }));
+      prisma.patient.findFirst.mockResolvedValue({ id: 'pat-1' });
+      prisma.deviceSession.create.mockResolvedValue(makeSession());
+      prisma.device.update.mockResolvedValue(makeDevice());
+      const result = await service.startSession('dev-1', PATIENT_OWNER, CTX);
+      expect(result.id).toBe('ses-1');
+    });
   });
 
   // ── endSession ──────────────────────────────────────────────────────────────
@@ -98,6 +118,7 @@ describe('SessionsService', () => {
     it('encerra sessão com status ENDED e atualiza dispositivo', async () => {
       const session = makeSession();
       prisma.deviceSession.findFirst.mockResolvedValue(session);
+      prisma.device.findFirst.mockResolvedValue(makeDevice());
       const ended = makeSession({ status: DeviceSessionStatus.ENDED, endedAt: new Date() });
       prisma.deviceSession.update.mockResolvedValue(ended);
       prisma.device.update.mockResolvedValue(makeDevice());
@@ -118,6 +139,7 @@ describe('SessionsService', () => {
 
     it('encerra com ERROR se opts.error fornecido e incrementa totalErrors', async () => {
       prisma.deviceSession.findFirst.mockResolvedValue(makeSession());
+      prisma.device.findFirst.mockResolvedValue(makeDevice());
       prisma.deviceSession.update.mockResolvedValue(makeSession({ status: DeviceSessionStatus.ERROR }));
       prisma.device.update.mockResolvedValue(makeDevice());
 
@@ -139,16 +161,23 @@ describe('SessionsService', () => {
       prisma.deviceSession.findFirst.mockResolvedValue(null);
       await expect(service.endSession('ghost', ADMIN, CTX)).rejects.toThrow(NotFoundException);
     });
+
+    it('SECURITY (IDOR): PATIENT não pode encerrar sessão de dispositivo de outro paciente', async () => {
+      prisma.deviceSession.findFirst.mockResolvedValue(makeSession());
+      prisma.device.findFirst.mockResolvedValue(makeDevice({ patientId: 'pat-1' }));
+      prisma.patient.findFirst.mockResolvedValue({ id: 'pat-2' });
+      await expect(service.endSession('ses-1', PATIENT_OTHER, CTX)).rejects.toThrow(ForbiddenException);
+    });
   });
 
   // ── findSessions ────────────────────────────────────────────────────────────
 
   describe('findSessions', () => {
-    it('retorna lista paginada de sessões', async () => {
+    it('retorna lista paginada de sessões para ADMIN', async () => {
       const sessions = [makeSession(), makeSession({ id: 'ses-2' })];
       prisma.$transaction.mockResolvedValue([sessions, 2]);
 
-      const result = await service.findSessions(1, 20);
+      const result = await service.findSessions(ADMIN, 1, 20);
 
       expect(result.data).toHaveLength(2);
       expect(result.total).toBe(2);
@@ -156,23 +185,36 @@ describe('SessionsService', () => {
 
     it('filtra por deviceId se fornecido', async () => {
       prisma.$transaction.mockResolvedValue([[], 0]);
-      await service.findSessions(1, 10, 'dev-2');
+      await service.findSessions(ADMIN, 1, 10, 'dev-2');
       expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('SECURITY: PATIENT não pode listar sessões (visão global de dispositivos)', async () => {
+      await expect(service.findSessions(PATIENT_OWNER, 1, 20)).rejects.toThrow(ForbiddenException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
   });
 
   // ── findById ────────────────────────────────────────────────────────────────
 
   describe('findById', () => {
-    it('retorna sessão por id', async () => {
+    it('retorna sessão por id para ADMIN', async () => {
       prisma.deviceSession.findFirst.mockResolvedValue(makeSession());
-      const result = await service.findById('ses-1');
+      prisma.device.findFirst.mockResolvedValue(makeDevice());
+      const result = await service.findById('ses-1', ADMIN);
       expect(result.id).toBe('ses-1');
     });
 
     it('lança NotFoundException se não existe', async () => {
       prisma.deviceSession.findFirst.mockResolvedValue(null);
-      await expect(service.findById('ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('ghost', ADMIN)).rejects.toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): PATIENT não pode ler sessão de dispositivo de outro paciente', async () => {
+      prisma.deviceSession.findFirst.mockResolvedValue(makeSession());
+      prisma.device.findFirst.mockResolvedValue(makeDevice({ patientId: 'pat-1' }));
+      prisma.patient.findFirst.mockResolvedValue({ id: 'pat-2' });
+      await expect(service.findById('ses-1', PATIENT_OTHER)).rejects.toThrow(ForbiddenException);
     });
   });
 });

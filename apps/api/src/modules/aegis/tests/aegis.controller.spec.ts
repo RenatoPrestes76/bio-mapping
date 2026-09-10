@@ -1,7 +1,10 @@
 import { AegisController } from '../controllers/aegis.controller';
 import { GoalType, RecommendationStatus } from '@bio/database';
 
-const mockInsightEngine = { generateInsights: jest.fn().mockResolvedValue(3) };
+const mockInsightEngine = {
+  generateInsights: jest.fn().mockResolvedValue(3),
+  markRead: jest.fn().mockResolvedValue({ id: 'i1', isRead: true }),
+};
 const mockRecommendations = {
   getRecommendations: jest.fn().mockResolvedValue([]),
   getHistory: jest.fn().mockResolvedValue([]),
@@ -67,9 +70,9 @@ describe('AegisController', () => {
   });
 
   describe('markInsightRead', () => {
-    it('calls repo markRead with id', async () => {
-      await controller.markInsightRead('insight-123');
-      expect(mockInsightRepo.markRead).toHaveBeenCalledWith('insight-123');
+    it('delegates to insightEngine.markRead with id and actor', async () => {
+      await controller.markInsightRead('insight-123', mockUser);
+      expect(mockInsightEngine.markRead).toHaveBeenCalledWith('insight-123', mockUser);
     });
   });
 
@@ -86,9 +89,9 @@ describe('AegisController', () => {
   });
 
   describe('updateRecommendation', () => {
-    it('calls updateStatus with id and body status', async () => {
-      await controller.updateRecommendation('r1', { status: RecommendationStatus.ACCEPTED });
-      expect(mockRecommendations.updateStatus).toHaveBeenCalledWith('r1', RecommendationStatus.ACCEPTED);
+    it('calls updateStatus with id, body status, and actor', async () => {
+      await controller.updateRecommendation('r1', { status: RecommendationStatus.ACCEPTED }, mockUser);
+      expect(mockRecommendations.updateStatus).toHaveBeenCalledWith('r1', RecommendationStatus.ACCEPTED, mockUser);
     });
   });
 

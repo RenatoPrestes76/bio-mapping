@@ -17,8 +17,8 @@ export class MembershipController {
 
   @Get()
   @ApiOperation({ summary: 'Lista membros da organização (paginado)' })
-  listMembers(@Param('orgId') orgId: string, @Query() query: PaginationDto) {
-    return this.membershipService.listMembers(orgId, query);
+  listMembers(@Param('orgId') orgId: string, @Query() query: PaginationDto, @CurrentUser() actor: JwtPayload) {
+    return this.membershipService.listMembers(orgId, actor.sub, query);
   }
 
   @Patch(':userId')

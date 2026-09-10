@@ -40,6 +40,10 @@ export class RecommendationRepository {
     });
   }
 
+  async findById(id: string) {
+    return this.prisma.recommendation.findUnique({ where: { id } });
+  }
+
   async updateStatus(id: string, status: RecommendationStatus) {
     const now = new Date();
     const timestamps: { acceptedAt?: Date; ignoredAt?: Date; completedAt?: Date } = {};

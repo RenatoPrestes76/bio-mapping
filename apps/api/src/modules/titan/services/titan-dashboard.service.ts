@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { EnrollmentStatus } from '@bio/database';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { BranchRepository } from '../repositories/branch.repository.js';
@@ -12,7 +12,15 @@ export class TitanDashboardService {
     private readonly planLimits: PlanLimitsService,
   ) {}
 
-  async getDashboard(organizationId: string) {
+  private async assertMember(organizationId: string, userId: string): Promise<void> {
+    const membership = await this.prisma.membership.findFirst({
+      where: { organizationId, userId, role: { in: ['OWNER', 'ADMIN', 'MANAGER'] }, deletedAt: null },
+    });
+    if (!membership) throw new ForbiddenException('Permissão insuficiente na organização');
+  }
+
+  async getDashboard(organizationId: string, actorId: string) {
+    await this.assertMember(organizationId, actorId);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
 
     const [
@@ -33,7 +41,7 @@ export class TitanDashboardService {
         include: { user: { select: { id: true, name: true, email: true } } },
       }),
       this.getEnrollmentMetrics(organizationId),
-      this.planLimits.getUsage(organizationId),
+      this.planLimits.getUsage(organizationId, actorId),
     ]);
 
     const activeBranchCount = branches.filter((b) => b.isActive).length;

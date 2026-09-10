@@ -1,3 +1,4 @@
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InsightEngineService } from '../services/insight-engine.service';
 import { WellnessInsightCategory, InsightPriority } from '@bio/database';
 
@@ -29,6 +30,8 @@ function makeInsightRepo() {
     expireOld: jest.fn().mockResolvedValue({}),
     existsToday: jest.fn().mockResolvedValue(false),
     create: jest.fn().mockResolvedValue({}),
+    findById: jest.fn().mockResolvedValue({ id: 'i1', patientId: 'p1' }),
+    markRead: jest.fn().mockResolvedValue({ id: 'i1', isRead: true }),
   };
 }
 
@@ -214,6 +217,33 @@ describe('InsightEngineService', () => {
       expect(repo.expireOld).toHaveBeenCalledWith('p1');
       expect(repo.create).not.toHaveBeenCalled();
       expect(count).toBe(0);
+    });
+  });
+
+  describe('markRead', () => {
+    it('marks the insight read when the actor owns it', async () => {
+      const { service, repo } = makeService();
+      const result = await service.markRead('i1', { sub: 'p1', role: 'PATIENT' });
+      expect(repo.markRead).toHaveBeenCalledWith('i1');
+      expect(result).toEqual({ id: 'i1', isRead: true });
+    });
+
+    it('allows ADMIN regardless of ownership', async () => {
+      const { service, repo } = makeService();
+      await service.markRead('i1', { sub: 'admin-1', role: 'ADMIN' });
+      expect(repo.markRead).toHaveBeenCalledWith('i1');
+    });
+
+    it('throws NotFoundException when insight does not exist', async () => {
+      const { service, repo } = makeService();
+      repo.findById.mockResolvedValue(null);
+      await expect(service.markRead('bad', { sub: 'p1', role: 'PATIENT' })).rejects.toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): a different patient cannot mark someone else\'s insight as read', async () => {
+      const { service, repo } = makeService();
+      await expect(service.markRead('i1', { sub: 'p2', role: 'PATIENT' })).rejects.toThrow(ForbiddenException);
+      expect(repo.markRead).not.toHaveBeenCalled();
     });
   });
 });

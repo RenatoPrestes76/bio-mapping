@@ -138,11 +138,12 @@ export class BiomarkersService {
         where: { userId: actor.sub, deletedAt: null },
       });
       if (!professional) throw new ForbiddenException('Profissional não cadastrado');
+      // Achado da Sprint 03: fallback "sharedOrg"/"membership" removido —
+      // `Patient` não tem `organizationId`, então "ter qualquer membership"
+      // não provava vínculo real com este paciente. Só `primaryProfessionalId`
+      // concede acesso.
       if (record.patient.primaryProfessionalId !== professional.id) {
-        const membership = await this.prisma.membership.findFirst({
-          where: { userId: actor.sub, deletedAt: null },
-        });
-        if (!membership) throw new ForbiddenException('Sem vínculo com este paciente');
+        throw new ForbiddenException('Sem vínculo com este paciente');
       }
       return;
     }

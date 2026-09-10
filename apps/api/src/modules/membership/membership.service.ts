@@ -15,7 +15,12 @@ export class MembershipService {
     private readonly organizationsService: OrganizationsService,
   ) {}
 
-  async listMembers(organizationId: string, dto: PaginationDto): Promise<PaginatedResponse<MembershipResponseDto>> {
+  async listMembers(organizationId: string, actorId: string, dto: PaginationDto): Promise<PaginatedResponse<MembershipResponseDto>> {
+    const actorMembership = await this.prisma.membership.findFirst({
+      where: { organizationId, userId: actorId, deletedAt: null },
+    });
+    if (!actorMembership) throw new ForbiddenException('Você não é membro desta organização');
+
     const { page = 1, limit = 20 } = dto;
     const where = { organizationId, deletedAt: null };
     const [members, total] = await Promise.all([

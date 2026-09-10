@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { OracleMetricType } from '@bio/database';
+import { OracleMetricType, Role } from '@bio/database';
 import { PatientsService } from '../patients/patients.service';
+import type { JwtPayload } from '../identity/auth/types/jwt-payload.interface';
 import { VitalsRepository } from '../vitals/repositories/vitals.repository';
 import { ClinicalRecordService } from '../hippocrates/services/clinical-record.service.js';
 import { EnrollmentService } from '../apollo/services/enrollment.service.js';
@@ -86,9 +87,16 @@ export class ClinicalContextBuilder {
     };
   }
 
+  // `ClinicalContextBuilder` é uma camada de agregação interna (não exposta via
+  // HTTP diretamente — consumida por prediction/risk engines e pelo scheduler
+  // do AEGIS), então usa um actor de sistema (equivalente a ADMIN) para as
+  // chamadas a serviços que agora exigem ator, mantendo o comportamento
+  // pré-existente (leitura irrestrita por processos internos).
+  private static readonly SYSTEM_ACTOR: JwtPayload = { sub: 'system', email: 'system@biobook.internal', role: Role.ADMIN };
+
   private async fetchPatient(patientId: string, sources: string[]): Promise<PatientSummary | null> {
     try {
-      const patient = await this.patientsService.findById(patientId);
+      const patient = await this.patientsService.findById(patientId, ClinicalContextBuilder.SYSTEM_ACTOR);
       sources.push('patients');
       return {
         patientId: patient.id,

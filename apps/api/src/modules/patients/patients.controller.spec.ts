@@ -35,23 +35,24 @@ describe('PatientsController', () => {
     expect(service.create).toHaveBeenCalledWith('user-1', {});
   });
 
-  it('findAll() delegates to service', async () => {
-    const result = await controller.findAll({});
+  it('findAll() delegates to service with the current user', async () => {
+    const result = await controller.findAll({}, user);
+    expect(service.findAll).toHaveBeenCalledWith({}, user);
     expect(result.data).toHaveLength(1);
   });
 
-  it('findById() delegates to service', async () => {
-    await controller.findById('pat-1');
-    expect(service.findById).toHaveBeenCalledWith('pat-1');
+  it('findById() delegates to service with the current user', async () => {
+    await controller.findById('pat-1', user);
+    expect(service.findById).toHaveBeenCalledWith('pat-1', user);
   });
 
-  it('update() delegates to service', async () => {
+  it('update() delegates to service with the current user', async () => {
     await controller.update('pat-1', { weight: 80 }, user);
-    expect(service.update).toHaveBeenCalledWith('pat-1', { weight: 80 }, 'user-1');
+    expect(service.update).toHaveBeenCalledWith('pat-1', { weight: 80 }, user);
   });
 
-  it('delete() delegates to service', async () => {
+  it('delete() delegates to service with the current user', async () => {
     await controller.delete('pat-1', user);
-    expect(service.delete).toHaveBeenCalledWith('pat-1', 'user-1');
+    expect(service.delete).toHaveBeenCalledWith('pat-1', user);
   });
 });

@@ -80,6 +80,24 @@ export class EvidenceService {
     return evidence.map(toEvidenceResponse);
   }
 
+  /** Achado da Sprint 03: antes, o `url` da evidência apontava direto para
+   * `/uploads/...`, servido por static middleware sem autenticação nenhuma.
+   * Este método reaplica `assertReadAccess` (mesma regra de `findAll`) antes
+   * de resolver o caminho físico do arquivo para o controller fazer stream. */
+  async download(assessmentId: string, evidenceId: string, actor: Actor): Promise<{ path: string; mimeType: string; originalName: string }> {
+    const assessment = await this.findAssessmentOrFail(assessmentId);
+    await this.assertReadAccess(assessment, actor);
+
+    const evidence = await this.prisma.assessmentEvidence.findFirst({ where: { id: evidenceId, assessmentId } });
+    if (!evidence) throw new NotFoundException('Evidência não encontrada');
+
+    return {
+      path: this.storage.getAbsolutePath(evidence.filename, assessmentId),
+      mimeType: evidence.mimeType,
+      originalName: evidence.originalName,
+    };
+  }
+
   async remove(assessmentId: string, evidenceId: string, actor: Actor, context: AuditContext): Promise<void> {
     const assessment = await this.findAssessmentOrFail(assessmentId);
 
@@ -119,6 +137,11 @@ export class EvidenceService {
       if (assessment.patient?.userId !== actor.sub) throw new ForbiddenException();
       return;
     }
+    if (actor.role === 'PROFESSIONAL' || actor.role === 'DOCTOR') {
+      await this.assertProfessionalAccess(assessment.patient, actor.sub);
+      return;
+    }
+    throw new ForbiddenException();
   }
 
   private async assertWriteAccess(assessment: any, actor: Actor) {
@@ -127,7 +150,26 @@ export class EvidenceService {
       if (assessment.patient?.userId !== actor.sub) throw new ForbiddenException();
       return;
     }
-    if (actor.role === 'PROFESSIONAL' || actor.role === 'DOCTOR') return;
+    if (actor.role === 'PROFESSIONAL' || actor.role === 'DOCTOR') {
+      await this.assertProfessionalAccess(assessment.patient, actor.sub);
+      return;
+    }
     throw new ForbiddenException();
+  }
+
+  /** Mesma regra de `AssessmentsService.assertProfessionalAccess` — evidence
+   * herdava do assessment pai mas não validava vínculo profissional↔paciente
+   * (achado da Sprint 03: qualquer PROFESSIONAL/DOCTOR autenticado podia ler/
+   * anexar/remover evidências de qualquer avaliação, de qualquer paciente). */
+  private async assertProfessionalAccess(patient: { primaryProfessionalId: string | null } | null | undefined, actorUserId: string) {
+    const professional = await this.prisma.professional.findFirst({ where: { userId: actorUserId, deletedAt: null } });
+    if (!professional) throw new ForbiddenException('Profissional não cadastrado');
+
+    // Achado da Sprint 03: fallback "sharedOrg" removido — `Patient` não tem
+    // `organizationId`, então "ter qualquer membership" não provava vínculo
+    // real com este paciente. Só `primaryProfessionalId` concede acesso.
+    if (!patient || patient.primaryProfessionalId !== professional.id) {
+      throw new ForbiddenException('Profissional sem vínculo com este paciente');
+    }
   }
 }

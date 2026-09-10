@@ -7,6 +7,7 @@ import { AdaptiveRecommendationEngine } from '../engines/adaptive-recommendation
 import { HabitEvolutionEngine } from '../engines/habit-evolution.engine.js';
 import { MilestonePredictionEngine } from '../engines/milestone-prediction.engine.js';
 import type { AnalyzeBioBookJourneyDto } from '../dto/bio-book-journey.dto.js';
+import type { JwtPayload } from '../../identity/auth/types/jwt-payload.interface.js';
 
 @Injectable()
 export class BioBookJourneyProvider {
@@ -23,15 +24,20 @@ export class BioBookJourneyProvider {
   ) {}
 
   analyze(dto: AnalyzeBioBookJourneyDto): JourneyReport {
+    // `dto.patientId` já chega aqui forçado para o próprio ator autenticado
+    // (ver `BioBookJourneyService.analyze`), então o "actor" sintético abaixo
+    // é seguro: as chamadas internas sempre operam sobre o próprio patientId.
+    const selfActor: JwtPayload = { sub: dto.patientId, email: '', role: 'PATIENT' };
+
     // Trigger the full bio-book + insight pipeline first
     this.bioBookInsightService.analyze({
       patientId: dto.patientId,
       events: dto.events,
       goalInputs: dto.goalInputs,
-    });
+    }, selfActor);
 
-    const narrative = this.bioBookService.getNarrative(dto.patientId);
-    const insightReport = this.bioBookInsightService.getReport(dto.patientId);
+    const narrative = this.bioBookService.getNarrative(dto.patientId, selfActor);
+    const insightReport = this.bioBookInsightService.getReport(dto.patientId, selfActor);
 
     const { events, milestones } = narrative;
     const { insights, goals, scoreEvolution } = insightReport;

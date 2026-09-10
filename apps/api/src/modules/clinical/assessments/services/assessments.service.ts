@@ -415,9 +415,11 @@ export class AssessmentsService {
     const professional = await this.prisma.professional.findFirst({ where: { userId: actorUserId, deletedAt: null } });
     if (!professional) throw new ForbiddenException('Profissional não cadastrado');
 
+    // Achado da Sprint 03: fallback "sharedOrg" removido — `Patient` não tem
+    // `organizationId`, então "ter qualquer membership" não provava vínculo
+    // real com este paciente. Só `primaryProfessionalId` concede acesso.
     if (patient.primaryProfessionalId !== professional.id) {
-      const sharedOrg = await this.prisma.membership.findFirst({ where: { userId: actorUserId, deletedAt: null } });
-      if (!sharedOrg) throw new ForbiddenException('Profissional sem vínculo com este paciente');
+      throw new ForbiddenException('Profissional sem vínculo com este paciente');
     }
   }
 }

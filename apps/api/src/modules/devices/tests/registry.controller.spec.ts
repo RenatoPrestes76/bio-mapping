@@ -70,8 +70,8 @@ describe('RegistryController', () => {
   });
 
   it('getSessions delega para sessions.findSessions', async () => {
-    const result = await controller.getSessions(1, 20);
-    expect(sessions.findSessions).toHaveBeenCalledWith(1, 20);
+    const result = await controller.getSessions(1, 20, USER);
+    expect(sessions.findSessions).toHaveBeenCalledWith(USER, 1, 20);
     expect(result.total).toBe(0);
   });
 

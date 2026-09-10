@@ -7,6 +7,7 @@ import { GoalEvolutionEngine } from '../engines/goal-evolution.engine.js';
 import { HealthScoreEvolutionEngine } from '../engines/health-score-evolution.engine.js';
 import { CurrentChapterEngine } from '../engines/current-chapter.engine.js';
 import type { AnalyzeBioBookInsightDto } from '../dto/bio-book-insight.dto.js';
+import type { JwtPayload } from '../../identity/auth/types/jwt-payload.interface.js';
 
 @Injectable()
 export class BioBookInsightProvider {
@@ -21,10 +22,15 @@ export class BioBookInsightProvider {
   constructor(private readonly bioBookService: BioBookService) {}
 
   analyze(dto: AnalyzeBioBookInsightDto): BioBookInsightReport {
+    // `dto.patientId` já chega aqui forçado para o próprio ator autenticado
+    // (ver `BioBookInsightService.analyze`), então o "actor" sintético abaixo
+    // é seguro: `BioBookService.generate` sempre usa `actor.sub` como
+    // patientId, e não faz checagem de ownership nesta chamada interna.
+    const selfActor: JwtPayload = { sub: dto.patientId, email: '', role: 'PATIENT' };
     const narrative = this.bioBookService.generate({
       patientId: dto.patientId,
       events: dto.events,
-    });
+    }, selfActor);
 
     const { events, milestones, chapters } = narrative;
     const goalInputs = dto.goalInputs ?? [];

@@ -16,6 +16,7 @@ const makePlanLimits = (usage: unknown = null) => ({
 const makePrisma = (overrides: Record<string, unknown> = {}) => ({
   membership: {
     count: jest.fn().mockResolvedValue(10),
+    findFirst: jest.fn().mockResolvedValue({ role: 'ADMIN' }),
     findMany: jest.fn().mockResolvedValue([
       { role: 'ADMIN' }, { role: 'PROFESSIONAL' }, { role: 'PROFESSIONAL' },
     ]),
@@ -46,7 +47,7 @@ describe('TitanDashboardService', () => {
         makeBranchRepo([activeBranch]) as never,
         makePlanLimits() as never,
       );
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       expect(result.summary.totalBranches).toBe(1);
       expect(result.summary.activeBranches).toBe(1);
     });
@@ -57,7 +58,7 @@ describe('TitanDashboardService', () => {
         makeBranchRepo([activeBranch, inactiveBranch]) as never,
         makePlanLimits() as never,
       );
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       expect(result.summary.totalBranches).toBe(2);
       expect(result.summary.activeBranches).toBe(1);
     });
@@ -68,7 +69,7 @@ describe('TitanDashboardService', () => {
         makeBranchRepo() as never,
         makePlanLimits() as never,
       );
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       expect(result.roleDistribution['PROFESSIONAL']).toBe(2);
       expect(result.roleDistribution['ADMIN']).toBe(1);
     });
@@ -79,7 +80,7 @@ describe('TitanDashboardService', () => {
         makeBranchRepo() as never,
         makePlanLimits() as never,
       );
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       expect(result.recentAuditEvents).toHaveLength(1);
     });
 
@@ -96,7 +97,7 @@ describe('TitanDashboardService', () => {
         },
       });
       const service = new TitanDashboardService(prisma as never, makeBranchRepo() as never, makePlanLimits() as never);
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       expect(result.enrollment.total).toBe(5);
       expect(result.enrollment.active).toBe(3);
       expect(result.enrollment.avgAdherence).toBe(80);
@@ -114,15 +115,21 @@ describe('TitanDashboardService', () => {
         makeBranchRepo() as never,
         makePlanLimits(planUsage) as never,
       );
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       const alert = result.alerts.find((a: { type: string }) => a.type === 'PLAN_USER_LIMIT');
       expect(alert?.severity).toBe('HIGH');
     });
 
     it('generates generatedAt timestamp', async () => {
       const service = new TitanDashboardService(makePrisma() as never, makeBranchRepo() as never, makePlanLimits() as never);
-      const result = await service.getDashboard('org-1');
+      const result = await service.getDashboard('org-1', 'actor-1');
       expect(result.generatedAt).toBeInstanceOf(Date);
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when actor has no membership in the org', async () => {
+      const prisma = makePrisma({ membership: { findFirst: jest.fn().mockResolvedValue(null), count: jest.fn(), findMany: jest.fn() } });
+      const service = new TitanDashboardService(prisma as never, makeBranchRepo() as never, makePlanLimits() as never);
+      await expect(service.getDashboard('org-1', 'outsider')).rejects.toThrow('Permissão insuficiente na organização');
     });
   });
 });

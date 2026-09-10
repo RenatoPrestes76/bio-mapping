@@ -21,7 +21,7 @@ const mockService = {
   share: jest.fn(),
 };
 
-const USER = { sub: 'u1' };
+const USER = { sub: 'u1', role: 'PATIENT' };
 
 describe('StoryEngineController', () => {
   let controller: StoryEngineController;
@@ -55,23 +55,23 @@ describe('StoryEngineController', () => {
 
   it('findOne — returns single chapter', async () => {
     mockService.findById.mockResolvedValue(CHAPTER);
-    const result = await controller.findOne('c1');
-    expect(mockService.findById).toHaveBeenCalledWith('c1');
+    const result = await controller.findOne('c1', USER);
+    expect(mockService.findById).toHaveBeenCalledWith('c1', USER);
     expect(result).toEqual(CHAPTER);
   });
 
-  it('update — passes dto and userId', async () => {
+  it('update — passes dto and actor', async () => {
     const updated = { ...CHAPTER, title: 'Novo Título' };
     mockService.update.mockResolvedValue(updated);
     const result = await controller.update('c1', { title: 'Novo Título' }, USER);
-    expect(mockService.update).toHaveBeenCalledWith('c1', { title: 'Novo Título' }, 'u1');
+    expect(mockService.update).toHaveBeenCalledWith('c1', { title: 'Novo Título' }, USER);
     expect(result.title).toBe('Novo Título');
   });
 
-  it('share — delegates with chapterId and sharedBy', async () => {
+  it('share — delegates with chapterId and actor', async () => {
     mockService.share.mockResolvedValue(SHARE);
     const result = await controller.share('c1', { sharedWith: 'u2' }, USER);
-    expect(mockService.share).toHaveBeenCalledWith('c1', { sharedWith: 'u2' }, 'u1');
+    expect(mockService.share).toHaveBeenCalledWith('c1', { sharedWith: 'u2' }, USER);
     expect(result).toEqual(SHARE);
   });
 

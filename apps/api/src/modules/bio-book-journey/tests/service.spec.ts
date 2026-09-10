@@ -1,8 +1,13 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { BioBookJourneyService } from '../bio-book-journey.service.js';
 import { JourneyReport } from '../entities/journey-report.entity.js';
 import { JourneyPath } from '../entities/journey-path.entity.js';
 import { JourneyPhase } from '../entities/journey-phase.entity.js';
+import type { JwtPayload } from '../../identity/auth/types/jwt-payload.interface.js';
+
+const owner: JwtPayload = { sub: 'p1', email: 'p1@example.com', role: 'PATIENT' };
+const otherPatient: JwtPayload = { sub: 'p2', email: 'p2@example.com', role: 'PATIENT' };
+const admin: JwtPayload = { sub: 'admin-1', email: 'admin@example.com', role: 'ADMIN' };
 
 const makePath = () =>
   new JourneyPath({
@@ -27,72 +32,62 @@ const makeProvider = (report?: JourneyReport) => ({
 
 describe('BioBookJourneyService', () => {
   describe('analyze()', () => {
-    it('delegates to provider and returns a JourneyReport', () => {
+    it('delegates to provider using the authenticated user as patientId, ignoring any client-supplied patientId', () => {
       const provider = makeProvider();
       const service = new BioBookJourneyService(provider as never);
-      const result = service.analyze({ patientId: 'p1' });
-      expect(provider.analyze).toHaveBeenCalledWith({ patientId: 'p1' });
+      const result = service.analyze({ patientId: 'someone-else' }, owner);
+      expect(provider.analyze).toHaveBeenCalledWith(expect.objectContaining({ patientId: 'p1' }));
       expect(result).toBeInstanceOf(JourneyReport);
     });
   });
 
   describe('getReport()', () => {
-    it('returns report when found', () => {
+    it('returns report when found and actor is the owner', () => {
       const report = makeReport('p1');
       const provider = makeProvider(report);
       const service = new BioBookJourneyService(provider as never);
-      expect(service.getReport('p1')).toBe(report);
+      expect(service.getReport('p1', owner)).toBe(report);
     });
 
-    it('throws NotFoundException when not found', () => {
+    it('returns report to an admin regardless of ownership', () => {
+      const report = makeReport('p1');
+      const provider = makeProvider(report);
+      const service = new BioBookJourneyService(provider as never);
+      expect(service.getReport('p1', admin)).toBe(report);
+    });
+
+    it('throws NotFoundException when not found for its own (non-existent) record', () => {
       const provider = makeProvider();
       const service = new BioBookJourneyService(provider as never);
-      expect(() => service.getReport('unknown')).toThrow(NotFoundException);
+      const selfOwner: JwtPayload = { sub: 'unknown', email: 'x@example.com', role: 'PATIENT' };
+      expect(() => service.getReport('unknown', selfOwner)).toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when a different patient requests it', () => {
+      const report = makeReport('p1');
+      const provider = makeProvider(report);
+      const service = new BioBookJourneyService(provider as never);
+      expect(() => service.getReport('p1', otherPatient)).toThrow(ForbiddenException);
     });
   });
 
-  describe('getPath()', () => {
-    it('returns the same report as getReport()', () => {
+  describe('getPath() / getNextSteps() / getMilestones()', () => {
+    it('all return the report for its own owner', () => {
       const report = makeReport('p1');
       const provider = makeProvider(report);
       const service = new BioBookJourneyService(provider as never);
-      expect(service.getPath('p1')).toBe(report);
+      expect(service.getPath('p1', owner)).toBe(report);
+      expect(service.getNextSteps('p1', owner)).toBe(report);
+      expect(service.getMilestones('p1', owner)).toBe(report);
     });
 
-    it('throws NotFoundException for unknown patient', () => {
-      const provider = makeProvider();
-      const service = new BioBookJourneyService(provider as never);
-      expect(() => service.getPath('ghost')).toThrow(NotFoundException);
-    });
-  });
-
-  describe('getNextSteps()', () => {
-    it('returns the report for a valid patient', () => {
+    it('SECURITY (IDOR): all three reject a non-owner, non-admin actor', () => {
       const report = makeReport('p1');
       const provider = makeProvider(report);
       const service = new BioBookJourneyService(provider as never);
-      expect(service.getNextSteps('p1')).toBe(report);
-    });
-
-    it('throws NotFoundException for unknown patient', () => {
-      const provider = makeProvider();
-      const service = new BioBookJourneyService(provider as never);
-      expect(() => service.getNextSteps('ghost')).toThrow(NotFoundException);
-    });
-  });
-
-  describe('getMilestones()', () => {
-    it('returns the report for a valid patient', () => {
-      const report = makeReport('p1');
-      const provider = makeProvider(report);
-      const service = new BioBookJourneyService(provider as never);
-      expect(service.getMilestones('p1')).toBe(report);
-    });
-
-    it('throws NotFoundException for unknown patient', () => {
-      const provider = makeProvider();
-      const service = new BioBookJourneyService(provider as never);
-      expect(() => service.getMilestones('ghost')).toThrow(NotFoundException);
+      expect(() => service.getPath('p1', otherPatient)).toThrow(ForbiddenException);
+      expect(() => service.getNextSteps('p1', otherPatient)).toThrow(ForbiddenException);
+      expect(() => service.getMilestones('p1', otherPatient)).toThrow(ForbiddenException);
     });
   });
 });

@@ -3,7 +3,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { join } from 'node:path';
 import helmet from 'helmet';
 import compression = require('compression');
 import { AppModule } from './app.module';
@@ -15,8 +14,13 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
-
+  // Achado da Sprint 03 (CRITICAL, reproduzido com evidência real): `/uploads/**`
+  // era servido via static middleware, montado ANTES do prefixo `api/v1` e de
+  // qualquer guard — qualquer pessoa com a URL (sem token algum) baixava
+  // evidências clínicas de avaliação (fotos, PDFs, laudos). Removido; o
+  // download agora passa por `GET /api/v1/assessments/:id/evidence/:id/download`,
+  // que exige JWT e reaplica a mesma checagem de ownership de leitura usada
+  // pelo resto do módulo (ver `EvidenceService.download`).
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
   app.useLogger(logger);
 

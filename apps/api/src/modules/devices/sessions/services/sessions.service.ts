@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeviceSessionStatus, DeviceStatus } from '@bio/database';
 import { PrismaService } from '../../../../database/prisma.service';
 import { AuditLogService, AuditContext } from '../../../../common/audit/audit-log.service';
@@ -16,8 +16,21 @@ export class SessionsService {
     private readonly ble: BleManagerService,
   ) {}
 
+  /** Mesma regra de `RegistryService.assertReadAccess` (o dispositivo já usa este
+   * padrão para GET /devices/:id) — aqui estendida às sessões do dispositivo, que
+   * antes não tinham checagem nenhuma (achado da Sprint 03: qualquer usuário
+   * autenticado podia iniciar/encerrar/listar sessões de qualquer dispositivo). */
+  private async assertDeviceAccess(device: { patientId: string | null }, actor: Actor): Promise<void> {
+    if (actor.role === 'ADMIN') return;
+    if (actor.role === 'PATIENT') {
+      const patient = await this.prisma.patient.findFirst({ where: { userId: actor.sub, deletedAt: null } });
+      if (!patient || device.patientId !== patient.id) throw new ForbiddenException('Acesso negado');
+    }
+  }
+
   async startSession(deviceId: string, actor: Actor, context: AuditContext) {
     const device = await this.findDeviceOrFail(deviceId);
+    await this.assertDeviceAccess(device, actor);
 
     const session = await this.prisma.deviceSession.create({
       data: { deviceId, status: DeviceSessionStatus.ACTIVE },
@@ -49,6 +62,8 @@ export class SessionsService {
       where: { id: sessionId },
     });
     if (!session) throw new NotFoundException('Sessão não encontrada');
+    const device = await this.findDeviceOrFail(session.deviceId);
+    await this.assertDeviceAccess(device, actor);
 
     const endedAt = new Date();
     const updated = await this.prisma.deviceSession.update({
@@ -84,7 +99,13 @@ export class SessionsService {
     return toSessionResponse(updated);
   }
 
-  async findSessions(page = 1, limit = 20, deviceId?: string) {
+  async findSessions(actor: Actor, page = 1, limit = 20, deviceId?: string) {
+    // Achado da Sprint 03: sem deviceId, esta rota devolvia TODAS as sessões de TODOS
+    // os dispositivos da plataforma para qualquer usuário autenticado. PATIENT nunca
+    // deveria enxergar a listagem global — só ADMIN/PROFESSIONAL/DOCTOR gerenciam
+    // dispositivos (mesma regra de `RegistryService.assertNotPatient`).
+    if (actor.role === 'PATIENT') throw new ForbiddenException('Pacientes não podem listar sessões de dispositivos');
+
     const where: any = {};
     if (deviceId) where.deviceId = deviceId;
 
@@ -101,9 +122,11 @@ export class SessionsService {
     return paginated(sessions.map(toSessionResponse), total, page, limit);
   }
 
-  async findById(sessionId: string) {
+  async findById(sessionId: string, actor: Actor) {
     const session = await this.prisma.deviceSession.findFirst({ where: { id: sessionId } });
     if (!session) throw new NotFoundException('Sessão não encontrada');
+    const device = await this.findDeviceOrFail(session.deviceId);
+    await this.assertDeviceAccess(device, actor);
     return toSessionResponse(session);
   }
 

@@ -31,25 +31,25 @@ export class StoryEngineController {
   }
 
   @Get('chapters/:id')
-  findOne(@Param('id') id: string) {
-    return this.service.findById(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.findById(id, user);
   }
 
   @Patch('chapters/:id')
   update(
     @Param('id') id: string,
     @Body() dto: UpdateChapterDto,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
   ) {
-    return this.service.update(id, dto, user.sub);
+    return this.service.update(id, dto, user);
   }
 
   @Post('chapters/:id/share')
   share(
     @Param('id') id: string,
     @Body() dto: ShareChapterDto,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
   ) {
-    return this.service.share(id, dto, user.sub);
+    return this.service.share(id, dto, user);
   }
 }

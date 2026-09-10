@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { OrganizationPlan } from '@bio/database';
 import { BranchRepository } from '../repositories/branch.repository.js';
 import { PrismaService } from '../../../database/prisma.service.js';
@@ -41,7 +41,12 @@ export class PlanLimitsService {
     }
   }
 
-  async getUsage(organizationId: string) {
+  async getUsage(organizationId: string, actorId: string) {
+    const membership = await this.prisma.membership.findFirst({
+      where: { organizationId, userId: actorId, role: { in: ['OWNER', 'ADMIN', 'MANAGER'] }, deletedAt: null },
+    });
+    if (!membership) throw new ForbiddenException('Permissão insuficiente na organização');
+
     const org = await this.prisma.organization.findFirst({ where: { id: organizationId } });
     if (!org) return null;
     const limits = this.getLimits(org.plan as OrganizationPlan);

@@ -178,8 +178,8 @@ export class BioCircleService {
     return this.notificationService.findByUser(userId);
   }
 
-  async markNotificationRead(id: string): Promise<BioCircleNotification> {
-    return this.notificationService.markRead(id);
+  async markNotificationRead(id: string, userId: string): Promise<BioCircleNotification> {
+    return this.notificationService.markRead(id, userId);
   }
 
   async markAllNotificationsRead(userId: string): Promise<void> {

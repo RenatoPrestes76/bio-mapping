@@ -1,5 +1,9 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { StoryEngineService } from '../services/story-engine.service.js';
+
+const OWNER = { sub: 'u1', role: 'PATIENT' };
+const OTHER = { sub: 'u2', role: 'PATIENT' };
+const ADMIN = { sub: 'admin-1', role: 'ADMIN' };
 
 const CHAPTER = {
   id: 'c1',
@@ -77,15 +81,26 @@ describe('StoryEngineService', () => {
   });
 
   describe('findById', () => {
-    it('returns chapter when found', async () => {
+    it('returns chapter when found for its owner', async () => {
       mockRepo.findById.mockResolvedValue(CHAPTER);
-      const result = await service.findById('c1');
+      const result = await service.findById('c1', OWNER);
+      expect(result).toEqual(CHAPTER);
+    });
+
+    it('returns chapter to ADMIN regardless of ownership', async () => {
+      mockRepo.findById.mockResolvedValue(CHAPTER);
+      const result = await service.findById('c1', ADMIN);
       expect(result).toEqual(CHAPTER);
     });
 
     it('throws NotFoundException when not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
-      await expect(service.findById('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('nonexistent', OWNER)).rejects.toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): throws ForbiddenException when a different user requests it', async () => {
+      mockRepo.findById.mockResolvedValue(CHAPTER);
+      await expect(service.findById('c1', OTHER)).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -95,14 +110,20 @@ describe('StoryEngineService', () => {
       const updated = { ...CHAPTER, title: 'Novo Título' };
       mockRepo.updateChapter.mockResolvedValue(updated);
 
-      const result = await service.update('c1', { title: 'Novo Título' }, 'u1');
+      const result = await service.update('c1', { title: 'Novo Título' }, OWNER);
       expect(result.title).toBe('Novo Título');
       expect(mockAudit.log).toHaveBeenCalledWith('CHAPTER_UPDATED', expect.objectContaining({ userId: 'u1' }));
     });
 
     it('throws when chapter not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
-      await expect(service.update('bad', { title: 'x' }, 'u1')).rejects.toThrow(NotFoundException);
+      await expect(service.update('bad', { title: 'x' }, OWNER)).rejects.toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): a different user cannot update someone else\'s chapter', async () => {
+      mockRepo.findById.mockResolvedValue(CHAPTER);
+      await expect(service.update('c1', { title: 'Hacked' }, OTHER)).rejects.toThrow(ForbiddenException);
+      expect(mockRepo.updateChapter).not.toHaveBeenCalled();
     });
   });
 
@@ -112,9 +133,15 @@ describe('StoryEngineService', () => {
       const share = { id: 's1', chapterId: 'c1', sharedBy: 'u1', sharedWith: 'u2', message: null, createdAt: new Date() };
       mockRepo.createShare.mockResolvedValue(share);
 
-      const result = await service.share('c1', { sharedWith: 'u2' }, 'u1');
+      const result = await service.share('c1', { sharedWith: 'u2' }, OWNER);
       expect(result).toEqual(share);
       expect(mockAudit.log).toHaveBeenCalledWith('CHAPTER_SHARED', expect.objectContaining({ userId: 'u1' }));
+    });
+
+    it('SECURITY (IDOR): a different user cannot share someone else\'s chapter', async () => {
+      mockRepo.findById.mockResolvedValue(CHAPTER);
+      await expect(service.share('c1', { sharedWith: 'u3' }, OTHER)).rejects.toThrow(ForbiddenException);
+      expect(mockRepo.createShare).not.toHaveBeenCalled();
     });
   });
 

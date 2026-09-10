@@ -76,8 +76,8 @@ export class BioCircleController {
   }
 
   @Patch('notifications/:id/read')
-  markRead(@Param('id') id: string) {
-    return this.service.markNotificationRead(id);
+  markRead(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
+    return this.service.markNotificationRead(id, user.sub);
   }
 
   @Patch('notifications/read-all')

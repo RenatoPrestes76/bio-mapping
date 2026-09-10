@@ -1,6 +1,11 @@
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RecommendationService } from '../services/recommendation.service';
 import { WellnessInsightCategory, InsightPriority, RecommendationStatus } from '@bio/database';
 import { InsightCandidate } from '../services/insight-engine.service';
+
+const OWNER = { sub: 'p1', role: 'PATIENT' };
+const OTHER = { sub: 'p2', role: 'PATIENT' };
+const ADMIN = { sub: 'admin-1', role: 'ADMIN' };
 
 function makeRepo() {
   return {
@@ -8,6 +13,7 @@ function makeRepo() {
     create: jest.fn().mockResolvedValue({ id: 'r1' }),
     findByStatus: jest.fn().mockResolvedValue([]),
     findHistory: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue({ id: 'r1', patientId: 'p1' }),
     updateStatus: jest.fn().mockResolvedValue({ id: 'r1', status: RecommendationStatus.ACCEPTED }),
   };
 }
@@ -90,9 +96,24 @@ describe('RecommendationService', () => {
   });
 
   describe('updateStatus', () => {
-    it('calls repo updateStatus with id and new status', async () => {
-      await service.updateStatus('r1', RecommendationStatus.ACCEPTED);
+    it('calls repo updateStatus with id and new status when actor owns the recommendation', async () => {
+      await service.updateStatus('r1', RecommendationStatus.ACCEPTED, OWNER);
       expect(repo.updateStatus).toHaveBeenCalledWith('r1', RecommendationStatus.ACCEPTED);
+    });
+
+    it('allows ADMIN regardless of ownership', async () => {
+      await service.updateStatus('r1', RecommendationStatus.ACCEPTED, ADMIN);
+      expect(repo.updateStatus).toHaveBeenCalledWith('r1', RecommendationStatus.ACCEPTED);
+    });
+
+    it('throws NotFoundException when recommendation does not exist', async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.updateStatus('bad', RecommendationStatus.ACCEPTED, OWNER)).rejects.toThrow(NotFoundException);
+    });
+
+    it('SECURITY (IDOR): a different patient cannot update someone else\'s recommendation', async () => {
+      await expect(service.updateStatus('r1', RecommendationStatus.ACCEPTED, OTHER)).rejects.toThrow(ForbiddenException);
+      expect(repo.updateStatus).not.toHaveBeenCalled();
     });
   });
 

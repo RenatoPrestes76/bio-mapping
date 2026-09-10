@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InsightPriority, RecommendationStatus } from '@bio/database';
 import { RecommendationRepository } from '../repositories/recommendation.repository.js';
 import { InsightCandidate } from './insight-engine.service.js';
+
+interface Actor { sub: string; role: string }
 
 interface RecommendationTemplate {
   priority: InsightPriority;
@@ -142,7 +144,16 @@ export class RecommendationService {
     return this.repo.findHistory(patientId, limit);
   }
 
-  async updateStatus(id: string, status: RecommendationStatus) {
+  /** Achado da Sprint 03: `updateStatus` atualizava por `id` sem checar dono —
+   * qualquer usuário autenticado podia aceitar/ignorar/completar a
+   * recomendação de saúde de QUALQUER outro paciente. Mesma convenção do
+   * `InsightEngineService.markRead`: `patientId` aqui é o próprio `sub`. */
+  async updateStatus(id: string, status: RecommendationStatus, actor: Actor) {
+    const recommendation = await this.repo.findById(id);
+    if (!recommendation) throw new NotFoundException('Recomendação não encontrada');
+    if (actor.role !== 'ADMIN' && recommendation.patientId !== actor.sub) {
+      throw new ForbiddenException('Acesso negado');
+    }
     return this.repo.updateStatus(id, status);
   }
 

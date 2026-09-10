@@ -21,56 +21,56 @@ export class CdsController {
   constructor(private readonly service: CdsService) {}
 
   @Post('evaluate')
-  evaluate(@Body() dto: EvaluateCdsDto, @CurrentUser() user: { sub: string }) {
-    return this.service.evaluate(dto, user.sub);
+  evaluate(@Body() dto: EvaluateCdsDto, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.evaluate(dto, user);
   }
 
   @Get('history')
   getHistory(
     @Query('patientId') patientId: string,
     @Query('limit') limit: string,
-    @CurrentUser() _user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
   ) {
-    return this.service.findHistory(patientId, limit ? parseInt(limit, 10) : undefined);
+    return this.service.findHistory(patientId, user, limit ? parseInt(limit, 10) : undefined);
   }
 
   @Get('alerts')
   getAlerts(
     @Query('patientId') patientId: string,
     @Query('unreadOnly') unreadOnly: string,
-    @CurrentUser() _user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
   ) {
-    return this.service.getAlerts(patientId, unreadOnly === 'true');
+    return this.service.getAlerts(patientId, user, unreadOnly === 'true');
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() _user: { sub: string }) {
-    return this.service.findById(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.findById(id, user);
   }
 
   @Post(':id/recalculate')
   @HttpCode(HttpStatus.OK)
-  recalculate(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    return this.service.recalculate(id, user.sub);
+  recalculate(@Param('id') id: string, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.recalculate(id, user);
   }
 
   @Get(':id/explanation')
-  getExplanation(@Param('id') id: string, @CurrentUser() _user: { sub: string }) {
-    return this.service.getExplanation(id);
+  getExplanation(@Param('id') id: string, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.getExplanation(id, user);
   }
 
   @Post(':id/feedback')
   addFeedback(
     @Param('id') id: string,
     @Body() dto: DecisionFeedbackDto,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { sub: string; role: string },
   ) {
-    return this.service.addFeedback(id, dto, user.sub);
+    return this.service.addFeedback(id, dto, user);
   }
 
   @Post('alerts/:alertId/read')
   @HttpCode(HttpStatus.OK)
-  markAlertRead(@Param('alertId') alertId: string, @CurrentUser() _user: { sub: string }) {
-    return this.service.markAlertRead(alertId);
+  markAlertRead(@Param('alertId') alertId: string, @CurrentUser() user: { sub: string; role: string }) {
+    return this.service.markAlertRead(alertId, user);
   }
 }
