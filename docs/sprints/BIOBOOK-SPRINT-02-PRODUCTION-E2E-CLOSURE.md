@@ -1,4 +1,4 @@
-# BIOBOOCK — Sprint 02: Production E2E Closure & Deployment Reproducibility Gate
+# BIOBOOK — Sprint 02: Production E2E Closure & Deployment Reproducibility Gate
 
 **Status final: PASS**
 
@@ -12,7 +12,7 @@
 
 ## Resumo executivo
 
-As três ressalvas da sprint anterior (BIOBOOCK — Production Deployment Report) foram fechadas com evidência real:
+As três ressalvas da sprint anterior (BIOBOOK — Production Deployment Report) foram fechadas com evidência real:
 
 1. **Pull por digest do GHCR** — na sprint anterior, bloqueado por rede (`TLS handshake timeout`). Nesta sprint, a rede se recuperou e o pull foi executado com sucesso, comprovado ponta a ponta: GHCR → digest → Docker → container → health → aplicação. **PASS.**
 2. **Migrations em banco vazio** — testado contra um Postgres genuinamente vazio (container novo, sem volume). Descoberto e documentado um achado real: `/health` reporta `database: connected` mesmo sem nenhuma migration aplicada (só faz `SELECT 1`), e qualquer rota que toque o banco falha com 500 até `prisma migrate deploy` ser executado. Após a migration, mesmo container, sem restart, tudo funciona. **PASS, com achado operacional documentado no runbook.**
@@ -234,13 +234,13 @@ Artefatos de investigação criados e já removidos antes deste commit: containe
 fix(biobook): close production deployment gate
 ```
 
-Arquivos no commit: `apps/api/src/main.ts` (fix de CORS), `docs/operations/PRODUCTION-DEPLOYMENT.md` (novo), `scripts/production-deploy.sh` (novo), `scripts/production-smoke.sh` (novo), `docs/sprints/BIOBOOCK-SPRINT-02-PRODUCTION-E2E-CLOSURE.md` (este documento).
+Arquivos no commit: `apps/api/src/main.ts` (fix de CORS), `docs/operations/PRODUCTION-DEPLOYMENT.md` (novo), `scripts/production-deploy.sh` (novo), `scripts/production-smoke.sh` (novo), `docs/sprints/BIOBOOK-SPRINT-02-PRODUCTION-E2E-CLOSURE.md` (este documento).
 
 ---
 
 ## Regra de encerramento
 
-### 1. O BioBoock agora possui deployment de produção reproduzível?
+### 1. O BioBook agora possui deployment de produção reproduzível?
 **SIM** — via `docker-compose.prod.yml` + `scripts/production-deploy.sh` + runbook, testado ponta a ponta nesta sessão com a imagem publicada real.
 
 ### 2. A imagem publicada foi realmente utilizada?
@@ -277,11 +277,11 @@ Arquivos no commit: `apps/api/src/main.ts` (fix de CORS), `docs/operations/PRODU
 **PASS**
 
 ### 13. Existe algum defeito real que justifique uma Sprint 03?
-**NÃO**, para o domínio de deployment/infraestrutura da API. O único item genuinamente pendente (Web → API) depende de acesso externo (SSO da Vercel) que não é um defeito do BioBoock — é documentado e reproduzível por quem tiver esse acesso.
+**NÃO**, para o domínio de deployment/infraestrutura da API. O único item genuinamente pendente (Web → API) depende de acesso externo (SSO da Vercel) que não é um defeito do BioBook — é documentado e reproduzível por quem tiver esse acesso.
 
 **Não criar nova sprint de deployment.**
 
-### Próximos passos (fora do escopo desta sprint, para avançar ao próximo domínio real do BioBoock)
+### Próximos passos (fora do escopo desta sprint, para avançar ao próximo domínio real do BioBook)
 
 - Se desejado, o operador com acesso à sessão Vercel roda a validação documentada na Parte 4 e atualiza este relatório.
 - Considerar decidir o destino do projeto Vercel órfão `bio-mapping-api` (descoberto nesta sprint — não é usado pela arquitetura atual).

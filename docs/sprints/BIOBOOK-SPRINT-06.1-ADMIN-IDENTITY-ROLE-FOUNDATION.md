@@ -1,4 +1,4 @@
-# BioBoock — Sprint 06.1: Admin Identity & Role Foundation
+# BioBook — Sprint 06.1: Admin Identity & Role Foundation
 
 **Data:** 2026-09-10
 **Escopo:** `database/prisma/seed.ts` (correção de defeito CRÍTICO), `apps/api` módulo `identity/users` (cobertura de teste, zero mudança de comportamento), `apps/web` (nova área `/admin`, link condicional no `UserMenu`) — **zero migration**.
@@ -8,7 +8,7 @@
 
 ## 1. Objetivo
 
-Uma única identidade administrativa: o mesmo usuário BioBoock, autenticado pelo mesmo login e pela mesma sessão dos Sprints 05/06, ganha acesso a uma Área Administrador quando sua conta carrega `role: ADMIN`. Sem segundo sistema de login, sem segunda sessão, sem usuário duplicado, sem autenticação paralela.
+Uma única identidade administrativa: o mesmo usuário BioBook, autenticado pelo mesmo login e pela mesma sessão dos Sprints 05/06, ganha acesso a uma Área Administrador quando sua conta carrega `role: ADMIN`. Sem segundo sistema de login, sem segunda sessão, sem usuário duplicado, sem autenticação paralela.
 
 ---
 
@@ -49,7 +49,7 @@ Bootstrap do administrador acontece **fora** do runtime da aplicação, via `dat
 
 `bootstrapAdmin()` em `seed.ts`, lógica idempotente e não-destrutiva:
 
-1. Lê `BIOBOOCK_ADMIN_EMAIL` / `BIOBOOCK_ADMIN_PASSWORD` de variáveis de ambiente — nunca hardcoded, nunca logadas.
+1. Lê `BIOBOOK_ADMIN_EMAIL` / `BIOBOOK_ADMIN_PASSWORD` de variáveis de ambiente — nunca hardcoded, nunca logadas.
 2. `findUnique({ where: { email } })`.
 3. **Conta não existe**: cria com `role: ADMIN`, senha com hash `argon2` (mesmo mecanismo do `auth.service.ts`).
 4. **Conta existe e já é ADMIN**: não faz nada (nunca sobrescreve senha).
@@ -112,7 +112,7 @@ Infraestrutura desligada ao final: processo `next dev` finalizado, `docker compo
 ## 8. Defeito Corrigido: Senha Hardcoded no Seed
 
 `database/prisma/seed.ts` tinha e-mail/senha de admin em texto puro no código-fonte desde `82d4a9f`. Reescrito para:
-- Ler credenciais exclusivamente de `BIOBOOCK_ADMIN_EMAIL`/`BIOBOOCK_ADMIN_PASSWORD` (documentadas, vazias, em `.env.example`).
+- Ler credenciais exclusivamente de `BIOBOOK_ADMIN_EMAIL`/`BIOBOOK_ADMIN_PASSWORD` (documentadas, vazias, em `.env.example`).
 - Nunca logar a senha (só e-mail e role nas mensagens de console).
 - Hash via `argon2` antes de persistir — nunca texto puro no banco.
 - Nunca sobrescrever a senha de uma conta já existente.

@@ -1,4 +1,4 @@
-# BioBoock API — Render Deployment
+# BioBook API — Render Deployment
 
 Este documento descreve como o `bioboock-api` é implantado na Render via Blueprint
 (`render.yaml`, raiz do repositório) e, em especial, como ele se conecta ao PostgreSQL
@@ -15,8 +15,8 @@ Este documento descreve como o `bioboock-api` é implantado na Render via Bluepr
 
 A conta Render já tem um PostgreSQL Free ativo chamado **`seltriva-postgres`**. O nome é
 histórico e não reflete o projeto atual — apesar do nome, esse é o banco em uso pelo
-BioBoock/Bio Mapping; o Seltriva não usa Render. Contas Render no tier gratuito aceitam
-somente **1 Postgres Free por vez**; tentar provisionar um segundo (`bioboock-db`) pelo
+BioBook/Bio Mapping; o Seltriva não usa Render. Contas Render no tier gratuito aceitam
+somente **1 Postgres Free por vez**; tentar provisionar um segundo (`biobook-db`) pelo
 Blueprint falha com `cannot have more than one active free tier database` e cancela o
 deploy do serviço web junto ("another action failed").
 

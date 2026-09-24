@@ -8,7 +8,7 @@ export default function SignupPage() {
         <div className="flex flex-col items-center text-center">
           <BrandMark />
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">Comece sua jornada</h1>
-          <p className="mt-1 text-sm text-ink-faint">Crie sua conta e acompanhe sua evolução no BioBoock.</p>
+          <p className="mt-1 text-sm text-ink-faint">Crie sua conta e acompanhe sua evolução no BioBook.</p>
         </div>
         <SignupForm />
       </div>

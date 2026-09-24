@@ -48,7 +48,7 @@ export function UserMenu() {
   return (
     <div className="flex items-center gap-4 border-b border-line bg-surface px-4 py-2.5 text-sm">
       <Link href="/biobook" className="font-bold tracking-tight text-primary-700">
-        BioBoock
+        BioBook
       </Link>
       <span className="text-ink-faint">
         {user.name} <span className="text-ink-faint/70">({user.email})</span>

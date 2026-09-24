@@ -142,7 +142,7 @@ export default function ProfilePage() {
         </div>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink">Minha história</h1>
-          <p className="text-sm text-ink-faint">{form.fullName || 'Sua jornada no BioBoock'}</p>
+          <p className="text-sm text-ink-faint">{form.fullName || 'Sua jornada no BioBook'}</p>
         </div>
       </div>
 

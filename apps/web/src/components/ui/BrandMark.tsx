@@ -1,4 +1,4 @@
-// Marca própria do BioBoock: um pulso/folha simples em SVG inline (sem
+// Marca própria do BioBook: um pulso/folha simples em SVG inline (sem
 // dependência de imagem externa, sem estética "AI" — Sprint 07 §25/§13).
 export function BrandMark({ size = 40 }: { size?: number }) {
   return (

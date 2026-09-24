@@ -1,9 +1,9 @@
-# BioBoock API — Production Deployment Runbook
+# BioBook API — Production Deployment Runbook
 
-Este documento descreve o procedimento real e testado para colocar a API do BioBoock
+Este documento descreve o procedimento real e testado para colocar a API do BioBook
 em execução a partir da imagem publicada, assinada e atestada no GHCR.
 
-Baseado em validação operacional real executada na Sprint BIOBOOCK-02 (commit `5c94ee2`,
+Baseado em validação operacional real executada na Sprint BIOBOOK-02 (commit `5c94ee2`,
 digest `sha256:ff5fcc112dba86bf39b77cdd11bbb20be56af652e146b21a73141b551813d562`).
 
 **Nunca coloque secrets reais neste arquivo.** Todo valor abaixo é placeholder.
@@ -34,7 +34,7 @@ Secrets nunca vão para o Git nem para este documento. Defina via `.env` local (
 | `NODE_ENV` | `production` (fixo no compose) | Não sobrescrever. |
 | `PORT` | `3000` | Porta interna do container; mapeada via compose. |
 | `DATABASE_URL` | montada a partir de `POSTGRES_*` no compose | Para banco externo, definir diretamente. |
-| `CORS_ORIGIN` | `*` | Lista separada por vírgula para restringir (ex.: `https://app.bioboock.com,https://staging.bioboock.com`). Com `*`, qualquer origem é aceita — não há `credentials`/cookies na API (100% Bearer token), então isso é seguro por padrão. Ver `apps/api/src/main.ts`. |
+| `CORS_ORIGIN` | `*` | Lista separada por vírgula para restringir (ex.: `https://app.biobook.com,https://staging.biobook.com`). Com `*`, qualquer origem é aceita — não há `credentials`/cookies na API (100% Bearer token), então isso é seguro por padrão. Ver `apps/api/src/main.ts`. |
 
 ## 4. Login/autenticação no GHCR
 

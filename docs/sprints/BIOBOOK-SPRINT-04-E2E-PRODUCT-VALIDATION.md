@@ -1,4 +1,4 @@
-# BioBoock — Sprint 04: E2E Product & Web→API Validation
+# BioBook — Sprint 04: E2E Product & Web→API Validation
 
 **Data:** 2026-09-10
 **Escopo:** `apps/api`, `apps/web`, `apps/mobile`, `database/prisma`.
@@ -8,7 +8,7 @@
 
 ## 1. Objetivo
 
-Validar o BioBoock de ponta a ponta — Web→API, autenticação, autorização, conexões privadas, feed/BioBoock, mídia, câmera/mobile, atividades, acessibilidade, produção, bootstrap com banco vazio e a janela pós-bloqueio de conta — com evidência de execução real, não apenas leitura de código, e transformar as 4 reservas do Sprint 03 em resultado comprovado ou bloqueio explícito.
+Validar o BioBook de ponta a ponta — Web→API, autenticação, autorização, conexões privadas, feed/BioBook, mídia, câmera/mobile, atividades, acessibilidade, produção, bootstrap com banco vazio e a janela pós-bloqueio de conta — com evidência de execução real, não apenas leitura de código, e transformar as 4 reservas do Sprint 03 em resultado comprovado ou bloqueio explícito.
 
 ---
 
@@ -92,15 +92,15 @@ A rede não se comporta como rede social pública — nenhuma ação foi possív
 
 ---
 
-## 9. BioBoock (BioBook)
+## 9. BioBook (BioBook)
 
-O módulo `bio-book`/`biobook` (histórico pessoal) existe e é robusto: API já com ownership corrigido no Sprint 03 (`assertOwner`, `actor.sub` forçado como `patientId`), Web com componentes reais (`PhotoComparison.tsx`, `PhotoMoment.tsx`, `BioHeader.tsx`, timeline, metas, conquistas). Sem um módulo de Feed para comparar, a regra de produto "Feed é temporário, BioBoock é permanente" não pôde ser testada como *separação* — mas o BioBook em si já é corretamente tratado como histórico permanente (nenhuma lógica de expiração/exclusão automática encontrada em `bio-book.service.ts`, `bio-book-journey`, `bio-book-insight`).
+O módulo `bio-book`/`biobook` (histórico pessoal) existe e é robusto: API já com ownership corrigido no Sprint 03 (`assertOwner`, `actor.sub` forçado como `patientId`), Web com componentes reais (`PhotoComparison.tsx`, `PhotoMoment.tsx`, `BioHeader.tsx`, timeline, metas, conquistas). Sem um módulo de Feed para comparar, a regra de produto "Feed é temporário, BioBook é permanente" não pôde ser testada como *separação* — mas o BioBook em si já é corretamente tratado como histórico permanente (nenhuma lógica de expiração/exclusão automática encontrada em `bio-book.service.ts`, `bio-book-journey`, `bio-book-insight`).
 
 ---
 
 ## 10. Fotos e Storage
 
-Storage de mídia real no sistema é exclusivamente `AssessmentEvidence` (fotos/PDFs/laudos de avaliação clínica) — já auditado e corrigido no Sprint 03 (achado CRITICAL: `/uploads/**` sem autenticação; corrigido com rota `GET /assessments/:id/evidence/:id/download` autenticada e com ownership). Não existe um "álbum de fotos pessoal" genérico associado a publicações — os componentes `PhotoComparison`/`PhotoMoment` no Web renderizam `photo.url`/`photo.label` a partir de um array vindo de `BioBookData.photos`, mas **o backend não expõe nenhum endpoint que popule esse array** (`buildDemoBioBookData()` usa `photos: []` como dado de demonstração fixo — não há integração real ainda). Os limites de produto pedidos (15 fotos por publicação, ~20 permanentes no BioBoock, exigir exclusão consciente antes de nova foto) **não têm nenhum código correspondente** — nem validação, nem contagem, nem UI de bloqueio. **NÃO APLICÁVEL / NÃO IMPLEMENTADO — não fabricado.**
+Storage de mídia real no sistema é exclusivamente `AssessmentEvidence` (fotos/PDFs/laudos de avaliação clínica) — já auditado e corrigido no Sprint 03 (achado CRITICAL: `/uploads/**` sem autenticação; corrigido com rota `GET /assessments/:id/evidence/:id/download` autenticada e com ownership). Não existe um "álbum de fotos pessoal" genérico associado a publicações — os componentes `PhotoComparison`/`PhotoMoment` no Web renderizam `photo.url`/`photo.label` a partir de um array vindo de `BioBookData.photos`, mas **o backend não expõe nenhum endpoint que popule esse array** (`buildDemoBioBookData()` usa `photos: []` como dado de demonstração fixo — não há integração real ainda). Os limites de produto pedidos (15 fotos por publicação, ~20 permanentes no BioBook, exigir exclusão consciente antes de nova foto) **não têm nenhum código correspondente** — nem validação, nem contagem, nem UI de bloqueio. **NÃO APLICÁVEL / NÃO IMPLEMENTADO — não fabricado.**
 
 ---
 

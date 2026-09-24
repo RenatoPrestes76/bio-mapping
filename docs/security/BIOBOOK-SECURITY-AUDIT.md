@@ -1,8 +1,8 @@
-# BioBoock — Sprint 03: Security & Privacy Production Audit
+# BioBook — Sprint 03: Security & Privacy Production Audit
 
 **Data:** 2026-09-10
 **Escopo:** `apps/api` (NestJS + Prisma + PostgreSQL), produção real (imagem Docker multi-stage, não `nest start --watch`).
-**Objetivo:** provar, com evidência de execução real, que um usuário autenticado não consegue ultrapassar seu limite de autorização, acessar dados privados de outro usuário, contornar a privacidade da rede social ou usar APIs/storage para escapar das regras de segurança do BioBoock.
+**Objetivo:** provar, com evidência de execução real, que um usuário autenticado não consegue ultrapassar seu limite de autorização, acessar dados privados de outro usuário, contornar a privacidade da rede social ou usar APIs/storage para escapar das regras de segurança do BioBook.
 
 ---
 

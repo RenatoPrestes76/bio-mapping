@@ -1,4 +1,4 @@
-# BioBoock — UX/UI Design System
+# BioBook — UX/UI Design System
 
 **Sprint:** 07 — UX/UI Foundation & Healthy Lifestyle Experience
 **Data:** 2026-09-10
@@ -7,7 +7,7 @@
 
 ## 1. Conceito Visual
 
-O BioBoock deve ser reconhecível como um produto de **vida saudável, movimento e evolução pessoal** antes mesmo de o usuário ler qualquer texto — não como um dashboard corporativo, um ERP ou uma ferramenta de IA.
+O BioBook deve ser reconhecível como um produto de **vida saudável, movimento e evolução pessoal** antes mesmo de o usuário ler qualquer texto — não como um dashboard corporativo, um ERP ou uma ferramenta de IA.
 
 Princípios:
 - **Profissional + Humano**: sofisticado sem ser frio.
@@ -54,7 +54,7 @@ Hierarquia aplicada nas telas redesenhadas: título de tela (`text-2xl font-bold
 - **`Alert`** — banners de erro/sucesso/info/aviso com `role="alert"`/`role="status"` corretos.
 - **`Card`** — superfície com borda, radius e sombra padronizados.
 - **`EmptyState`** — estado vazio motivador (título + descrição + ação), conforme §22.
-- **`BrandMark`** — marca própria do BioBoock em SVG inline (sem dependência de imagem externa), usada nas telas de autenticação.
+- **`BrandMark`** — marca própria do BioBook em SVG inline (sem dependência de imagem externa), usada nas telas de autenticação.
 
 ## 7. Telas Alteradas
 
@@ -67,7 +67,7 @@ Hierarquia aplicada nas telas redesenhadas: título de tela (`text-2xl font-bold
 | `/profile` | Redesenho completo — avatar/inicial e nome em destaque no topo ("Minha história"), formulário dentro de `Card`. Lógica de fetch/PATCH inalterada. |
 | `/admin` | Realinhamento de tokens (cores, radius, sombra) — estrutura e proteção de backend inalteradas. |
 | `/biobook` (BioBookLayout, BioHeader + 12 widgets) | Realinhamento sistemático de tokens em todos os componentes do módulo `biobook` (cards, texto, estados de tendência, skeleton de carregamento) — nenhuma lógica de negócio alterada. |
-| `UserMenu` (global) | Realinhamento de tokens + link de marca "BioBoock" apontando para `/biobook`. |
+| `UserMenu` (global) | Realinhamento de tokens + link de marca "BioBook" apontando para `/biobook`. |
 
 ## 8. Componentes Fora de Escopo (documentado, não alterado)
 

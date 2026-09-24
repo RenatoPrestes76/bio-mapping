@@ -1,4 +1,4 @@
-# Render Blueprint — BioBoock API
+# Render Blueprint — BioBook API
 #
 # Deploy: no dashboard da Render, "New" -> "Blueprint" -> conectar este
 # repositório. A Render lê este arquivo e provisiona só o serviço web
@@ -6,7 +6,7 @@
 #
 # BANCO DE DADOS: este Blueprint NÃO cria um PostgreSQL. A conta Render já
 # possui um Postgres Free ativo ("seltriva-postgres", apesar do nome, é o
-# banco em uso pelo BioBoock) — a conta é limitada a 1 Postgres Free, então
+# banco em uso pelo BioBook) — a conta é limitada a 1 Postgres Free, então
 # criar um segundo aqui derruba o deploy ("cannot have more than one active
 # free tier database"). DATABASE_URL abaixo é `sync: false` de propósito:
 # a Render pede o valor durante a criação do Blueprint (ou ele é preenchido

@@ -1,4 +1,4 @@
-# BioBoock — Sprint 06: User Registration, Onboarding & Profile Foundation
+# BioBook — Sprint 06: User Registration, Onboarding & Profile Foundation
 
 **Data:** 2026-09-10
 **Escopo:** `apps/web` (novo) + `apps/api` módulo `profiles` (correção de defeito real) — nenhuma migration nova.
@@ -134,7 +134,7 @@ Cadastro e onboarding nasceram acessíveis, seguindo o padrão já estabelecido 
 
 ## 15. UX
 
-Fluxo implementado exatamente como pedido: `Criar conta → Dados básicos → Conta criada → Entrar (automático) → Completar perfil (onboarding, 1 campo) → BioBoock`. Onboarding pedindo só um campo evita o "formulário gigante" explicitamente proibido; perfil completo fica disponível a qualquer momento depois, sem forçar nada no primeiro acesso.
+Fluxo implementado exatamente como pedido: `Criar conta → Dados básicos → Conta criada → Entrar (automático) → Completar perfil (onboarding, 1 campo) → BioBook`. Onboarding pedindo só um campo evita o "formulário gigante" explicitamente proibido; perfil completo fica disponível a qualquer momento depois, sem forçar nada no primeiro acesso.
 
 ---
 

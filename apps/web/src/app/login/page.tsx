@@ -7,7 +7,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center text-center">
           <BrandMark />
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">BioBoock</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">BioBook</h1>
           <p className="mt-1 text-sm text-ink-faint">Bem-vindo(a) de volta à sua jornada.</p>
         </div>
         <LoginForm />

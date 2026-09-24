@@ -1,4 +1,4 @@
-# BioBoock — Sprint 05: Web Authentication & Identity Integration
+# BioBook — Sprint 05: Web Authentication & Identity Integration
 
 **Data:** 2026-09-10
 **Escopo:** `apps/web` (integração de identidade) — `apps/api` não foi alterado nesta sprint.

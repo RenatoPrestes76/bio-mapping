@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# production-smoke.sh — Smoke test mínimo contra a API do BioBoock implantada.
+# production-smoke.sh — Smoke test mínimo contra a API do BioBook implantada.
 #
 # Uso: ./scripts/production-smoke.sh [BASE_URL]
 #   BASE_URL default: http://localhost:3000

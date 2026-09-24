@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# production-deploy.sh — Deploy da imagem assinada do BioBoock API (GHCR, por digest).
+# production-deploy.sh — Deploy da imagem assinada do BioBook API (GHCR, por digest).
 #
 # Lê o digest de docker-compose.prod.yml (fonte única de verdade) — não aceita um
 # digest arbitrário via argumento, para não permitir bypass do processo de release

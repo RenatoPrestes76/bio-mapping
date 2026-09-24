@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 
 type CheckState = 'checking' | 'needs-onboarding' | 'already-done';
 
-// Onboarding é só o mínimo para o BioBoock funcionar: nome exibido. Tudo o
+// Onboarding é só o mínimo para o BioBook funcionar: nome exibido. Tudo o
 // mais (CPF, telefone, endereço...) já existe no modelo de Profile da API,
 // mas fica para a página de Perfil completa — não faz sentido pedir aqui
 // (Sprint 06: "não transformar o onboarding em um formulário gigante").
@@ -80,7 +80,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center text-center">
           <BrandMark />
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">Bem-vindo(a) ao BioBoock</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">Bem-vindo(a) ao BioBook</h1>
           <p className="mt-1 text-sm text-ink-faint">Só mais uma coisa antes de começar sua jornada.</p>
         </div>
 

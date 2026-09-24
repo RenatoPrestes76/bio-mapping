@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BioBoock",
+  title: "BioBook",
   description: "Acompanhe sua evolução, sua saúde e sua jornada de vida ativa.",
 };
 

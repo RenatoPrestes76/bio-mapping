@@ -90,7 +90,7 @@ export default function AdminPage() {
 
       <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-soft">
         <table className="w-full text-left text-sm">
-          <caption className="sr-only">Lista de usuários cadastrados no BioBoock</caption>
+          <caption className="sr-only">Lista de usuários cadastrados no BioBook</caption>
           <thead className="bg-surface-muted text-ink-faint">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-medium">Nome</th>

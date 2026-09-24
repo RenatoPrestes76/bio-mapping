@@ -1,4 +1,4 @@
-# BioBoock — Sprint Extra: Production API & Web Connectivity Recovery
+# BioBook — Sprint Extra: Production API & Web Connectivity Recovery
 
 **Data:** 2026-09-10
 **Escopo:** `apps/web` (bug de conectividade + mostrar/ocultar senha) — zero mudança em `apps/api`, zero migration, zero alteração de arquitetura de autenticação.
@@ -30,7 +30,7 @@ GET https://bio-mapping-api-five.vercel.app/api/v1/health
 → HTTP 404 (página 404 genérica da Vercel — nenhuma rota NestJS existe ali)
 ```
 
-Esse projeto já havia sido identificado como órfão/não usado na Sprint 02 (`docs/sprints/BIOBOOCK-SPRINT-02-PRODUCTION-E2E-CLOSURE.md`, Parte 4), mas nunca foi removido nem renomeado — daí a confusão em achar que era a API.
+Esse projeto já havia sido identificado como órfão/não usado na Sprint 02 (`docs/sprints/BIOBOOK-SPRINT-02-PRODUCTION-E2E-CLOSURE.md`, Parte 4), mas nunca foi removido nem renomeado — daí a confusão em achar que era a API.
 
 Os dois aliases adicionais mencionados (`bio-mapping-api-git-master-...` e `bio-mapping-30kjhauza-...`) são deployments de branch/preview do **mesmo** projeto órfão, protegidos por Vercel Deployment Protection (SSO) — testados nesta sessão, ambos retornam `302` para `vercel.com/sso-api`. Não são uma API separada.
 
@@ -47,7 +47,7 @@ Auditoria completa por evidência (não suposição):
 - Git history: nenhum commit menciona Render, Railway, Fly.io, VPS, nginx ou qualquer outro provedor de hospedagem para a API. Todos os commits com "deploy" no histórico (`cdf7541`, `93d83cb`, `51eca3d`, `19a9089`, `ecbaba4`, `408c26e`, `03b8e4e`) são exclusivamente sobre o deploy do **Web** na Vercel.
 - `vercel project ls` (CLI autenticado como `renatoprestes76`): confirma 8 projetos na conta; nenhum além de `web` e o órfão `bio-mapping-api` está relacionado a este repositório.
 
-**Conclusão objetiva: Cenário B.** Não existe, e nunca existiu, uma API NestJS publicamente acessível para o BioBoock. A imagem está publicada, assinada e pronta (GHCR, digest `sha256:ff5fcc112dba86bf...`), mas nunca foi colocada para rodar em um host publicamente alcançável.
+**Conclusão objetiva: Cenário B.** Não existe, e nunca existiu, uma API NestJS publicamente acessível para o BioBook. A imagem está publicada, assinada e pronta (GHCR, digest `sha256:ff5fcc112dba86bf...`), mas nunca foi colocada para rodar em um host publicamente alcançável.
 
 Por instrução explícita desta sprint ("REGRA ZERO — não inventar infraestrutura"), **nenhum servidor, domínio ou IP foi inventado**, e nenhum deploy improvisado foi executado. Provisionar um host real (VPS/Render/Railway/Fly.io) exigiria credenciais de uma conta de nuvem que não estão disponíveis nesta sessão — fora do que pode ser resolvido só com os recursos já existentes no projeto.
 
@@ -88,7 +88,7 @@ Browser
   → sessão (accessToken + refreshToken)
   → cookies httpOnly (lib/auth/session.ts: bb_at, bb_rt, bb_rm)
   → BFF (/api/proxy/[...path]) para todas as chamadas autenticadas subsequentes
-  → BioBoock (/biobook)
+  → BioBook (/biobook)
 ```
 
 Nenhum arquivo de sessão, BFF, `proxy.ts`, `RolesGuard` ou JWT foi tocado. `API_BASE` continua sendo o único ponto de configuração da URL real da API, exatamente como estabelecido na Sprint 05.
@@ -145,7 +145,7 @@ Toda a validação funcional real (login, cadastro, refresh, logout, admin, isol
 
 | Projeto | URL de produção | O que realmente é |
 |---|---|---|
-| `web` | `web-renatoprestes76s-projects.vercel.app` | O Web BioBoock real (`apps/web`). `NEXT_PUBLIC_API_URL` = `""` (vazio) em Produção. |
+| `web` | `web-renatoprestes76s-projects.vercel.app` | O Web BioBook real (`apps/web`). `NEXT_PUBLIC_API_URL` = `""` (vazio) em Produção. |
 | `bio-mapping-api` | `bio-mapping-api-five.vercel.app` | **Órfão** — builda `apps/web` via `vercel.json` da raiz (Root Directory `.`), não é uma API. Já documentado como não usado desde a Sprint 02. |
 
 Nenhuma alteração foi feita em nenhum dos dois projetos (nem renomeação, nem env vars, nem remoção) — decisão deliberada, ver §3.3.
@@ -171,7 +171,7 @@ Ver seção final do relatório de entrega (commit/SHA local/SHA remoto/working 
 
 ## 14. Bloqueios
 
-1. **Não existe, hoje, nenhuma API NestJS do BioBoock publicamente acessível.** A imagem Docker está pronta, publicada, assinada e verificada no GHCR (`ghcr.io/renatoprestes76/bio-mapping/api@sha256:ff5fcc112dba86bf...`), mas nunca foi colocada para rodar em um servidor com IP/domínio público. Isso é um bloqueio **exclusivamente externo** (falta de infraestrutura de hospedagem) — não é algo que o código deste repositório possa resolver sozinho, e a Regra Zero desta sprint proíbe inventar ou improvisar essa infraestrutura. Login e cadastro em produção continuarão retornando erro de conexão até que: (a) a imagem seja implantada em algum host real (seguindo `docs/operations/PRODUCTION-DEPLOYMENT.md`), e (b) `NEXT_PUBLIC_API_URL` no projeto `web` da Vercel seja atualizada para apontar para esse host.
+1. **Não existe, hoje, nenhuma API NestJS do BioBook publicamente acessível.** A imagem Docker está pronta, publicada, assinada e verificada no GHCR (`ghcr.io/renatoprestes76/bio-mapping/api@sha256:ff5fcc112dba86bf...`), mas nunca foi colocada para rodar em um servidor com IP/domínio público. Isso é um bloqueio **exclusivamente externo** (falta de infraestrutura de hospedagem) — não é algo que o código deste repositório possa resolver sozinho, e a Regra Zero desta sprint proíbe inventar ou improvisar essa infraestrutura. Login e cadastro em produção continuarão retornando erro de conexão até que: (a) a imagem seja implantada em algum host real (seguindo `docs/operations/PRODUCTION-DEPLOYMENT.md`), e (b) `NEXT_PUBLIC_API_URL` no projeto `web` da Vercel seja atualizada para apontar para esse host.
 
 ---
 

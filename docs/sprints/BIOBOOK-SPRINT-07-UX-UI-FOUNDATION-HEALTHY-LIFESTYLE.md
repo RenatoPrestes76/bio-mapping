@@ -1,4 +1,4 @@
-# BioBoock — Sprint 07: UX/UI Foundation & Healthy Lifestyle Experience
+# BioBook — Sprint 07: UX/UI Foundation & Healthy Lifestyle Experience
 
 **Data:** 2026-09-10
 **Escopo:** `apps/web` (design tokens, primitivos de UI, redesenho de telas) — zero mudança em `apps/api`, zero migration.
@@ -8,7 +8,7 @@
 
 ## 1. Objetivo
 
-Substituir a linguagem visual genérica (cinza `zinc`, dark-first, template padrão do `create-next-app`) por uma identidade própria do BioBoock associada a vida saudável, movimento e evolução pessoal — sem alterar nenhuma regra de negócio, autenticação ou autorização já validada.
+Substituir a linguagem visual genérica (cinza `zinc`, dark-first, template padrão do `create-next-app`) por uma identidade própria do BioBook associada a vida saudável, movimento e evolução pessoal — sem alterar nenhuma regra de negócio, autenticação ou autorização já validada.
 
 ## 2. Auditoria (Fase 1)
 
@@ -22,7 +22,7 @@ Encontrado antes de qualquer mudança:
 
 ## 3. Nova Direção Visual
 
-Documentação completa em [`docs/ux/BIOBOOCK-UX-UI-DESIGN-SYSTEM.md`](../ux/BIOBOOCK-UX-UI-DESIGN-SYSTEM.md). Resumo:
+Documentação completa em [`docs/ux/BIOBOOK-UX-UI-DESIGN-SYSTEM.md`](../ux/BIOBOOK-UX-UI-DESIGN-SYSTEM.md). Resumo:
 
 - **Paleta**: verde `primary` (saúde/natureza), azul `secondary` (confiança/equilíbrio), coral `accent` (energia, moderado), neutros warm `canvas`/`surface`/`ink` (substituindo `zinc` frio), semânticas `success`/`warning`/`error`/`info`.
 - **Tipografia**: Plus Jakarta Sans via `next/font/google` (zero dependência nova), substituindo Geist.
@@ -87,7 +87,7 @@ Não há ferramenta de automação de browser/E2E (Playwright ou similar) instal
 
 ## 12. Documentação
 
-- Criado: `docs/ux/BIOBOOCK-UX-UI-DESIGN-SYSTEM.md`.
+- Criado: `docs/ux/BIOBOOK-UX-UI-DESIGN-SYSTEM.md`.
 - Criado: este relatório.
 
 ## 13. Git

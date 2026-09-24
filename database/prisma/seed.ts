@@ -10,17 +10,17 @@ const prisma = new PrismaClient({ adapter });
 // senha de administrador HARDCODED em texto puro (`admin@biomapping.com` /
 // `Admin123@`), versionados no Git desde o commit 82d4a9f. Removido —
 // agora a credencial vem exclusivamente de variáveis de ambiente
-// (BIOBOOCK_ADMIN_EMAIL / BIOBOOCK_ADMIN_PASSWORD), nunca do código-fonte,
+// (BIOBOOK_ADMIN_EMAIL / BIOBOOK_ADMIN_PASSWORD), nunca do código-fonte,
 // nunca logada. Se `Admin123@` foi usada em algum deploy real, ela deve ser
 // considerada comprometida e rotacionada — remover do arquivo não remove do
 // histórico do Git, e reescrever histórico não foi feito aqui (ação
 // destrutiva que exige autorização explícita, fora do escopo desta sprint).
 async function bootstrapAdmin() {
-  const email = process.env.BIOBOOCK_ADMIN_EMAIL;
-  const password = process.env.BIOBOOCK_ADMIN_PASSWORD;
+  const email = process.env.BIOBOOK_ADMIN_EMAIL;
+  const password = process.env.BIOBOOK_ADMIN_PASSWORD;
 
   if (!email) {
-    console.log('BIOBOOCK_ADMIN_EMAIL não definido — bootstrap de admin pulado.');
+    console.log('BIOBOOK_ADMIN_EMAIL não definido — bootstrap de admin pulado.');
     return;
   }
 
@@ -40,7 +40,7 @@ async function bootstrapAdmin() {
   }
 
   if (!password) {
-    console.log('BIOBOOCK_ADMIN_PASSWORD não definido — não é possível criar a conta admin (ela ainda não existe).');
+    console.log('BIOBOOK_ADMIN_PASSWORD não definido — não é possível criar a conta admin (ela ainda não existe).');
     return;
   }
 
